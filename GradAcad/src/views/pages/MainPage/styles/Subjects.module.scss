@@ -1,0 +1,59 @@
+@import '/src/views/variables_css/variables';
+
+.mainSubjects {
+
+    height: 84%;
+    max-height: 84%;
+
+    h3, h5 {
+        margin: 0;
+    }
+    h3 {
+        padding: 20px 0px;
+        color: black;
+        text-align: start;
+        border-bottom: solid 1px $black;
+    }
+    h5 {
+        text-align: start;
+        color: $black;
+        font-size: $semiMedium;
+    }
+
+    .listSubjects {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        padding: 25px 20px;
+        ul {
+            align-self: center;
+            display: flex;
+            flex-wrap: wrap; /* Allow items to wrap to the next line */
+            gap: 50px; /* Optional: Space between items */
+            padding: 0;
+            margin: 0;
+            max-height: clamp(316px, 70vh, 576px);
+            list-style: none;
+            overflow-y: auto;
+
+            li {
+                width: 20%; /* Button spans full width of the list item */
+                height: 200px;
+                background: rgba(15, 42, 113, 0.63);
+                border-radius: 4px;
+                cursor: pointer;
+
+                button {
+
+                    &:hover {
+
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+

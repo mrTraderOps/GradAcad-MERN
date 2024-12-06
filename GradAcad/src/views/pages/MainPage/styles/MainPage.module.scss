@@ -1,0 +1,471 @@
+@import '/src/views/variables_css/variables';
+
+.landingPage {
+    display: flex;
+    max-width: 100%;
+    width: 100vw;
+    height: 100vh;
+    flex-direction: row;
+    overflow: hidden;
+    font-family: $primaryFont;
+}
+    .aside {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        width: 20%;
+        background-color: $blue;
+    }
+        .aside > header {
+            padding: 10px;
+        }
+            .aside > header > div > img{
+                padding: 10px;
+            }
+        
+        nav {
+            
+        }
+            ul {
+                padding-left: 10px;
+                margin: 0;
+                list-style: none;
+            }
+                li {
+                    margin:0;
+                    
+                }
+                    button {
+                        background-color: transparent;
+                        border: none;
+                        color: white;
+                        
+                    }
+                    li > button {
+                        width: 100%;
+                        text-align: start;
+                    }
+        footer {
+            align-self: center;
+            padding-bottom: 20px;
+        }
+    
+    main {
+        width: 80%;
+    }
+        main > header {
+            display: flex;
+            justify-content: center;
+            height: 10%;
+            width: 100%;
+        }
+            main > header > div {
+                width: 100%;
+                justify-content: space-around;
+                align-items: center;
+            }
+        .MainPage {
+            height: 86%;
+        }
+    input {
+        align-self: center;
+        width: 44vw;
+        height: 6vh;
+        border-radius: 20px;
+        padding-left: 20px;
+        background-color: whitesmoke;
+        color: black;
+    }
+
+.section1, .section2 {
+    display: flex;
+    flex-direction: row;
+    padding: 20px 20px 0px 20px;
+    align-items: center;
+}
+    .section1 {
+        height: 18%;
+        justify-content: center;
+        padding: 15px 22px;
+    }
+        .dashboard1 {
+            width: 92%;
+            display: flex;
+            flex-direction: row;
+            padding: 7px 27px;
+            background-color: $blue;
+            align-items: center;
+            border-radius: 16px;
+            height: 90%;
+            justify-content: space-around;
+        }
+            .greetings{
+                flex:4;
+                padding-left: 10px;
+            }
+            .timeDay{
+                flex: 1;
+                padding-left: 40px;
+
+                p {
+                    margin: 0;
+                    text-align: center;
+                    color: $white;
+                    padding-bottom: 5px;
+                    font-size: $semiMedium;
+                    font-weight: 600;
+                }
+            }
+    .section2 {
+        height: 63%;
+        justify-content: space-around;
+        border-radius: 10px;
+    }
+        .analytics, .courseSum {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 15px;
+            background-color: $coverBoxColor;
+        }
+        .analytics > div, .courseSum > div {
+            height: 100%;
+            padding: 13px 13px 0px 13px;  
+        }
+
+        .analytics {
+            width: 57%;
+        }
+
+        .courseSum {
+            width: 40%;
+        }
+
+        .analytics, .courseSum {     
+            
+            div {
+
+                p {
+                    margin: 0;
+                    color: $darkblue;
+                    font-size: $Small;
+                    font-weight: $extraBold;
+                }
+                .selectCont {
+                    padding: 8px 0px;
+                    display: flex;
+                    gap: 10px;
+                    align-items: center;
+                
+                    p {
+                        font-size: $Small - 1px;
+                        font-weight: $Light + 300;
+                        color: $black;
+                        
+                    }
+                    .sortSelect {
+                        border: 1px inset $black;
+                        background-color: $white;
+                        color: $black;
+                        font-family: $primaryFont;
+                        font-size: $Small - 1px;
+                        padding: 4px;
+                        font-weight: $MediumW;
+                        width: 60px;
+                    }
+                }
+                .tableAnalytics {
+                    padding-bottom: 15px;
+                    padding-top: 10px;
+                    height: 68%;
+                    min-height: 68%;
+
+                    .tableContainer {
+                        max-height: clamp(100px, 38vh, 226px);     /* Set the max height for the table container */
+                        overflow: auto;     /* Enable vertical scrolling */
+                        width: 100%;
+                        height: 100%;    
+
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            overflow: auto;
+    
+                            thead {
+                                
+                                tr {
+                                    th {
+                                        padding: 10px 10px;
+                                        color: $black;
+                                        text-align: start;
+                                        font-size: $Small - 2px;
+                                        
+                                    }
+                                    .gwa {
+                                        text-align: center;
+                                    }
+                                }
+                            }
+
+                            tbody {
+                                background-color: $white;
+                                
+                                tr {
+    
+                                    .gwa {
+                                        text-align: center;
+                                    }
+    
+                                    td {
+                                        color: $black;
+                                        padding: 10px;
+                                        font-size: $Small;
+                                        font-weight: $MediumW + 100;
+                                    }
+    
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+            .nc_footer, .nc_logo_name, .nc_org, .nc_footer > div {
+                display: flex;
+                align-items: center;
+            }
+            .nc_footer {
+                height: 100%;
+                padding-bottom: 0%;
+            }
+                .nc_footer > div {
+                    width: 100%;
+                    padding: 1%;
+                    justify-content: space-between;
+                }
+            .nc_logo_name {
+                padding-left: 3%;
+                gap: 13px;
+
+                h2 {
+                    font-size: $Medium;
+                    font-weight: $extraBold;
+                    color: $darkblue;
+                    align-self: center;
+                    margin: 0;
+                }
+            }
+            .concerns {
+                width: 18%;
+                background-color: $yellow;
+                align-self: center;
+                width: 37%;
+                margin-right: 2%;
+                border-radius: 24px;
+                padding: 0px;
+
+                p {
+                    color: $darkblue;
+                    font-size: $Small;
+                    font-weight: $Bold;
+                    color: $darkblue;
+                }
+            }
+
+    .section3 {
+        height: 13.7%;
+    }
+
+header > div {
+    display: flex;
+    align-items: center;
+}
+
+.activeButton {
+    background-color: white;
+    
+        button {
+            color: rgba(15, 42, 113, 1);
+            font-weight: $MediumW + 200;
+        }
+}
+
+p {
+    color: black;
+}
+
+//Detailed Style fonts, colors etc..
+.header {
+
+    div {
+
+        div{
+            display: flex;
+
+            h2 {
+                font-size: $extraLarge;
+                font-weight: $Bold;
+                letter-spacing: 2px;
+                text-align: center;
+                align-self: center;
+            }
+            .excel {
+                color: $yellow;
+            }
+        }
+    }
+}
+
+.navItems {
+
+    li {
+        
+        button {
+            font-size: $large;
+            font-weight: $MediumW + 100;
+            letter-spacing: 1px;           
+        }
+    }
+}
+
+.shortCut {
+
+    div {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    div, button {
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        
+        button {
+            height: 38px;
+            width: clamp(80px, 9vw, 111px);
+            background-color: #00173F;
+            border-radius: 9px;
+            gap: 10px;
+            box-shadow: 1px 2px 2px $black;
+            
+            p {
+                font-size: $Small - 2px;
+                font-weight: $Light;
+                color: $white;
+            }
+        }
+    }
+    
+}
+
+
+
+
+
+.custom_input {
+	display: flex;
+	align-items: center;
+	position: relative;
+	max-width: 100%;
+    width: 55%;
+    padding-left: 25px;
+}
+
+.input {
+	font-size: 13px;
+	padding: 6px 13px;
+	width: 100%;
+	padding-right: 10px;
+	outline: none;
+	background: #FFFFFF;
+	color: #000000;
+	border: 1px solid $blue;
+	border-radius: 17px;
+	box-shadow: 3px 6px 8px -1px #E2E2E2;
+	transition: .3s ease;
+}
+
+.input:focus {
+	background: #F2F2F2;
+	border: 1px solid #5A7EC7;
+	border-radius: 12px;
+    font-family: $primaryFont;
+}
+
+.input::placeholder {
+	color: #DDDDDD;
+    font-family: $primaryFont;
+}
+
+.svg_icon {
+	position: absolute;
+	right: 35px;
+	fill: #4660DC;
+	width: 13px;
+	height: 13px;
+}
+
+.headerUserName {
+    color: $black;
+    font-weight: $Light + 100;
+    font-size: $large;
+}
+
+.greetings {
+
+    h4, p {
+        margin: 0;
+    }
+
+    h4 {
+        font-size: $Medium;
+        color: $yellow;
+        font-weight: $Light + 100;
+        padding-bottom: 5px;
+    }
+    p {
+        font-size: $semiMedium;
+        color: $white;
+        font-weight: $Light + 200;
+    }
+}
+
+
+th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: $coverBoxColor;
+}
+
+.userProfile {
+    display: flex;
+    align-items: center;
+    padding-right: 10px;
+
+    button {
+        padding: 10px;
+    }
+}
+
+.Dashboard {
+    height: 100%;
+}
+
+.department, .calendar, .settings {
+    h1 {
+        color: $black;
+    }
+}
+
+.MainPageHeader {
+    background-color: rgba(41, 63, 116, 1);
+
+
+    div {
+        justify-content: space-between;
+    }
+}

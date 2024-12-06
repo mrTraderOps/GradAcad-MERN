@@ -1,0 +1,174 @@
+@import '/src/views/variables_css/variables';
+
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8); /* Dark semi-transparent background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensure it's on top */
+}
+
+.popup {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    width: 40%;
+    height: 50%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.closeButton {
+    color: $darkblue;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.content {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+}
+ 
+.header {
+
+    .header1, .headerNav {
+        display: flex;  
+        flex-direction: row;
+    }
+
+    .header1 {
+        
+        justify-content: space-around;
+
+        div {
+
+            p {
+                text-align: start;
+            }
+        }
+    }
+
+    .headerNav {
+
+        ul {
+
+            width: 100%;
+            gap: 0px;
+            padding: 0px;
+            padding-top: 10px;
+            
+            li {
+
+                height: 40px;
+                flex: 1;
+
+                button {
+                    text-align: center;
+                }
+            }
+        }
+    }
+}
+
+.content {
+    display: flex; 
+
+    div {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+        button {
+            width: 20%;
+            align-self: center;
+            font-size: $Small;
+            border-radius: 5px;
+        }
+
+        div {
+            align-self: center;
+            justify-content: center;
+            gap: 10px;
+
+            table {
+                align-self: center;
+                border-collapse: collapse;
+                padding: 5px; 
+                border: 1px solid #ccc; 
+                text-align: center; 
+                white-space: nowrap;
+
+                tr {
+                    height: auto;
+                    td {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 10px;
+
+                        h4 {
+                            color: $darkblue;
+                        }
+
+                        input {
+                            width: 20px;
+                            height: 10px;
+                            padding: 10px;
+                            font-size: 16px;
+                            text-align: center;
+                            border: 1px solid #ccc;
+                            border-radius: 4px;
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+select {
+    height: 20%;
+}
+
+.submitButton {
+    background-color: $darkblue;
+}
+
+.activeButton {
+    background: #ffffff;
+    color: $darkblue;
+    border: 1px solid $darkblue;
+}
+
+.inactiveButton {
+        border: 1px solid #ccc;
+        background: $darkblue;
+        cursor: pointer;
+}
+
+.buttonGroup {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 20px;
+
+    button {
+        height: 45px;
+    }
+}
+

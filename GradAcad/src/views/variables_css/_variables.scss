@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+$blue: #0F2A71;
+$darkblue: #00173F;
+$yellow: #F4C501;
+$white: white; 
+$black: rgb(37, 35, 35, 80%);
+$coverBoxColor: #EDF2FF;
+
+$primaryFont: "Inter", sans-serif;
+
+//fontWeight
+$extraBold: 800;
+$Bold: 700;
+$MediumW: 500;
+$Light: 300;
+ 
+//fontSize
+$extraLarge: clamp(13px, 1.6vw, 24px);
+$large: clamp(10px, 1.6vw, 16px);
+$semiLarge: 26px;
+$Medium: clamp(10px, 1.6vw, 19px);
+$semiMedium: clamp(10px, 1.5vw, 16px);
+$smallClamp: calc(4px + 0.6vw);
+$Small: 12px;
+
+
+
+
+
+
+
