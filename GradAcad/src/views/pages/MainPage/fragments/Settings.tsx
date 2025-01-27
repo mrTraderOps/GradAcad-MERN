@@ -1,9 +1,5 @@
 import style from "../styles/Settings.module.scss";
-
-interface Props {
-  LoggedName: string;
-  LoggeduserName: string;
-}
+import { Props } from "../../../../models/types/Props";
 
 const Settings = ({ LoggedName, LoggeduserName }: Props) => {
   return (

@@ -1,81 +1,24 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import Papa from "papaparse";
 import EqScale from "./EqScale";
-import { useState, useEffect } from "react";
-import StudentData from "../../../../../models/StudentData";
-import TermGrade from "../../../../../models/TermGrade";
-
-interface Props {
-  onSubjectClick: () => void;
-  LoggeduserName: string;
-  data: any;
-}
-
-interface Student {
-  studentId: string;
-  studentName: {
-    lastName: string;
-    firstName: string;
-    middleInitial: string;
-  };
-}
-
-interface Grade {
-  studentId: string;
-  prelim?: number;
-  midterm?: number;
-  final?: number;
-}
-
-interface StudentRow {
-  studentId: string;
-  studentName: {
-    lastName: string;
-    firstName: string;
-    middleInitial: string;
-  };
-  prelim?: number;
-  midterm?: number;
-  final?: number;
-}
-
-interface CombinedData extends Student, Grade {}
+import { useState } from "react";
+import { Props } from "../../../../../models/types/Props";
+import { useStudentList } from "../../../../../hooks/useStudentList";
+import { useCombinedData } from "../../../../../hooks/useCombinedData";
+import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
+import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
+import { newTerm } from "../../../../../utils/helpers/newTerm";
+import { getRemarks } from "../../../../../utils/helpers/getRemarks";
+import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 
 const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
-  const [combinedData, setCombinedData] = useState<CombinedData[]>([]);
-  const [studentList, setStudentList] = useState<StudentRow[]>([]);
-  const { subjectCode, subjectName, course, section } = data;
-  const [isPopupVisible, setPopupVisible] = useState(false);
+  const studentList = useStudentList(LoggeduserName);
+  const { combinedData, handleInputChange, setCombinedData } =
+    useCombinedData();
+  const { subjectCode, subjectName, dept, section } = data;
+  const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
 
-  const openPopup = () => setPopupVisible(true);
-  const closePopup = () => setPopupVisible(false);
   const [isEditing, setIsEditing] = useState(true);
-
-  const userMapping = {
-    jonathan_pascual: "BEED",
-    christian_torres: "BSCS",
-    oliver_palad: "BSHM",
-  };
-
-  function getStudentListByUsername(username: string): StudentRow[] {
-    if (username in userMapping) {
-      const designation = userMapping[username as keyof typeof userMapping];
-
-      const courseData = StudentData.find((data) =>
-        designation in data ? true : false
-      );
-
-      return courseData?.[designation as keyof typeof courseData] ?? [];
-    }
-
-    return [];
-  }
-
-  useEffect(() => {
-    const username = LoggeduserName;
-    const list = getStudentListByUsername(username);
-    setStudentList(list);
-  }, []);
 
   const [termActive, setTermActive] = useState({
     isPrelim: true,
@@ -85,44 +28,6 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
     isFinal: true,
     isDoneFinal: false,
   });
-
-  const downloadCSV = () => {
-    // Initialize an array for CSV data
-    const csvData = [];
-
-    // Add header row to CSV
-    csvData.push(["STUDENT ID", "STUDENT NAME", "PRELIM", "MIDTERM", "FINAL"]);
-
-    // Loop through the tableData to extract rows
-    studentList.forEach((row) => {
-      const fullName = `${row.studentName.lastName} ${row.studentName.firstName} ${row.studentName.middleInitial}`;
-      const formattedName = capitalizeWords(fullName);
-      csvData.push([
-        row.studentId, // Student ID
-        formattedName, // Full name
-        "",
-        "",
-        "", // Blank value for Final Term
-      ]);
-    });
-
-    // Create CSV content
-    const csvContent = csvData
-      .map((row) => row.join(",")) // Join rows with commas
-      .join("\n"); // Add newline between rows
-
-    // Create a Blob for the CSV content
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    // Create a link and trigger download
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Student_Grades_Template.csv"; // Filename
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  };
 
   const handleFileUpload = (event: any) => {
     const file = event.target.files[0];
@@ -136,7 +41,7 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
       skipEmptyLines: true,
       complete: (result) => {
         const uploadedData = result.data;
-        const expectedHeaders = ["PRELIM", "MIDTERM", "FINAL", "STUDENT_ID"];
+        const expectedHeaders = ["STUDENT_ID", "PRELIM", "MIDTERM", "FINAL", ];
 
         // Validate headers
         const parsedHeaders = Object.keys(uploadedData[0] || {});
@@ -182,99 +87,8 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
     });
   };
 
-  const capitalizeWords = (str: string) => {
-    return str
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalize the first letter of each word
-      .join(" ");
-  };
-
-  const handleInputChange = (
-    index: number,
-    fieldName: keyof CombinedData,
-    value: any
-  ) => {
-    setCombinedData((prevData: CombinedData[]) =>
-      prevData.map((row, i) =>
-        i === index ? { ...row, [fieldName]: value } : row
-      )
-    );
-  };
-
-  const calculateEQ = (term: number) => {
-    const ranges = [
-      { min: 96.5, grade: 1.0 },
-      { min: 93.5, grade: 1.25 },
-      { min: 90.5, grade: 1.5 },
-      { min: 87.5, grade: 1.75 },
-      { min: 84.5, grade: 2.0 },
-      { min: 81.5, grade: 2.25 },
-      { min: 75.5, grade: 2.75 },
-      { min: 74.5, grade: 3.0 },
-    ];
-
-    const match = ranges.find((range) => term >= range.min);
-    return match ? match.grade : 5.0; // Default to 5.0 if no match
-  };
-
   const toggleMode = () => {
     setIsEditing((prevState) => !prevState);
-  };
-
-  const newTerm = (prelim: any, midterm: any, final: any) => {
-    const _prelim = parseFloat(prelim) || 0;
-    const _midterm = parseFloat(midterm) || 0;
-    const _final = parseFloat(final) || 0;
-
-    const average = _prelim + _midterm + _final;
-
-    const fg = average / 3;
-
-    return fg;
-  };
-
-  useEffect(() => {
-    const students: Student[] = [];
-    StudentData.forEach((courseData) => {
-      Object.values(courseData).forEach((studentList) => {
-        students.push(...studentList);
-      });
-    });
-
-    const combined = students.map((student) => {
-      const termGrade = TermGrade.find(
-        (grade) => grade.studentId === student.studentId
-      );
-      return {
-        ...student,
-        ...termGrade,
-      } as CombinedData;
-    });
-
-    setCombinedData(combined);
-  }, []);
-
-  const getRemarks = (
-    prelim: number,
-    midterm: number,
-    final: number,
-    fg: number
-  ) => {
-    const terms = [prelim, midterm, final];
-    const nonZeroCount = terms.filter((term) => term > 0).length;
-
-    if (nonZeroCount === 1) {
-      return (
-        <select>
-          <option value="AW">AW</option>
-          <option value="UW">UW</option>
-          <option value="NCA">NCA</option>
-          <option value="INC">INC</option>
-        </select>
-      );
-    }
-
-    return fg === 5.0 ? "FAILED" : "PASSED";
   };
 
   return (
@@ -295,12 +109,15 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
 
         <div className={styles.div2}>
           <p>
-            COURSE & SECTION : {course} - {section}
+            COURSE & SECTION : {dept} - {section}
           </p>
         </div>
 
         <div className={styles.div3}>
-          <button className={styles.button1} onClick={downloadCSV}>
+          <button
+            className={styles.button1}
+            onClick={() => downloadCSV(studentList)}
+          >
             <img src="src\assets\icons\download_icon.png" alt="" width={20} />
             <p>Download Grade Template</p>
           </button>

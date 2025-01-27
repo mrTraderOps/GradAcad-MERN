@@ -1,10 +1,6 @@
 import course_styles from "../styles/Courses.module.scss";
 import style from "../styles/Department.module.scss";
-
-interface Props {
-  onCourseClick: () => void;
-  onDepartmentClick: () => void;
-}
+import { Props } from "../../../../models/types/Props";
 
 const Courses = ({ onCourseClick, onDepartmentClick }: Props) => {
   return (

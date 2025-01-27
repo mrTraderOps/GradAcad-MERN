@@ -1,18 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import style from "../styles/Department.module.scss";
 import Subjects from "./Subjects";
 import EncodeGrade from "./students_panel/EncodeGrade";
-
-interface Props {
-  LoggeduserName: string;
-}
-
-interface SubjectData {
-  subjectCode: string;
-  subjectName: string;
-  course: string;
-  section: string;
-}
+import { Props } from "../../../../models/types/Props";
+import { SubjectData } from "../../../../models/types/SubjectData";
 
 const GradeEncode = ({ LoggeduserName }: Props) => {
   const [activePanel, setActivePanel] = useState("grade_encoding");
@@ -23,17 +14,17 @@ const GradeEncode = ({ LoggeduserName }: Props) => {
       case "grade_encoding":
         return (
           <Subjects
+            LoggeduserName={LoggeduserName}
             onStudentClick={(data: SubjectData[]) => {
               setSubjectData(data);
               setActivePanel("students");
             }}
-            LoggeduserName={LoggeduserName}
           />
         );
       case "students":
         return (
           <EncodeGrade
-            data={subjectData}
+            data={subjectData[0]}
             onSubjectClick={() => {
               setActivePanel("grade_encoding");
             }}

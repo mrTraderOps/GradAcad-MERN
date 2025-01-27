@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./LoginPage.scss";
-import axios from "axios";
 import { UserContext } from "../../../models/context/UserContext";
 
 import logo from "../../../assets/images/nc_logo_large.png";
@@ -9,6 +8,7 @@ import qrGrade from "../../../assets/images/qr-grade.png";
 import partner1 from "../../../assets/images/ccs_icon.png";
 import partner2 from "../../../assets/images/charms_icon.png";
 import partner3 from "../../../assets/images/safe_icon.png";
+import { handleLogin } from "../../../services/UserService";
 
 interface Props {
   onLogin: () => void;
@@ -29,24 +29,11 @@ const LoginPage = ({ onLogin }: Props) => {
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    axios
-      .post("http://localhost:5000/api/login", { username, password })
-      .then((response) => {
-        if (response.data.success) {
-          onLogin();
-          setUser(response.data.user);
-          navigate("/grade_encoding");
-        } else {
-          setErrorMessage(response.data.message || "Invalid credentials.");
-        }
-      })
-      .catch((error) => {
-        const message = error.response?.data?.message || "An error occurred.";
-        setErrorMessage(message);
-      });
+    handleLogin(username, password, onLogin, setUser, navigate, setErrorMessage);
   };
+
 
   return (
     <div className="login-page">
@@ -77,7 +64,7 @@ const LoginPage = ({ onLogin }: Props) => {
         <div className="login-form">
           <h2>Login</h2>
           <p>Enter your account details</p>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Username</label>
               <input

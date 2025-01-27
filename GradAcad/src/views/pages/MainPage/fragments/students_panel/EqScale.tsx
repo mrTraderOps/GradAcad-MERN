@@ -1,11 +1,5 @@
-import { ReactNode } from "react";
 import styles from "./styles/EqScale.module.scss";
-
-interface Props {
-  isVisible: boolean;
-  onClose: () => void;
-  children: ReactNode;
-}
+import { Props } from "../../../../../models/types/Props";
 
 const EqScale = ({ isVisible, onClose, children }: Props) => {
   if (!isVisible) return null;

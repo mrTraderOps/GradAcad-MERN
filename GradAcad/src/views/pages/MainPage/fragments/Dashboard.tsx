@@ -1,9 +1,6 @@
 import styles from "../styles/MainPage.module.scss";
 import { useEffect, useState } from "react";
-
-interface Props {
-  LoggedName: string;
-}
+import { Props } from "../../../../models/types/Props";
 
 const Dashboard = ({ LoggedName }: Props) => {
   const [currentTime, setCurrentTime] = useState("");

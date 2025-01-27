@@ -1,35 +1,16 @@
-import { useState, useEffect } from "react";
-import course_styles from "../styles/Subjects.module.scss";
+import courseStyles from "../styles/Subjects.module.scss";
 import style from "../styles/department.module.scss";
-import subjectData from "../../../../models/SubjectData";
+import { SubjectData } from "../../../../models/types/SubjectData";
+import { useSubjects } from "../../../../hooks/useSubjects";
 
 interface Props {
-  onStudentClick: Function;
-  LoggeduserName: string;
+  LoggeduserName: string | undefined;
+  onStudentClick: (data: SubjectData[]) => void;
 }
 
-interface SubjectData {
-  username: string;
-  dept: string;
-  subjectCode: string;
-  subjectName: string;
-  section: string;
-}
+const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
+  const { subjects, errorMessage } = useSubjects(LoggeduserName);
 
-const Subjects = ({ onStudentClick, LoggeduserName }: Props) => {
-  const [subjects, setSubjects] = useState<SubjectData[]>([]);
-
-  // Use useEffect to set filtered subjects when LoggeduserName changes
-  useEffect(() => {
-    if (LoggeduserName) {
-      const filteredSubjects = subjectData.filter(
-        (subject) => subject.username === LoggeduserName
-      );
-      setSubjects(filteredSubjects);
-    }
-  }, [LoggeduserName]);
-
-  // Function to determine department class
   const getClassForDept = (dept: string) => {
     switch (dept) {
       case "Gen":
@@ -51,32 +32,38 @@ const Subjects = ({ onStudentClick, LoggeduserName }: Props) => {
       <header>
         <h2>Subjects</h2>
       </header>
-      <main className={course_styles.mainSubjects}>
-        <div className={course_styles.listSubjects}>
-          <ul>
-            {subjects.map((subject, index) => (
-              <li key={index}>
-                <button
-                  onClick={() => {
-                    onStudentClick(subject);
-                  }}
-                >
-                  <div>
-                    <div className={getClassForDept(subject.dept)}></div>
-                    <div className={style.deptName}>
-                      <h2>{subject.subjectCode}</h2>
-                      <p>{subject.subjectName}</p>
-                      <p>{`${subject.dept} - ${subject.section}`}</p>
+      <main className={courseStyles.mainSubjects}>
+        {errorMessage ? (
+          <p className={courseStyles.error}>{errorMessage}</p>
+        ) : subjects.length === 0 ? (
+          <p className={courseStyles.loading}>Loading subjects...</p>
+        ) : (
+          <div className={courseStyles.listSubjects}>
+            <ul>
+              {subjects.map((subject, index) => (
+                <li key={index}>
+                  <button
+                    onClick={() => {
+                      onStudentClick([subject]);
+                    }}
+                  >
+                    <div>
+                      <div className={getClassForDept(subject.dept)}></div>
+                      <div className={style.deptName}>
+                        <h2>{subject.subjectCode}</h2>
+                        <p>{subject.subjectName}</p>
+                        <p>{`${subject.dept} - ${subject.section}`}</p>
+                      </div>
+                      <footer>
+                        <p>First Semester A.Y. 2023 - 2024</p>
+                      </footer>
                     </div>
-                    <footer>
-                      <p>First Semester A.Y. 2023 - 2024</p>
-                    </footer>
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </main>
     </>
   );
