@@ -1,0 +1,332 @@
+[{
+  "_id": {
+    "$oid": "6795f88bb59dc56467e92bdd"
+  },
+  "BSCS": {
+    "1A": [
+      {
+        "StudentId": "9282-1161",
+        "LastName": "Garcia",
+        "FirstName": "John",
+        "MiddleInitial": "X"
+      },
+      {
+        "StudentId": "7157-7126",
+        "LastName": "Williams",
+        "FirstName": "Jane",
+        "MiddleInitial": "L"
+      },
+      {
+        "StudentId": "5282-4436",
+        "LastName": "Johnson",
+        "FirstName": "Michael",
+        "MiddleInitial": "V"
+      },
+      {
+        "StudentId": "8311-8285",
+        "LastName": "Smith",
+        "FirstName": "David",
+        "MiddleInitial": "N"
+      }
+    ],
+    "1B": [
+      {
+        "StudentId": "4335-1517",
+        "LastName": "Garcia",
+        "FirstName": "Alex",
+        "MiddleInitial": "S"
+      },
+      {
+        "StudentId": "2929-6598",
+        "LastName": "Brown",
+        "FirstName": "Emily",
+        "MiddleInitial": "X"
+      },
+      {
+        "StudentId": "3658-9827",
+        "LastName": "Jones",
+        "FirstName": "Michael",
+        "MiddleInitial": "M"
+      },
+      {
+        "StudentId": "9631-2883",
+        "LastName": "Johnson",
+        "FirstName": "Emily",
+        "MiddleInitial": "Q"
+      }
+    ],
+    "1C": [
+      {
+        "StudentId": "8093-3102",
+        "LastName": "Jones",
+        "FirstName": "Emily",
+        "MiddleInitial": "X"
+      },
+      {
+        "StudentId": "7018-2185",
+        "LastName": "Miller",
+        "FirstName": "David",
+        "MiddleInitial": "J"
+      },
+      {
+        "StudentId": "9325-3335",
+        "LastName": "Davis",
+        "FirstName": "Jane",
+        "MiddleInitial": "E"
+      },
+      {
+        "StudentId": "7348-2590",
+        "LastName": "Brown",
+        "FirstName": "Alex",
+        "MiddleInitial": "L"
+      }
+    ]
+  },
+  "BSED": {
+    "1A": [
+      {
+        "StudentId": "9925-6531",
+        "LastName": "Brown",
+        "FirstName": "Emily",
+        "MiddleInitial": "S"
+      },
+      {
+        "StudentId": "4171-2138",
+        "LastName": "Smith",
+        "FirstName": "David",
+        "MiddleInitial": "D"
+      },
+      {
+        "StudentId": "1907-9680",
+        "LastName": "Davis",
+        "FirstName": "John",
+        "MiddleInitial": "D"
+      },
+      {
+        "StudentId": "6170-9260",
+        "LastName": "Williams",
+        "FirstName": "Jane",
+        "MiddleInitial": "U"
+      }
+    ],
+    "1B": [
+      {
+        "StudentId": "5466-7928",
+        "LastName": "Jones",
+        "FirstName": "Sarah",
+        "MiddleInitial": "Q"
+      },
+      {
+        "StudentId": "5635-9657",
+        "LastName": "Williams",
+        "FirstName": "Sarah",
+        "MiddleInitial": "C"
+      },
+      {
+        "StudentId": "4716-4000",
+        "LastName": "Williams",
+        "FirstName": "Emily",
+        "MiddleInitial": "P"
+      },
+      {
+        "StudentId": "3805-5699",
+        "LastName": "Miller",
+        "FirstName": "Sarah",
+        "MiddleInitial": "M"
+      }
+    ],
+    "1C": [
+      {
+        "StudentId": "7738-6227",
+        "LastName": "Johnson",
+        "FirstName": "Laura",
+        "MiddleInitial": "G"
+      },
+      {
+        "StudentId": "4536-8476",
+        "LastName": "Miller",
+        "FirstName": "Sarah",
+        "MiddleInitial": "M"
+      },
+      {
+        "StudentId": "8034-5544",
+        "LastName": "Brown",
+        "FirstName": "John",
+        "MiddleInitial": "D"
+      },
+      {
+        "StudentId": "8328-2241",
+        "LastName": "Jones",
+        "FirstName": "David",
+        "MiddleInitial": "G"
+      }
+    ]
+  },
+  "BEED": {
+    "1A": [
+      {
+        "StudentId": "1802-1173",
+        "LastName": "Davis",
+        "FirstName": "Emily",
+        "MiddleInitial": "I"
+      },
+      {
+        "StudentId": "8063-9302",
+        "LastName": "Miller",
+        "FirstName": "John",
+        "MiddleInitial": "R"
+      },
+      {
+        "StudentId": "7842-9585",
+        "LastName": "Brown",
+        "FirstName": "Jane",
+        "MiddleInitial": "S"
+      },
+      {
+        "StudentId": "8172-7595",
+        "LastName": "Miller",
+        "FirstName": "Alex",
+        "MiddleInitial": "X"
+      }
+    ],
+    "1B": [
+      {
+        "StudentId": "5641-4126",
+        "LastName": "Johnson",
+        "FirstName": "Alex",
+        "MiddleInitial": "C"
+      },
+      {
+        "StudentId": "3071-5255",
+        "LastName": "Miller",
+        "FirstName": "John",
+        "MiddleInitial": "P"
+      },
+      {
+        "StudentId": "9712-1801",
+        "LastName": "Johnson",
+        "FirstName": "David",
+        "MiddleInitial": "E"
+      },
+      {
+        "StudentId": "4921-3420",
+        "LastName": "Miller",
+        "FirstName": "Emily",
+        "MiddleInitial": "W"
+      }
+    ],
+    "1C": [
+      {
+        "StudentId": "2456-3563",
+        "LastName": "Brown",
+        "FirstName": "John",
+        "MiddleInitial": "V"
+      },
+      {
+        "StudentId": "6928-1371",
+        "LastName": "Williams",
+        "FirstName": "Michael",
+        "MiddleInitial": "K"
+      },
+      {
+        "StudentId": "5068-9103",
+        "LastName": "Garcia",
+        "FirstName": "Emily",
+        "MiddleInitial": "G"
+      },
+      {
+        "StudentId": "6935-9576",
+        "LastName": "Smith",
+        "FirstName": "Jane",
+        "MiddleInitial": "B"
+      }
+    ]
+  },
+  "BSHM": {
+    "1A": [
+      {
+        "StudentId": "6538-2125",
+        "LastName": "Smith",
+        "FirstName": "Michael",
+        "MiddleInitial": "V"
+      },
+      {
+        "StudentId": "1908-4045",
+        "LastName": "Brown",
+        "FirstName": "Jane",
+        "MiddleInitial": "Z"
+      },
+      {
+        "StudentId": "6848-8913",
+        "LastName": "Smith",
+        "FirstName": "Jane",
+        "MiddleInitial": "X"
+      },
+      {
+        "StudentId": "8674-3179",
+        "LastName": "Williams",
+        "FirstName": "Jane",
+        "MiddleInitial": "R"
+      }
+    ],
+    "1B": [
+      {
+        "StudentId": "8958-6621",
+        "LastName": "Smith",
+        "FirstName": "Laura",
+        "MiddleInitial": "K"
+      },
+      {
+        "StudentId": "6666-5240",
+        "LastName": "Brown",
+        "FirstName": "Michael",
+        "MiddleInitial": "A"
+      },
+      {
+        "StudentId": "8902-9935",
+        "LastName": "Brown",
+        "FirstName": "Emily",
+        "MiddleInitial": "T"
+      },
+      {
+        "StudentId": "7716-4989",
+        "LastName": "Davis",
+        "FirstName": "Sarah",
+        "MiddleInitial": "C"
+      }
+    ],
+    "1C": [
+      {
+        "StudentId": "1111-2264",
+        "LastName": "Garcia",
+        "FirstName": "Michael",
+        "MiddleInitial": "R"
+      },
+      {
+        "StudentId": "6944-6840",
+        "LastName": "Brown",
+        "FirstName": "David",
+        "MiddleInitial": "E"
+      },
+      {
+        "StudentId": "3446-6780",
+        "LastName": "Miller",
+        "FirstName": "Sarah",
+        "MiddleInitial": "S"
+      },
+      {
+        "StudentId": "7818-5401",
+        "LastName": "Jones",
+        "FirstName": "Laura",
+        "MiddleInitial": "D"
+      }
+    ]
+  },
+  "name": "regulars"
+},
+{
+  "_id": {
+    "$oid": "6795f8e7b59dc56467e92bde"
+  },
+  "name": "irregulars"
+}]

@@ -1,0 +1,145 @@
+[{
+  "_id": {
+    "$oid": "67960a0bb59dc56467e92c0e"
+  },
+  "oliver_palad": [
+    {
+      "dept": "BSHM",
+      "subjectCode": "PATHFIT 1",
+      "subjectName": "Physical Fitness 1",
+      "section": "1A"
+    },
+    {
+      "dept": "BSHM",
+      "subjectCode": "PATHFIT 1",
+      "subjectName": "Physical Fitness 1",
+      "section": "1C"
+    },
+    {
+      "dept": "BSHM",
+      "subjectCode": "PATHFIT 3",
+      "subjectName": "Physical Fitness 3",
+      "section": "2A"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "BEED 212",
+      "subjectName": "Subject for BEED Students",
+      "section": "3A"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "BEED 212",
+      "subjectName": "Subject for BEED Students",
+      "section": "3B"
+    }
+  ],
+  "jm_delamerced": [
+    {
+      "dept": "BSHM",
+      "subjectCode": "GE 9",
+      "subjectName": "General Elective 9",
+      "section": "4A"
+    },
+    {
+      "dept": "BSHM",
+      "subjectCode": "GE 9",
+      "subjectName": "General Elective 9",
+      "section": "4B"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "GE-ELECTIVE",
+      "subjectName": "General Elective",
+      "section": "3A"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "GE-ELECTIVE",
+      "subjectName": "General Elective",
+      "section": "3B"
+    }
+  ],
+  "jonathan_pascual": [
+    {
+      "dept": "BEED",
+      "subjectCode": "PROF ED 101",
+      "subjectName": "Professional Education 101",
+      "section": "1A"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "PROF ED 101",
+      "subjectName": "Professional Education 101",
+      "section": "1B"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "PROF ED 105",
+      "subjectName": "Professional Education 105",
+      "section": "2A"
+    },
+    {
+      "dept": "BEED",
+      "subjectCode": "PROF ED 105",
+      "subjectName": "Professional Education 105",
+      "section": "2B"
+    }
+  ],
+  "christian_torres": [
+    {
+      "dept": "BSCS",
+      "subjectCode": "CSC 1",
+      "subjectName": "Introduction to Computing",
+      "section": "1A"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "CSC 1",
+      "subjectName": "Introduction to Computing",
+      "section": "1B"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "CSC 1",
+      "subjectName": "Introduction to Computing",
+      "section": "1C"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "IAS101",
+      "subjectName": "Information Assurance and Security",
+      "section": "3A"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "IAS101",
+      "subjectName": "Information Assurance and Security",
+      "section": "3B"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "NC102",
+      "subjectName": "Network Communication",
+      "section": "4A"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "NC102",
+      "subjectName": "Network Communication",
+      "section": "4B"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "THS101",
+      "subjectName": "Thesis 1",
+      "section": "4A"
+    },
+    {
+      "dept": "BSCS",
+      "subjectCode": "THS101",
+      "subjectName": "Thesis 1",
+      "section": "4B"
+    }
+  ]
+}]

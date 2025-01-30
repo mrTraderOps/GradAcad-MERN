@@ -1,0 +1,36 @@
+[{
+  "_id": {
+    "$oid": "6795ba52ad9f648520a32f92"
+  },
+  "username": "jonathan_pascual",
+  "password": "NC2024",
+  "name": "Jonathan Pascual",
+  "role": "prof"
+},
+{
+  "_id": {
+    "$oid": "6795ba52ad9f648520a32f93"
+  },
+  "username": "jm_delamerced",
+  "password": "NC2024",
+  "name": "JM Dela Merced",
+  "role": "prof"
+},
+{
+  "_id": {
+    "$oid": "6795ba52ad9f648520a32f94"
+  },
+  "username": "oliver_palad",
+  "password": "NC2024",
+  "name": "Oliver Palad",
+  "role": "prof"
+},
+{
+  "_id": {
+    "$oid": "6795ba52ad9f648520a32f95"
+  },
+  "username": "christian_torres",
+  "password": "NC2024",
+  "name": "Christian Torres",
+  "role": "prof"
+}]
