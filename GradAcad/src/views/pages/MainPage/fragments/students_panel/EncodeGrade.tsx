@@ -41,7 +41,7 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
       skipEmptyLines: true,
       complete: (result) => {
         const uploadedData = result.data;
-        const expectedHeaders = ["STUDENT_ID", "PRELIM", "MIDTERM", "FINAL", ];
+        const expectedHeaders = ["STUDENT_ID", "PRELIM", "MIDTERM", "FINAL"];
 
         // Validate headers
         const parsedHeaders = Object.keys(uploadedData[0] || {});
@@ -181,7 +181,10 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
               <tbody>
                 {combinedData.map((row, index) => {
                   const average = newTerm(row.prelim, row.midterm, row.final);
-                  const fg = calculateEQ(average);
+                  const fg = calculateEQ(
+                    newTerm(row.prelim, row.midterm, row.final)
+                  );
+                  const isFailed = fg > 3.0;
                   const remarks = getRemarks(
                     row.prelim ?? 0,
                     row.midterm ?? 0,
@@ -207,16 +210,16 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
                           e.preventDefault();
                         }
                       }}
-                      onChange={(e: any) => {
-                        const value =
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        let value =
                           e.target.value === ""
                             ? undefined
                             : parseFloat(e.target.value);
-                        if (value !== undefined && value > max) {
-                          e.target.value = max;
-                        } else if (value !== undefined && value < 0) {
-                          e.target.value = 0;
+
+                        if (value !== undefined) {
+                          value = Math.min(max, Math.max(0, value));
                         }
+
                         handleInputChange(index, fieldName, value);
                       }}
                     />
@@ -264,7 +267,7 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
                       )}
                       <td>{average.toFixed(2)}</td>
                       <td>{fg.toFixed(2)}</td>
-                      <td>{remarks}</td>
+                      <td className={isFailed ? styles.fail : ""}>{remarks}</td>
                     </tr>
                   );
                 })}
@@ -276,7 +279,7 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
           <button onClick={openPopup}>
             <p>Grading Reference</p>
           </button>
-          <div onClick={toggleMode}>
+          <div onClick={() => toggleMode}>
             <span className={isEditing ? styles.pencilIcon : styles.saveIcon}>
               {isEditing ? "save" : "edit"}
             </span>
