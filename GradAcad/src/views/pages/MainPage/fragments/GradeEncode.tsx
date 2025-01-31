@@ -4,6 +4,7 @@ import Subjects from "./Subjects";
 import EncodeGrade from "./students_panel/EncodeGrade";
 import { Props } from "../../../../models/types/Props";
 import { SubjectData } from "../../../../models/types/SubjectData";
+import GradeSheet from "./students_panel/GradeSheet";
 
 const GradeEncode = ({ LoggeduserName }: Props) => {
   const [activePanel, setActivePanel] = useState("grade_encoding");
@@ -31,6 +32,16 @@ const GradeEncode = ({ LoggeduserName }: Props) => {
             LoggeduserName={LoggeduserName}
           />
         );
+      case "gradesheet":
+      return (
+        <GradeSheet
+          data={subjectData[0]}
+          onSubjectClick={() => {
+            setActivePanel("grade_encoding");
+          }}
+          LoggeduserName={LoggeduserName}
+        />
+      );
     }
   };
 

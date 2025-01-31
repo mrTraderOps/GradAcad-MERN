@@ -1,111 +1,22 @@
 import styles from "./styles/StudentsPanel.module.scss";
-import { useState, useEffect } from "react";
-import StudentData from "../../../../../models/StudentData";
-import SemestralGrade from "../../../../../models/SemestralGrade";
-
-interface Props {
-  onSubjectClick: () => void;
-  data: {
-    subjectCode: string;
-    subjectName: string;
-    course: string;
-    section: string;
-  };
-}
-
-interface Student {
-  studentId: string;
-  studentName: {
-    lastName: string;
-    firstName: string;
-    middleInitial: string;
-  };
-}
-
-interface Grade {
-  studentId: string;
-  prelim?: number;
-  midterm?: number;
-  final?: number;
-}
-
-interface CombinedData extends Student, Grade {}
+import { useState } from "react";
+import { Props } from "../../../../../models/types/Props";
+import { useCombinedData } from "../../../../../hooks/useCombinedData";
+import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 
 const GradeSheet = ({ data, onSubjectClick }: Props) => {
+
   const { subjectCode, subjectName, course, section } = data;
-
-  const [combinedData, setCombinedData] = useState<CombinedData[]>([]);
-
-  const capitalizeWords = (str: string) => {
-    return str
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  };
+  const { combinedData } = useCombinedData();
+  const {isPopupVisible, openPopup, closePopup} = usePopupVisibility()
 
   const calculateAverage = (prelim: number, midterm: number, final: number) => {
     return (prelim + midterm + final) / 3 || 0;
   };
 
-  const calculateEQ = (term: number) => {
-    const ranges = [
-      { min: 96.5, grade: 1.0 },
-      { min: 93.5, grade: 1.25 },
-      { min: 90.5, grade: 1.5 },
-      { min: 87.5, grade: 1.75 },
-      { min: 84.5, grade: 2.0 },
-      { min: 81.5, grade: 2.25 },
-      { min: 75.5, grade: 2.75 },
-      { min: 74.5, grade: 3.0 },
-    ];
-
-    const match = ranges.find((range) => term >= range.min);
-    return match ? match.grade : 5.0; // Default to 5.0 if no match
+  const toggleMode = () => {
+    setIsEditing((prevState) => !prevState);
   };
-
-  const getRemarks = (
-    prelim: number,
-    midterm: number,
-    final: number,
-    fg: number
-  ) => {
-    const terms = [prelim, midterm, final];
-    const nonZeroCount = terms.filter((term) => term > 0).length;
-
-    if (nonZeroCount === 1) {
-      return (
-        <select>
-          <option value="AW">AW</option>
-          <option value="UW">UW</option>
-          <option value="NCA">NCA</option>
-          <option value="INC">INC</option>
-        </select>
-      );
-    }
-
-    return fg === 5.0 ? "FAILED" : "PASSED";
-  };
-
-  useEffect(() => {
-    const students: Student[] = [];
-    StudentData.forEach((courseData) => {
-      Object.values(courseData).forEach((studentList) => {
-        students.push(...studentList);
-      });
-    });
-
-    const combined = students.map((student) => {
-      const semGrade = SemestralGrade.find(
-        (grade) => grade.studentId === student.studentId
-      );
-      return {
-        ...student,
-        ...semGrade,
-      } as CombinedData;
-    });
-
-    setCombinedData(combined);
-  }, []);
 
   return (
     <>

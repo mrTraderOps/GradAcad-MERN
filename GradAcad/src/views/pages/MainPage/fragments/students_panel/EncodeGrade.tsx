@@ -12,6 +12,7 @@ import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 
 const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
+  
   const studentList = useStudentList(LoggeduserName);
   const { combinedData, handleInputChange, setCombinedData } =
     useCombinedData();
