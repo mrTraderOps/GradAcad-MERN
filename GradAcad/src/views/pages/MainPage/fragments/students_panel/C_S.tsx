@@ -10,7 +10,9 @@ const SelectCourseSection = ({ isVisible, onClose, children }: Props) => {
         <button className={styles.closeButton} onClick={onClose}>
           &times;
         </button>
-        <div className={styles.content}>{children}</div>
+        <div className={styles.content}>
+          {children}
+          </div>
       </div>
     </div>
   );

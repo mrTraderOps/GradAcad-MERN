@@ -10,6 +10,7 @@ import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { newTerm } from "../../../../../utils/helpers/newTerm";
 import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
+import SelectCourseSection from "./C_S";
 
 const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
   
