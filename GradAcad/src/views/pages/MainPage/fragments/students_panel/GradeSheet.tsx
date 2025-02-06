@@ -1,21 +1,15 @@
 import styles from "./styles/StudentsPanel.module.scss";
-import { useState } from "react";
 import { Props } from "../../../../../models/types/Props";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
-import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
+import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
+import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 
 const GradeSheet = ({ data, onSubjectClick }: Props) => {
-
-  const { subjectCode, subjectName, course, section } = data;
+  const { subjectCode, subjectName, dept, section } = data;
   const { combinedData } = useCombinedData();
-  const {isPopupVisible, openPopup, closePopup} = usePopupVisibility()
 
   const calculateAverage = (prelim: number, midterm: number, final: number) => {
     return (prelim + midterm + final) / 3 || 0;
-  };
-
-  const toggleMode = () => {
-    setIsEditing((prevState) => !prevState);
   };
 
   return (
@@ -36,7 +30,7 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
 
         <div className={styles.div2}>
           <p>
-            COURSE & SECTION : {course} - {section}
+            COURSE & SECTION : {dept} - {section}
           </p>
         </div>
 
@@ -67,9 +61,6 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
             <table>
               <thead>
                 <tr>
-                  <th>
-                    <h5>#</h5>
-                  </th>
                   <th>
                     <h5>STUDENT ID</h5>
                   </th>
@@ -110,10 +101,10 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
                     row.final ?? 0,
                     fg
                   );
+                  const isFailed = fg > 3.0;
 
                   return (
                     <tr key={index}>
-                      <td>{index + 1}</td>
                       <td>{row.studentId}</td>
                       <td className={styles.studentName}>
                         {`${row.studentName.lastName}, ${row.studentName.firstName} ${row.studentName.middleInitial}`}
@@ -123,7 +114,7 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
                       <td>{row.final}</td>
                       <td>{average.toFixed(2)}</td>
                       <td>{fg}</td>
-                      <td>{remarks}</td>
+                      <td className={isFailed ? styles.fail : ""}>{remarks}</td>
                     </tr>
                   );
                 })}

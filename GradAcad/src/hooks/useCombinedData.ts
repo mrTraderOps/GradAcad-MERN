@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import StudentData from "../models/StudentData"; // Adjust the path
+import StudentData from "../models/StudentData";
 import TermGrade from "../models/TermGrade"; // Adjust the path
 import { Student } from "../models/types/StudentData"; // Adjust the path
 import { Grade } from "../models/types/GradeData"; // Adjust the path

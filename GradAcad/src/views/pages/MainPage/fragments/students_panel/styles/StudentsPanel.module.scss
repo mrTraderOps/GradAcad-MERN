@@ -301,19 +301,27 @@ p {
             justify-content: center;
             align-items: center;
             background-color: $darkblue;
-            width: 40px;
-            height: 40px;
-            border-radius: 40px;
+            width: 70px;
+            height: 36px;
+            border-radius: 24px;
             border: solid 2px $black;
             cursor: pointer;
 
             &:hover {
                 background-color: white;
                 border: solid 2px $black ;
-
                 span {
                     color: $darkblue;
+                    font-family: $primaryFont;
+                    font-size: calc(4px + 0.6vw);
+                    font-weight: $Bold;
                 }
+            }
+            span {
+                color: white;
+                font-family: $primaryFont;
+                font-size: calc(4px + 0.6vw);
+                font-weight: $Bold;
             }
 
             .pencilIcon {

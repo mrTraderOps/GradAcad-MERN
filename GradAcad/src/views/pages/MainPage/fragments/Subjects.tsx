@@ -9,13 +9,17 @@ import { useState } from "react";
 
 interface Props {
   LoggeduserName: string | undefined;
-  onStudentClick: (data: SubjectData[]) => void;
+  onStudentClick: (data: SubjectData[], nextPanel: string) => void;
 }
 
 const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
   const [activeTab, setActiveTab] = useState("encode");
   const { subjects, errorMessage } = useSubjects(LoggeduserName);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
+  const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
+    null
+  );
+  const [selectedTerm, setSelectedTerm] = useState<string>("PRELIM");
 
   const getClassForDept = (dept: string) => {
     switch (dept) {
@@ -49,7 +53,10 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
               {subjects.map((subject, index) => (
                 <li key={index}>
                   <button
-                    onClick={openPopup}
+                    onClick={() => {
+                      setSelectedSubject(subject); // Store the selected subject
+                      openPopup();
+                    }}
                   >
                     <div>
                       <div className={getClassForDept(subject.dept)}></div>
@@ -70,27 +77,60 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
         )}
       </main>
       <SelectCourseSection isVisible={isPopupVisible} onClose={closePopup}>
-      <div className={courseStyles.header}>
-            <h3>Select Filter</h3>
-            <section className={c_s.buttonGroup}>
-                <button
-                className={activeTab === "encode" ? c_s.activeButton : c_s.inactiveButton}
-                onClick={() => setActiveTab("encode")}
-                >
-                Encode Grade
-                </button>
-                <button
-                className={activeTab === "summary" ? c_s.activeButton : c_s.inactiveButton}
-                onClick={() => setActiveTab("summary")}
-                >
-                Grade Sheet
-                </button>
-            </section>
-            <button className={c_s.submitButton}>
-                Submit
+        <div className={courseStyles.header}>
+          <h3>Select Filter</h3>
+          <section className={c_s.buttonGroup}>
+            <button
+              className={
+                activeTab === "encode" ? c_s.activeButton : c_s.inactiveButton
+              }
+              onClick={() => setActiveTab("encode")}
+            >
+              Encode Grade
             </button>
-            </div>
-      </SelectCourseSection> 
+            <button
+              className={
+                activeTab === "gradesheet"
+                  ? c_s.activeButton
+                  : c_s.inactiveButton
+              }
+              onClick={() => setActiveTab("gradesheet")}
+            >
+              Grade Sheet
+            </button>
+          </section>
+          <select
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+            className={activeTab === "encode" ? "" : c_s.unselect}
+          >
+            <option value="PRELIM">PRELIM</option>
+            <option value="MIDTERM">MIDTERM</option>
+            <option value="FINAL">FINAL</option>
+          </select>
+          <button
+            className={c_s.submitButton}
+            onClick={() => {
+              if (selectedSubject) {
+                const combinedData = {
+                  ...selectedSubject,
+                  term: selectedTerm,
+                };
+
+                if (activeTab === "encode") {
+                  onStudentClick([combinedData], "students"); // Proceed to EncodeGradeCopy
+                } else if (activeTab === "gradesheet") {
+                  onStudentClick([combinedData], "gradesheet"); // Proceed to GradeSheet
+                }
+
+                closePopup();
+              }
+            }}
+          >
+            Submit
+          </button>
+        </div>
+      </SelectCourseSection>
     </>
   );
 };

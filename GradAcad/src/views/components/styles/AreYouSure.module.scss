@@ -1,0 +1,39 @@
+@import '/src/views/variables_css/variables';
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.8); /* Dark semi-transparent background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000; /* Ensure it's on top */
+}
+
+.modalContent {
+    background: #fff;
+    border-radius: 40px;
+    padding: 20px;
+    width: 35%;
+    height: calc(180px - 3vh);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    h3 {
+        color: $black;
+    }
+}
+
+.modalActions {
+    padding-top: 20px;
+    button {
+        color: $darkblue;
+    }
+}
