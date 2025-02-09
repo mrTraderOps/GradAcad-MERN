@@ -5,7 +5,8 @@ import { useSubjects } from "../../../../hooks/useSubjects";
 import SelectCourseSection from "./students_panel/C_S";
 import { usePopupVisibility } from "../../../../hooks/usePopupVisibility";
 import c_s from "../fragments/students_panel/styles/C_S.module.scss";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTerm } from "../../../../hooks/useTerm";
 
 interface Props {
   LoggeduserName: string | undefined;
@@ -16,6 +17,7 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
   const [activeTab, setActiveTab] = useState("encode");
   const { subjects, errorMessage } = useSubjects(LoggeduserName);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
+  const { terms, error, loading } = useTerm();
   const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
     null
   );
@@ -99,15 +101,37 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
               Grade Sheet
             </button>
           </section>
+
           <select
             value={selectedTerm}
             onChange={(e) => setSelectedTerm(e.target.value)}
             className={activeTab === "encode" ? "" : c_s.unselect}
           >
-            <option value="PRELIM">PRELIM</option>
-            <option value="MIDTERM">MIDTERM</option>
-            <option value="FINAL">FINAL</option>
+            {error ? (
+              <option disabled>Error loading terms</option>
+            ) : loading ? ( // Use `loading` from `useTerm`
+              <option>Loading terms...</option>
+            ) : terms.length > 0 ? (
+              terms.map((termData, index) =>
+                termData.term && termData.term.length > 0
+                  ? Object.entries(termData.term[0]).map(
+                      ([termKey, termValue]) =>
+                        termValue ? (
+                          <option
+                            key={`${index}-${termKey}`}
+                            value={termKey.toUpperCase()}
+                          >
+                            {termKey.toUpperCase()}
+                          </option>
+                        ) : null
+                    )
+                  : null
+              )
+            ) : (
+              <option disabled>No terms available</option>
+            )}
           </select>
+
           <button
             className={c_s.submitButton}
             onClick={() => {

@@ -6,6 +6,7 @@ import { connectDB } from './config/db.js';
 import userRoutes from './routes/userRoutes.js';
 import studentRoutes from './routes/studentRoutes.js'
 import subjectRoutes from './routes/subjectRoutes.js'
+import gradeRoutes from './routes/gradeRoutes.js'
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ const startServer = async () => {
         app.use('/api/v1/user', userRoutes);
         app.use('/api/v1/student', studentRoutes);
         app.use('/api/v1/subject', subjectRoutes);
+        app.use('/api/v1/terms', gradeRoutes);
 
         // Start the server
         const PORT = process.env.PORT || 5000;

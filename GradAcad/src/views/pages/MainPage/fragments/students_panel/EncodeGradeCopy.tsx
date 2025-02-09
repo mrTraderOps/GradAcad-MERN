@@ -221,7 +221,7 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
                       <tr key={row.StudentId}>
                         <td>{row.StudentId}</td>
                         <td className={styles.studentName}>
-                          {`${row.LastName}, ${row.FirstName} ${row.MiddleInitial}`}
+                          {`${row.LastName}, ${row.FirstName} ${row.MiddleInitial}.`}
                         </td>
                         <td>
                           {renderInput(
