@@ -1,11 +1,10 @@
 import { useState } from "react";
 import style from "../styles/Department.module.scss";
 import Subjects from "./Subjects";
-import EncodeGrade from "./students_panel/EncodeGrade";
 import { Props } from "../../../../models/types/Props";
 import { SubjectData } from "../../../../models/types/SubjectData";
 import GradeSheet from "./students_panel/GradeSheet";
-import EncodeGradeCopy from "./students_panel/EncodeGradeCopy";
+import EncodeGradeCopy from "./students_panel/EncodeGrade";
 
 const GradeEncode = ({ LoggeduserName }: Props) => {
   const [activePanel, setActivePanel] = useState("grade_encoding");

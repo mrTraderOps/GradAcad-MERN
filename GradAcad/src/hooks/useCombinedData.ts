@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import StudentData from "../models/StudentData";
-import TermGrade from "../models/TermGrade"; // Adjust the path
 import { Student } from "../models/types/StudentData"; // Adjust the path
 import { Grade } from "../models/types/GradeData"; // Adjust the path
+import { StudentData } from "../services/StudentService";
+import TermGrade from "../models/TermGrade"; // Adjust the path
 
 interface CombinedData extends Student, Grade {}
 
-export const useCombinedData = () => {
+export const useCombinedData = (department: string, section: string) => {
   const [combinedData, setCombinedData] = useState<CombinedData[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Function to handle input changes
   const handleInputChange = (
@@ -22,34 +24,30 @@ export const useCombinedData = () => {
     );
   };
 
-  // Effect to load and combine data on mount
+  // Fetch student data on mount or when department/section changes
   useEffect(() => {
-    const students: Student[] = [];
+    setLoading(true);
 
-    // Flatten the student data
-    StudentData.forEach((courseData) => {
-      Object.values(courseData).forEach((studentList) => {
-        students.push(...studentList);
+    StudentData(department, section, (students: Student[]) => {
+      // Combine student data with term grades
+      const combined = students.map((student) => {
+        const termGrade = TermGrade.find(
+          (grade) => grade.studentId === student.StudentId
+        );
+        return {
+          ...student,
+          ...termGrade,
+        } as CombinedData;
       });
+
+      setCombinedData(combined);
+      setLoading(false);
+    }, (error: string) => {
+      setErrorMessage(error);
+      setLoading(false);
     });
 
-    // Map and combine student data with their term grades
-    const combined = students.map((student) => {
-      const termGrade = TermGrade.find(
-        (grade) => grade.studentId === student.studentId
-      );
-      return {
-        ...student,
-        ...termGrade,
-      } as CombinedData;
-    });
+  }, [department, section]);
 
-    setCombinedData(combined);
-  }, []);
-
-
-  return { combinedData, handleInputChange, setCombinedData };
+  return { combinedData, handleInputChange, setCombinedData, errorMessage, loading };
 };
-
-
-

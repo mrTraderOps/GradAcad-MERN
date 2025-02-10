@@ -1,16 +1,25 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import { Props } from "../../../../../models/types/Props";
-import { useCombinedData } from "../../../../../hooks/useCombinedData";
+import { useCombinedData } from "../../../../../hooks/useCombinedData1";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../../utils/helpers/getRemarks";
+import { useTerm } from "../../../../../hooks/useTerm";
 
 const GradeSheet = ({ data, onSubjectClick }: Props) => {
   const { subjectCode, subjectName, dept, section } = data;
   const { combinedData } = useCombinedData();
+  const { terms, error, loading } = useTerm();
 
   const calculateAverage = (prelim: number, midterm: number, final: number) => {
     return (prelim + midterm + final) / 3 || 0;
   };
+
+  const activeTerms =
+    terms.length > 0
+      ? Object.entries(terms[0].term[0])
+          .filter(([_, value]) => value) // Keep only true values
+          .map(([key]) => key.toUpperCase()) // Convert to uppercase
+      : [];
 
   return (
     <>
@@ -48,7 +57,6 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
               accept=".csv"
               id="fileInput"
               style={{ display: "none" }}
-              // onChange={handleFileUpload}
             />
             <span className={styles.printIcon}>print</span>
             <p>PRINT</p>
@@ -67,20 +75,26 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
                   <th>
                     <h5>STUDENT NAME</h5>
                   </th>
-                  <th>
-                    <h5>PRELIM</h5>
-                  </th>
-                  <th>
-                    <h5>MIDTERM</h5>
-                  </th>
-                  <th>
-                    <h5>FINAL</h5>
-                  </th>
+                  {activeTerms.includes("PRELIM") && (
+                    <th>
+                      <h5>PRELIM</h5>
+                    </th>
+                  )}
+                  {activeTerms.includes("MIDTERM") && (
+                    <th>
+                      <h5>MIDTERM</h5>
+                    </th>
+                  )}
+                  {activeTerms.includes("FINAL") && (
+                    <th>
+                      <h5>FINAL</h5>
+                    </th>
+                  )}
                   <th>
                     <h5>AVERAGE</h5>
                   </th>
                   <th>
-                    <h5>FG</h5>
+                    <h5>GRADE EQ</h5>
                   </th>
                   <th>
                     <h5>REMARKS</h5>
@@ -94,14 +108,14 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
                     row.midterm ?? 0,
                     row.final ?? 0
                   );
-                  const fg = calculateEQ(average);
+                  const gradeEq = calculateEQ(average);
                   const remarks = getRemarks(
                     row.prelim ?? 0,
                     row.midterm ?? 0,
                     row.final ?? 0,
-                    fg
+                    gradeEq
                   );
-                  const isFailed = fg > 3.0;
+                  const isFailed = gradeEq > 3.0;
 
                   return (
                     <tr key={index}>
@@ -109,11 +123,13 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
                       <td className={styles.studentName}>
                         {`${row.studentName.lastName}, ${row.studentName.firstName} ${row.studentName.middleInitial}`}
                       </td>
-                      <td>{row.prelim}</td>
-                      <td>{row.midterm}</td>
-                      <td>{row.final}</td>
+                      {activeTerms.includes("PRELIM") && <td>{row.prelim}</td>}
+                      {activeTerms.includes("MIDTERM") && (
+                        <td>{row.midterm}</td>
+                      )}
+                      {activeTerms.includes("FINAL") && <td>{row.final}</td>}
                       <td>{average.toFixed(2)}</td>
-                      <td>{fg}</td>
+                      <td>{gradeEq}</td>
                       <td className={isFailed ? styles.fail : ""}>{remarks}</td>
                     </tr>
                   );

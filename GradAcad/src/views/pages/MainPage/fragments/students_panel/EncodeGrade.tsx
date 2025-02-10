@@ -1,34 +1,29 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import Papa from "papaparse";
 import EqScale from "./EqScale";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Props } from "../../../../../models/types/Props";
 import { useStudentList } from "../../../../../hooks/useStudentList";
+// import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
-import { newTerm } from "../../../../../utils/helpers/newTerm";
-import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
-import SelectCourseSection from "./C_S";
+import AreYousure from "../../../../components/AreYouSure";
 
-const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
+const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
+  const { subjectCode, subjectName, dept, section, term } = data;
   const studentList = useStudentList(LoggeduserName);
-  const { combinedData, handleInputChange, setCombinedData } =
-    useCombinedData();
-  const { subjectCode, subjectName, dept, section } = data;
+  const {
+    combinedData,
+    handleInputChange,
+    setCombinedData,
+    errorMessage,
+    loading,
+  } = useCombinedData(dept, section);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
-
-  const [isEditing, setIsEditing] = useState(true);
-
-  const [termActive, setTermActive] = useState({
-    isPrelim: true,
-    isDonePrelim: true,
-    isMidterm: true,
-    isDoneMidterm: false,
-    isFinal: true,
-    isDoneFinal: false,
-  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleFileUpload = (event: any) => {
     const file = event.target.files[0];
@@ -89,8 +84,57 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
   };
 
   const toggleMode = () => {
-    setIsEditing((prevState) => !prevState);
+    if (isEditing) {
+      setShowModal(true); // Open modal before saving
+    } else {
+      setIsEditing(true);
+    }
   };
+
+  const handleConfirmSave = () => {
+    setShowModal(false);
+    setIsEditing(false);
+  };
+
+  const handleCancelSave = () => {
+    setShowModal(false);
+  };
+
+  const renderInput = useCallback(
+    (
+      fieldValue: number | undefined,
+      fieldName: any,
+      max: number,
+      step: number,
+      index: number,
+      isEditing: boolean
+    ) => (
+      <input
+        type="number"
+        step={step}
+        max={max}
+        value={fieldValue ?? ""}
+        readOnly={!isEditing}
+        onKeyDown={(e) => {
+          if (["e", "E", "+", "-"].includes(e.key)) {
+            e.preventDefault();
+          }
+        }}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          let value =
+            e.target.value === "" ? undefined : parseFloat(e.target.value);
+
+          if (value !== undefined) {
+            value = Math.min(max, Math.max(0, value));
+          }
+
+          handleInputChange(index, fieldName, value);
+        }}
+        aria-label={`Input for ${fieldName}`}
+      />
+    ),
+    [handleInputChange]
+  );
 
   return (
     <>
@@ -141,150 +185,72 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
       <main className={styles.main}>
         <section>
           <div className={styles.StudentList}>
-            <table>
-              <thead>
-                <tr>
-                  <th>
-                    <h5>#</h5>
-                  </th>
-                  <th>
-                    <h5>STUDENT ID</h5>
-                  </th>
-                  <th>
-                    <h5>Name</h5>
-                  </th>
-                  {termActive.isPrelim && (
+            {loading && <p className={styles.loading}>Loading data...</p>}
+            {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+            {!loading && !errorMessage && (
+              <table>
+                <thead>
+                  <tr>
                     <th>
-                      <h5>Prelim</h5>
+                      <h5>STUDENT ID</h5>
                     </th>
-                  )}
-                  {termActive.isMidterm && (
                     <th>
-                      <h5>Midterm</h5>
+                      <h5>STUDENT NAME</h5>
                     </th>
-                  )}
-                  {termActive.isFinal && (
                     <th>
-                      <h5>Final</h5>
+                      <h5>{term}</h5>
                     </th>
-                  )}
-                  <th>
-                    <h5>Average</h5>
-                  </th>
-                  <th>
-                    <h5>Final Grade</h5>
-                  </th>
-                  <th>
-                    <h5>Remarks</h5>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {combinedData.map((row, index) => {
-                  const average = newTerm(row.prelim, row.midterm, row.final);
-                  const fg = calculateEQ(
-                    newTerm(row.prelim, row.midterm, row.final)
-                  );
-                  const isFailed = fg > 3.0;
-                  const remarks = getRemarks(
-                    row.prelim ?? 0,
-                    row.midterm ?? 0,
-                    row.final ?? 0,
-                    fg
-                  );
+                    <th>
+                      <h5>GRADE EQ</h5>
+                    </th>
+                    <th>
+                      <h5>REMARKS</h5>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {combinedData.map((row, index) => {
+                    const prelim = row.prelim ?? 0;
+                    const gradeEq = calculateEQ(prelim);
+                    const isFailed = gradeEq > 3.0;
+                    const remarks = gradeEq === 5.0 ? "FAILED" : "PASSED";
+                    const formattedGrade = gradeEq.toFixed(2);
 
-                  const renderInput = (
-                    fieldValue: any,
-                    fieldName: any,
-                    max: number,
-                    step: any,
-                    isActive: boolean
-                  ) => (
-                    <input
-                      type="number"
-                      step={step}
-                      max={max}
-                      readOnly={!isActive}
-                      value={fieldValue ?? ""}
-                      onKeyDown={(e) => {
-                        if (["e", "E", "+", "-"].includes(e.key)) {
-                          e.preventDefault();
-                        }
-                      }}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        let value =
-                          e.target.value === ""
-                            ? undefined
-                            : parseFloat(e.target.value);
-
-                        if (value !== undefined) {
-                          value = Math.min(max, Math.max(0, value));
-                        }
-
-                        handleInputChange(index, fieldName, value);
-                      }}
-                    />
-                  );
-
-                  return (
-                    <tr key={index}>
-                      <td>{index + 1}</td>
-                      <td>{row.studentId}</td>
-                      <td className={styles.studentName}>
-                        {`${row.studentName.lastName}, ${row.studentName.firstName} ${row.studentName.middleInitial}`}
-                      </td>
-                      {termActive.isPrelim && (
+                    return (
+                      <tr key={row.StudentId}>
+                        <td>{row.StudentId}</td>
+                        <td className={styles.studentName}>
+                          {`${row.LastName}, ${row.FirstName} ${row.MiddleInitial}.`}
+                        </td>
                         <td>
                           {renderInput(
                             row.prelim,
                             "prelim",
                             100.0,
                             0.01,
-                            termActive.isPrelim
+                            index,
+                            isEditing
                           )}
                         </td>
-                      )}
-                      {termActive.isMidterm && (
-                        <td>
-                          {renderInput(
-                            row.midterm,
-                            "midterm",
-                            100.0,
-                            0.01,
-                            termActive.isMidterm
-                          )}
+                        <td>{formattedGrade}</td>
+                        <td className={isFailed ? styles.fail : ""}>
+                          {remarks}
                         </td>
-                      )}
-                      {termActive.isFinal && (
-                        <td>
-                          {renderInput(
-                            row.final,
-                            "final",
-                            100.0,
-                            0.01,
-                            termActive.isFinal
-                          )}
-                        </td>
-                      )}
-                      <td>{average.toFixed(2)}</td>
-                      <td>{fg.toFixed(2)}</td>
-                      <td className={isFailed ? styles.fail : ""}>{remarks}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </section>
         <footer>
+          <div onClick={toggleMode}>
+            <span>{isEditing ? "Save" : "Edit"}</span>
+          </div>
           <button onClick={openPopup}>
             <p>Grading Reference</p>
           </button>
-          <div onClick={() => toggleMode}>
-            <span className={isEditing ? styles.pencilIcon : styles.saveIcon}>
-              {isEditing ? "save" : "edit"}
-            </span>
-          </div>
         </footer>
       </main>
       <EqScale isVisible={isPopupVisible} onClose={closePopup}>
@@ -365,8 +331,13 @@ const EncodeGrade = ({ onSubjectClick, data, LoggeduserName }: Props) => {
           </tbody>
         </table>
       </EqScale>
+      <AreYousure
+        isOpen={showModal}
+        onConfirm={handleConfirmSave}
+        onCancel={handleCancelSave}
+      />
     </>
   );
 };
 
-export default EncodeGrade;
+export default EncodeGradeCopy;

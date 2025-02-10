@@ -5,7 +5,7 @@ import { useSubjects } from "../../../../hooks/useSubjects";
 import SelectCourseSection from "./students_panel/C_S";
 import { usePopupVisibility } from "../../../../hooks/usePopupVisibility";
 import c_s from "../fragments/students_panel/styles/C_S.module.scss";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTerm } from "../../../../hooks/useTerm";
 
 interface Props {
