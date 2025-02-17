@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { Student } from "../models/types/StudentData"; // Adjust the path
-import { Grade } from "../models/types/GradeData"; // Adjust the path
+import { GradeData } from "../models/types/GradeData"; // Adjust the path
 import { StudentData } from "../services/StudentService";
 import TermGrade from "../models/TermGrade"; // Adjust the path
 
-interface CombinedData extends Student, Grade {}
+interface CombinedData extends Student, GradeData {}
 
 export const useCombinedData = (department: string, section: string) => {
   const [combinedData, setCombinedData] = useState<CombinedData[]>([]);

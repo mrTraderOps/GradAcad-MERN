@@ -17,7 +17,7 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
   const [activeTab, setActiveTab] = useState("encode");
   const { subjects, errorMessage } = useSubjects(LoggeduserName);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
-  const { terms, error, loading } = useTerm();
+  const { terms, error, loading, hasActiveTerms } = useTerm();
   const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
     null
   );
@@ -142,14 +142,15 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
                 };
 
                 if (activeTab === "encode") {
-                  onStudentClick([combinedData], "students"); // Proceed to EncodeGradeCopy
+                  onStudentClick([combinedData], "students");
                 } else if (activeTab === "gradesheet") {
-                  onStudentClick([combinedData], "gradesheet"); // Proceed to GradeSheet
+                  onStudentClick([combinedData], "gradesheet");
                 }
 
                 closePopup();
               }
             }}
+            disabled={!hasActiveTerms}
           >
             Submit
           </button>

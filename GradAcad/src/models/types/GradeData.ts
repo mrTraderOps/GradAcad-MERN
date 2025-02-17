@@ -1,4 +1,13 @@
-export interface Grade {
+export interface GradeData {
+    studentId: string;
+    terms: {
+      prelim: number;
+      midterm: number;
+      final: number;
+    }
+  }
+
+  export interface Grade {
     studentId: string;
     prelim?: number;
     midterm?: number;

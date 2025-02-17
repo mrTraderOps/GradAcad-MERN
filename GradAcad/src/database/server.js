@@ -23,7 +23,7 @@ const startServer = async () => {
         app.use('/api/v1/user', userRoutes);
         app.use('/api/v1/student', studentRoutes);
         app.use('/api/v1/subject', subjectRoutes);
-        app.use('/api/v1/terms', gradeRoutes);
+        app.use('/api/v1/grade', gradeRoutes);
 
         // Start the server
         const PORT = process.env.PORT || 5000;
