@@ -1,6 +1,6 @@
-import { StudentRow } from "../../models/types/StudentRow";
+import { Student } from "../../models/types/StudentData";
 
-export const downloadCSV = (studentList: StudentRow[]) => {
+export const downloadCSV = (studentList: Student[], grades: string[]) => {
 
   const capitalizeWords = (str: string) => {
     return str
@@ -13,18 +13,16 @@ export const downloadCSV = (studentList: StudentRow[]) => {
   const csvData = [];
 
   // Add header row to CSV
-  csvData.push(["STUDENT_ID", "STUDENT NAME", "PRELIM", "MIDTERM", "FINAL"]);
+  csvData.push(["STUDENT_ID", "STUDENT NAME", `${grades}`]);
 
   // Loop through the tableData to extract rows
   studentList.forEach((row) => {
-    const fullName = `${row.studentName.lastName} ${row.studentName.firstName} ${row.studentName.middleInitial}`;
+    const fullName = `${row.LastName} ${row.FirstName} ${row.MiddleInitial}.`;
     const formattedName = capitalizeWords(fullName);
     csvData.push([
-      row.studentId, // Student ID
+      row.StudentId, // Student ID
       formattedName, // Full name
       "",
-      "",
-      "", // Blank value for Final Term
     ]);
   });
 

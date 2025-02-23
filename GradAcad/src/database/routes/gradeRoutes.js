@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTerms, getAllGrades } from '../controllers/gradesController.js';
+import { getTerms, getAllGrades, getAllGradesV2 } from '../controllers/gradesController.js';
 
 const router = express.Router();
 

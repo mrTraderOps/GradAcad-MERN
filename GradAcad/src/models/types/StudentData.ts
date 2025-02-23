@@ -4,9 +4,9 @@ export interface Student {
     LastName?: string;
     FirstName?: string;
     MiddleInitial?: string;
-    studentName: {
-      lastName: string;
-      firstName: string;
-      middleInitial: string;
+    studentName?: {
+      lastName?: string;
+      firstName?: string;
+      middleInitial?: string;
     };
   }

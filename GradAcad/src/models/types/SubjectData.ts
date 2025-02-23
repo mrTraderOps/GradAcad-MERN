@@ -4,5 +4,5 @@ export interface SubjectData {
   subjectName: string;
   course?: string;
   section: string;
-  term?: string;
+  terms?: [string];
 }

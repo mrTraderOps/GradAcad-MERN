@@ -3,27 +3,45 @@ import Papa from "papaparse";
 import EqScale from "./EqScale";
 import { useCallback, useState } from "react";
 import { Props } from "../../../../../models/types/Props";
-import { useStudentList } from "../../../../../hooks/useStudentList";
-// import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import AreYousure from "../../../../components/AreYouSure";
 
-const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
-  const { subjectCode, subjectName, dept, section, term } = data;
-  const studentList = useStudentList(LoggeduserName);
+interface DataProps {
+  dept: string;
+  section: string;
+  subjectCode: string;
+  subjectName: string;
+  term: string[];
+}
+
+const EncodeGrade = ({ onSubjectClick, data }: Props) => {
+  const { subjectCode, subjectName, dept, section, term }: DataProps = data;
   const {
     combinedData,
-    handleInputChange,
     setCombinedData,
+    handleInputChange,
     errorMessage,
     loading,
-  } = useCombinedData(dept, section);
+    students,
+  } = useCombinedData({
+    dept,
+    sect: section,
+    subjCode: subjectCode,
+    terms: term,
+  });
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState<string>(term[0]); // Default to the first term
+
+  type TermName = "PRELIM" | "MIDTERM" | "FINAL";
+
+  function isTermName(term: string): term is TermName {
+    return ["PRELIM", "MIDTERM", "FINAL"].includes(term);
+  }
 
   const handleFileUpload = (event: any) => {
     const file = event.target.files[0];
@@ -37,7 +55,9 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
       skipEmptyLines: true,
       complete: (result) => {
         const uploadedData = result.data;
-        const expectedHeaders = ["STUDENT_ID", "PRELIM", "MIDTERM", "FINAL"];
+
+        // Expected headers: STUDENT_ID, STUDENT NAME, and the specific term (e.g., PRELIM, MIDTERM, FINAL)
+        const expectedHeaders = ["STUDENT_ID", "STUDENT NAME", term[0]]; // term[0] is the current term (e.g., PRELIM)
 
         // Validate headers
         const parsedHeaders = Object.keys(uploadedData[0] || {});
@@ -51,25 +71,27 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
         }
 
         // Map uploaded data to existing student list
-        const updatedTableData = studentList.map((row) => {
+        const updatedTableData = combinedData.map((row) => {
           const matchingRow: any = uploadedData.find(
-            (uploadedRow: any) => uploadedRow["STUDENT_ID"] === row.studentId
+            (uploadedRow: any) => uploadedRow["STUDENT_ID"] === row.StudentId
           );
 
           const validateGrade = (grade: number) =>
             !isNaN(grade) && grade >= 0 && grade <= 100;
 
+          // Update the specific term grade
+          const updatedTerms = {
+            ...row.terms,
+            [term[0]]:
+              isTermName(term[0]) &&
+              validateGrade(parseFloat(matchingRow?.[term[0]]))
+                ? parseFloat(matchingRow[term[0]])
+                : row.terms[term[0] as TermName],
+          };
+
           return {
             ...row,
-            prelim: validateGrade(parseFloat(matchingRow?.["PRELIM"]))
-              ? parseFloat(matchingRow["PRELIM"])
-              : row.prelim,
-            midterm: validateGrade(parseFloat(matchingRow?.["MIDTERM"]))
-              ? parseFloat(matchingRow["MIDTERM"])
-              : row.midterm,
-            final: validateGrade(parseFloat(matchingRow?.["FINAL"]))
-              ? parseFloat(matchingRow["FINAL"])
-              : row.final,
+            terms: updatedTerms, // Update the terms object
           };
         });
 
@@ -103,7 +125,7 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
   const renderInput = useCallback(
     (
       fieldValue: number | undefined,
-      fieldName: any,
+      fieldName: string,
       max: number,
       step: number,
       index: number,
@@ -113,7 +135,7 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
         type="number"
         step={step}
         max={max}
-        value={fieldValue ?? ""}
+        value={fieldValue !== undefined ? fieldValue : ""} // ✅ Ensure value is valid
         readOnly={!isEditing}
         onKeyDown={(e) => {
           if (["e", "E", "+", "-"].includes(e.key)) {
@@ -125,10 +147,10 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
             e.target.value === "" ? undefined : parseFloat(e.target.value);
 
           if (value !== undefined) {
-            value = Math.min(max, Math.max(0, value));
+            value = Math.min(max, Math.max(0, value)); // ✅ Keep within range
           }
 
-          handleInputChange(index, fieldName, value);
+          handleInputChange(index, fieldName, value); // ✅ Ensure this updates state
         }}
         aria-label={`Input for ${fieldName}`}
       />
@@ -161,7 +183,7 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
         <div className={styles.div3}>
           <button
             className={styles.button1}
-            onClick={() => downloadCSV(studentList)}
+            onClick={() => downloadCSV(students, term)}
           >
             <img src="src\assets\icons\download_icon.png" alt="" width={20} />
             <p>Download Grade Template</p>
@@ -198,7 +220,9 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
                       <h5>STUDENT NAME</h5>
                     </th>
                     <th>
-                      <h5>{term}</h5>
+                      {term.map((termName) => (
+                        <h5 key={termName}>{termName}</h5>
+                      ))}
                     </th>
                     <th>
                       <h5>GRADE EQ</h5>
@@ -210,27 +234,38 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
                 </thead>
                 <tbody>
                   {combinedData.map((row, index) => {
-                    const prelim = row.prelim ?? 0;
-                    const gradeEq = calculateEQ(prelim);
+                    const hasNoGrades =
+                      isTermName(selectedTerm) && !row.terms?.[selectedTerm]; // Check if the selected term has no grade
+                    const gradeEq = calculateEQ(
+                      isTermName(selectedTerm)
+                        ? row.terms?.[selectedTerm] ?? 0
+                        : 0
+                    ); // Calculate GRADE_EQ for the selected term
                     const isFailed = gradeEq > 3.0;
                     const remarks = gradeEq === 5.0 ? "FAILED" : "PASSED";
                     const formattedGrade = gradeEq.toFixed(2);
 
                     return (
-                      <tr key={row.StudentId}>
+                      <tr
+                        key={row.StudentId}
+                        className={hasNoGrades ? styles.missingGrades : ""}
+                      >
                         <td>{row.StudentId}</td>
                         <td className={styles.studentName}>
-                          {`${row.LastName}, ${row.FirstName} ${row.MiddleInitial}.`}
+                          {`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
+                            row.MiddleInitial ?? ""
+                          }.`}
                         </td>
                         <td>
-                          {renderInput(
-                            row.prelim,
-                            "prelim",
-                            100.0,
-                            0.01,
-                            index,
-                            isEditing
-                          )}
+                          {isTermName(selectedTerm) &&
+                            renderInput(
+                              row.terms?.[selectedTerm],
+                              selectedTerm,
+                              100.0,
+                              0.01,
+                              index,
+                              isEditing
+                            )}
                         </td>
                         <td>{formattedGrade}</td>
                         <td className={isFailed ? styles.fail : ""}>
@@ -335,9 +370,9 @@ const EncodeGradeCopy = ({ onSubjectClick, data, LoggeduserName }: Props) => {
         isOpen={showModal}
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
-      />
+      ></AreYousure>
     </>
   );
 };
 
-export default EncodeGradeCopy;
+export default EncodeGrade;

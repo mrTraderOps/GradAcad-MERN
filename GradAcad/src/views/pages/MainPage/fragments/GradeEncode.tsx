@@ -4,7 +4,7 @@ import Subjects from "./Subjects";
 import { Props } from "../../../../models/types/Props";
 import { SubjectData } from "../../../../models/types/SubjectData";
 import GradeSheet from "./students_panel/GradeSheet";
-import EncodeGradeCopy from "./students_panel/EncodeGrade";
+import EncodeGrade from "./students_panel/EncodeGrade";
 
 const GradeEncode = ({ LoggeduserName }: Props) => {
   const [activePanel, setActivePanel] = useState("grade_encoding");
@@ -24,7 +24,7 @@ const GradeEncode = ({ LoggeduserName }: Props) => {
         );
       case "students":
         return (
-          <EncodeGradeCopy
+          <EncodeGrade
             data={subjectData[0]}
             onSubjectClick={() => {
               setActivePanel("grade_encoding");

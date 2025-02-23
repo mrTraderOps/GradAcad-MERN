@@ -21,3 +21,69 @@ export const StudentData = (
         });
 };
 
+export const StudentGrade = ( 
+  dept: string,
+  sect: string,
+  subjCode: string,
+  terms: string[],
+  setGrades: React.Dispatch<React.SetStateAction<any>>,
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<any>>
+) => {
+  axios
+        .post("http://localhost:5000/api/v1/grade/getAllGrades", {
+          dept: dept,
+          sect: sect,
+          subjCode: subjCode,
+          terms: terms,
+        })
+        .then((response) => {
+          if (response.data.success && Array.isArray(response.data.data)) {
+            setGrades(response.data.data);
+            setError("");
+          } else {
+            setError("Failed to fetch grades.");
+          }
+        })
+        .catch((error) => {
+          setError("An error occurred while fetching grades.");
+          console.error(error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+}
+
+export const StudentGradeV2 = ( 
+  dept: string,
+  sect: string,
+  subjCode: string,
+  terms: string[],
+  setGrades: React.Dispatch<React.SetStateAction<any>>,
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<any>>
+) => {
+  axios
+        .post("http://localhost:5000/api/v1/grade/getAllGradesV2", {
+          department: dept,
+          section: sect,
+          subjectCode: subjCode,
+          terms: terms,
+        })
+        .then((response) => {
+          if (response.data.success && Array.isArray(response.data.data)) {
+            setGrades(response.data.data);
+            setError("");
+          } else {
+            setError("Failed to fetch grades.");
+          }
+        })
+        .catch((error) => {
+          setError("An error occurred while fetching grades.");
+          console.error(error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+}
+

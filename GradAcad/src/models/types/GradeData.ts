@@ -1,9 +1,9 @@
 export interface GradeData {
-    studentId: string;
+    StudentId?: string;
     terms: {
-      prelim: number;
-      midterm: number;
-      final: number;
+      PRELIM?: number;
+      MIDTERM?: number;
+      FINAL?: number;
     }
   }
 

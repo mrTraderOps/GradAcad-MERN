@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { GradeData } from "../models/types/GradeData";
+import { StudentGrade } from "../services/StudentService";
 
 interface UseStudentGradeProps {
   dept: string;
   sect: string;
   subjCode: string;
-  terms: string[]; // Array of selected terms (e.g., ["PRELIM", "MIDTERM"])
+  terms: string[];
 }
 
 export const useStudentGrade = ({ dept, sect, subjCode, terms }: UseStudentGradeProps) => {
+
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -22,29 +23,17 @@ export const useStudentGrade = ({ dept, sect, subjCode, terms }: UseStudentGrade
     }
 
     setLoading(true);
-    axios
-      .post("http://localhost:5000/api/v1/grade/getAllGrades", {
-        department: dept,
-        section: sect,
-        subjectCode: subjCode,
-        terms: terms, // Ensure `terms` is sent as an array
-      })
-      .then((response) => {
-        if (response.data.success && Array.isArray(response.data.data)) {
-          setGrades(response.data.data);
-          setError("");
-        } else {
-          setError("Failed to fetch grades.");
-        }
-      })
-      .catch((error) => {
-        setError("An error occurred while fetching grades.");
-        console.error(error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [dept, sect, subjCode, terms]); // Include dependencies for re-fetching
+    StudentGrade(
+      dept,
+      sect,
+      subjCode,
+      terms,
+      setGrades,
+      setError,
+      setLoading
+    );
+
+  }, [dept, sect, subjCode, terms]);
 
   return { grades, error, loading };
 };

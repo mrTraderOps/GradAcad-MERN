@@ -138,7 +138,7 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
               if (selectedSubject) {
                 const combinedData = {
                   ...selectedSubject,
-                  term: selectedTerm,
+                  term: [selectedTerm],
                 };
 
                 if (activeTab === "encode") {
