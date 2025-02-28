@@ -4,6 +4,7 @@ import { useResolvedPath, useMatch, useNavigate } from "react-router-dom";
 
 interface Props {
   onLogout: () => void;
+  role: string;
 }
 
 interface CustomButton {
@@ -11,7 +12,7 @@ interface CustomButton {
   children: ReactNode;
 }
 
-const Aside = ({ onLogout }: Props) => {
+const Aside = ({ role, onLogout }: Props) => {
   function CustomButton({ to, children, ...props }: CustomButton) {
     const resolvedPath = useResolvedPath(to);
     const isActive = useMatch({ path: resolvedPath.pathname, end: true });
@@ -49,8 +50,23 @@ const Aside = ({ onLogout }: Props) => {
       <nav>
         <ul className={styles.navItems}>
           <CustomButton to="/dashboard">DASHBOARD</CustomButton>
-          <CustomButton to="/grade_encoding">GRADE ENCODING</CustomButton>
-          <CustomButton to="/settings">ACCOUNT DETAILS</CustomButton>
+
+          {role === "admin" && (
+            <>
+              <CustomButton to="/account_approvals">
+                ACCOUNT APPROVAL
+              </CustomButton>
+              <CustomButton to="/user_management">USER MANAGEMENT</CustomButton>
+              <CustomButton to="/audit_trail">AUDIT TRAIL</CustomButton>
+            </>
+          )}
+
+          {role === "prof" && (
+            <>
+              <CustomButton to="/grade_encoding">GRADE ENCODING</CustomButton>
+              <CustomButton to="/settings">SETTINGS</CustomButton>
+            </>
+          )}
         </ul>
       </nav>
       <footer>

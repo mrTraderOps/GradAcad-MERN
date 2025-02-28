@@ -1,45 +1,50 @@
+import { useContext } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./views/pages/LoginPage/LoginPage";
 import MainPage from "./views/pages/MainPage/MainPage";
-import { UserProvider } from "./models/context/UserContext";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { UserProvider, UserContext } from "./models/context/UserContext";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const context = useContext(UserContext);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-  };
+  if (!context) {
+    throw new Error("App must be used within a UserProvider");
+  }
+
+  const { user, logout } = context;
 
   return (
-    <UserProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              isLoggedIn ? (
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            user ? (
+              user.role === "prof" ? (
                 <Navigate to="/grade_encoding" replace />
               ) : (
-                <LoginPage onLogin={() => setIsLoggedIn(true)} />
+                <Navigate to="/account_approvals" replace />
               )
-            }
-          />
-
-          <Route
-            path="/*"
-            element={
-              isLoggedIn ? (
-                <MainPage onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            }
-          />
-        </Routes>
-      </BrowserRouter>
-    </UserProvider>
+            ) : (
+              <LoginPage onLogin={() => {}} />
+            )
+          }
+        />
+        <Route
+          path="/*"
+          element={
+            user ? <MainPage onLogout={logout} /> : <Navigate to="/" replace />
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <UserProvider>
+      <App />
+    </UserProvider>
+  );
+}

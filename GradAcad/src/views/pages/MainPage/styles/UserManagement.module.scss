@@ -1,0 +1,125 @@
+@import '/src/views/variables_css/variables';
+
+.userManagement {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    h2 {
+      font-size: 25px;
+      color: $blue;
+    }
+  }
+  
+  .searchBar {
+    margin-bottom: 20px;
+  
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+  }
+  
+  .userList {
+    .userItem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+  
+      .userInfo {
+        p {
+          margin: 0;
+          font-size: 14px;
+  
+          strong {
+            font-weight: bold;
+          }
+        }
+      }
+  
+      .actions {
+        display: flex;
+        gap: 10px;
+  
+        button {
+          padding: 5px 10px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+  
+          &.editButton {
+            background-color: #3498db;
+            color: white;
+          }
+  
+          &.deleteButton {
+            background-color: #e74c3c;
+            color: white;
+          }
+        }
+      }
+    }
+  }
+  
+  .editForm {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  
+    h3 {
+      margin-top: 0;
+    }
+  
+    .formGroup {
+      margin-bottom: 15px;
+  
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+  
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+    }
+  
+    .formActions {
+      display: flex;
+      gap: 10px;
+  
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+  
+        &:first-child {
+          background-color: #2ecc71;
+          color: white;
+        }
+  
+        &:last-child {
+          background-color: #e74c3c;
+          color: white;
+        }
+      }
+    }
+  }

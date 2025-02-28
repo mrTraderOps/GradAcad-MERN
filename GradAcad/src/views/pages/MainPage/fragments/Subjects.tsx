@@ -84,7 +84,7 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
           <section className={c_s.buttonGroup}>
             <button
               className={
-                activeTab === "encode" ? c_s.activeButton : c_s.inactiveButton
+                activeTab === "encode" ? c_s.inactiveButton : c_s.activeButton
               }
               onClick={() => setActiveTab("encode")}
             >
@@ -93,8 +93,8 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
             <button
               className={
                 activeTab === "gradesheet"
-                  ? c_s.activeButton
-                  : c_s.inactiveButton
+                  ? c_s.inactiveButton
+                  : c_s.activeButton
               }
               onClick={() => setActiveTab("gradesheet")}
             >
@@ -109,7 +109,7 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
           >
             {error ? (
               <option disabled>Error loading terms</option>
-            ) : loading ? ( // Use `loading` from `useTerm`
+            ) : loading ? (
               <option>Loading terms...</option>
             ) : terms.length > 0 ? (
               terms.map((termData, index) =>

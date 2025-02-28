@@ -1,0 +1,95 @@
+@import '/src/views/variables_css/variables';
+
+.accountApproval {
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    h5 {
+      font-size: 25px;
+      color: $blue;
+    }
+  }
+  
+  .searchBar {
+    margin-bottom: 20px;
+  
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+  }
+  
+  .buttonGroup {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+  
+      &.pendingButton {
+        background-color: #3498db;
+        color: white;
+      }
+  
+      &.approvedButton {
+        background-color: #2ecc71;
+        color: white;
+      }
+    }
+  }
+  
+  .accountList {
+    .accountItem {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+  
+      .accountInfo {
+        p {
+          margin: 0;
+          font-size: 14px;
+  
+          &:first-child {
+            font-weight: bold;
+          }
+        }
+      }
+  
+      .actions {
+        display: flex;
+        gap: 10px;
+  
+        button {
+          padding: 5px 10px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+  
+          &.approveButton {
+            background-color: #2ecc71;
+            color: white;
+          }
+  
+          &.rejectButton {
+            background-color: #e74c3c;
+            color: white;
+          }
+        }
+      }
+    }
+  }

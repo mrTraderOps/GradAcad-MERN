@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import { SubjectData } from "./SubjectData";
 
 export interface Props {
     LoggedName?: string;
@@ -10,5 +11,6 @@ export interface Props {
     onCourseClick?: () => void;
     onDepartmentClick?: () => void;
     data?: any;
+    onStudentClick?: (data: SubjectData[], nextPanel: string) => void
   }
   

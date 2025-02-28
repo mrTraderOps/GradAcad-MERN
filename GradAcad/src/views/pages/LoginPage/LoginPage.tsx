@@ -15,8 +15,6 @@ interface Props {
 }
 
 const LoginPage = ({ onLogin }: Props) => {
-  const navigate = useNavigate();
-
   const context = useContext(UserContext);
 
   if (!context) {
@@ -31,9 +29,8 @@ const LoginPage = ({ onLogin }: Props) => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    handleLogin(username, password, onLogin, setUser, navigate, setErrorMessage);
+    handleLogin(username, password, onLogin, setUser, setErrorMessage);
   };
-
 
   return (
     <div className="login-page">

@@ -1,39 +1,29 @@
-import React, {
-  createContext,
-  useState,
-  ReactNode,
-  Dispatch,
-  SetStateAction,
-} from "react";
+import React, { createContext, useState } from "react";
 
-// Define a type for the user object
-type User = {
-  id: number;
+interface User {
+  id: string;
+  username?: string;
   name: string;
-  username: string;
-} | null;
+  role: string; // "prof" or "admin"
+}
 
-// Define a type for the context value
-type UserContextType = {
-  user: User;
-  setUser: Dispatch<SetStateAction<User>>;
-};
+interface UserContextType {
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  logout: () => void; // Add logout function
+}
 
-// Create the context with a default value of `undefined` (until provided by `UserProvider`)
-export const UserContext = createContext<UserContextType | undefined>(
-  undefined
-);
+export const UserContext = createContext<UserContextType | null>(null);
 
-// Define props for the UserProvider component
-type UserProviderProps = {
-  children: ReactNode; // Accept any valid React children
-};
+export const UserProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
 
-export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User>(null);
+  const logout = () => {
+    setUser(null);
+  };
 
   return (
-    <UserContext.Provider value={{ user, setUser }}>
+    <UserContext.Provider value={{ user, setUser, logout }}>
       {children}
     </UserContext.Provider>
   );

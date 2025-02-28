@@ -7,6 +7,7 @@ import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
+import SelectCourseSection from "./C_S";
 import AreYousure from "../../../../components/AreYouSure";
 
 interface DataProps {
@@ -17,7 +18,7 @@ interface DataProps {
   term: string[];
 }
 
-const EncodeGrade = ({ onSubjectClick, data }: Props) => {
+const EncodeGrade = ({ onSubjectClick, data, onStudentClick }: Props) => {
   const { subjectCode, subjectName, dept, section, term }: DataProps = data;
   const {
     combinedData,
@@ -33,9 +34,13 @@ const EncodeGrade = ({ onSubjectClick, data }: Props) => {
     terms: term,
   });
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
+  const [switchPanel, setSwitchPanel] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState<string>(term[0]); // Default to the first term
+  const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
+
+  const openSwitch = () => setSwitchPanel(true);
+  const closeSwitch = () => setSwitchPanel(false);
 
   type TermName = "PRELIM" | "MIDTERM" | "FINAL";
 
@@ -283,6 +288,9 @@ const EncodeGrade = ({ onSubjectClick, data }: Props) => {
           <div onClick={toggleMode}>
             <span>{isEditing ? "Save" : "Edit"}</span>
           </div>
+          <button onClick={openSwitch}>
+            <p>Switch Panel</p>
+          </button>
           <button onClick={openPopup}>
             <p>Grading Reference</p>
           </button>
@@ -371,6 +379,30 @@ const EncodeGrade = ({ onSubjectClick, data }: Props) => {
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
       ></AreYousure>
+      <SelectCourseSection isVisible={switchPanel} onClose={closeSwitch}>
+        {/* <div className={styles.termSelector}>
+          <label htmlFor="term-select">Select Term:</label>
+          <select
+            id="term-select"
+            value={selectedTerm}
+            onChange={() => setSelectedTerm}
+          >
+            {term.map((term) => (
+              <option key={term} value={term}>
+                {term}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => {
+              onStudentClick([data], "gradesheet");
+            }}
+          >
+            Go to GradeSheet
+          </button>
+        </div> */}
+      </SelectCourseSection>
     </>
   );
 };

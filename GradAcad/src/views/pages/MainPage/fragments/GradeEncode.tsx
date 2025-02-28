@@ -30,6 +30,10 @@ const GradeEncode = ({ LoggeduserName }: Props) => {
               setActivePanel("grade_encoding");
             }}
             LoggeduserName={LoggeduserName}
+            onStudentClick={(data: SubjectData[], nextPanel = "gradesheet") => {
+              setSubjectData(data);
+              setActivePanel(nextPanel);
+            }}
           />
         );
       case "gradesheet":
