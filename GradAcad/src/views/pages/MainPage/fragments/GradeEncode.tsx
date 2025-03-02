@@ -29,7 +29,6 @@ const GradeEncode = ({ LoggeduserName }: Props) => {
             onSubjectClick={() => {
               setActivePanel("grade_encoding");
             }}
-            LoggeduserName={LoggeduserName}
             onStudentClick={(data: SubjectData[], nextPanel = "gradesheet") => {
               setSubjectData(data);
               setActivePanel(nextPanel);
