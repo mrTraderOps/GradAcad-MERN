@@ -1,7 +1,6 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import Papa from "papaparse";
-import EqScale from "./EqScale";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
@@ -9,6 +8,7 @@ import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import AreYousure from "../../../../components/AreYouSure";
 import SwitchPanel from "../../../../components/SwitchPanel";
 import { SubjectData } from "../../../../../models/types/SubjectData";
+import { GradingReference } from "../../../../components/EqScale";
 
 interface DataProps {
   dept: string;
@@ -20,7 +20,7 @@ interface DataProps {
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
-  onStudentClick: (data: SubjectData[], nextPanel: string) => void; // Make it required
+  onStudentClick: (data: SubjectData[], nextPanel: string) => void;
   data: any;
 }
 
@@ -30,6 +30,10 @@ const EncodeGrade = ({
   onStudentClick,
 }: EncodeGradeProps) => {
   const { subjectCode, subjectName, dept, section, term }: DataProps = data;
+  const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
+
+  const terms = useMemo(() => [selectedTerm], [selectedTerm]);
+
   const {
     combinedData,
     setCombinedData,
@@ -41,13 +45,15 @@ const EncodeGrade = ({
     dept,
     sect: section,
     subjCode: subjectCode,
-    terms: term,
+    terms,
   });
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [switchPanel, setSwitchPanel] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
+
+  const openSwitch = () => setSwitchPanel(true);
+  const closeSwitch = () => setSwitchPanel(false);
 
   const handleTermChange = (term: string) => {
     setSelectedTerm(term);
@@ -56,9 +62,6 @@ const EncodeGrade = ({
   const handleGoToGradeSheet = () => {
     onStudentClick([data], "gradesheet");
   };
-
-  const openSwitch = () => setSwitchPanel(true);
-  const closeSwitch = () => setSwitchPanel(false);
 
   type TermName = "PRELIM" | "MIDTERM" | "FINAL";
 
@@ -158,7 +161,7 @@ const EncodeGrade = ({
         type="number"
         step={step}
         max={max}
-        value={fieldValue !== undefined ? fieldValue : ""} // ✅ Ensure value is valid
+        value={fieldValue !== undefined ? fieldValue : ""}
         readOnly={!isEditing}
         onKeyDown={(e) => {
           if (["e", "E", "+", "-"].includes(e.key)) {
@@ -170,10 +173,10 @@ const EncodeGrade = ({
             e.target.value === "" ? undefined : parseFloat(e.target.value);
 
           if (value !== undefined) {
-            value = Math.min(max, Math.max(0, value)); // ✅ Keep within range
+            value = Math.min(max, Math.max(0, value));
           }
 
-          handleInputChange(index, fieldName, value); // ✅ Ensure this updates state
+          handleInputChange(index, fieldName, value);
         }}
         aria-label={`Input for ${fieldName}`}
       />
@@ -243,9 +246,7 @@ const EncodeGrade = ({
                       <h5>STUDENT NAME</h5>
                     </th>
                     <th>
-                      {term.map((termName) => (
-                        <h5 key={termName}>{termName}</h5>
-                      ))}
+                      <h5>{selectedTerm}</h5>
                     </th>
                     <th>
                       <h5>GRADE EQ</h5>
@@ -257,13 +258,14 @@ const EncodeGrade = ({
                 </thead>
                 <tbody>
                   {combinedData.map((row, index) => {
-                    const hasNoGrades =
-                      isTermName(selectedTerm) && !row.terms?.[selectedTerm]; // Check if the selected term has no grade
-                    const gradeEq = calculateEQ(
-                      isTermName(selectedTerm)
-                        ? row.terms?.[selectedTerm] ?? 0
-                        : 0
-                    ); // Calculate GRADE_EQ for the selected term
+                    const gradeForSelectedTerm = isTermName(selectedTerm)
+                      ? row.terms?.[selectedTerm]
+                      : undefined;
+
+                    // const hasNoGrades =
+                    //   isTermName(selectedTerm) && !row.terms?.[selectedTerm];
+
+                    const gradeEq = calculateEQ(gradeForSelectedTerm ?? 0);
                     const isFailed = gradeEq > 3.0;
                     const remarks = gradeEq === 5.0 ? "FAILED" : "PASSED";
                     const formattedGrade = gradeEq.toFixed(2);
@@ -271,7 +273,9 @@ const EncodeGrade = ({
                     return (
                       <tr
                         key={row.StudentId}
-                        className={hasNoGrades ? styles.missingGrades : ""}
+                        className={
+                          !gradeForSelectedTerm ? styles.missingGrades : ""
+                        }
                       >
                         <td>{row.StudentId}</td>
                         <td className={styles.studentName}>
@@ -282,7 +286,7 @@ const EncodeGrade = ({
                         <td>
                           {isTermName(selectedTerm) &&
                             renderInput(
-                              row.terms?.[selectedTerm],
+                              gradeForSelectedTerm,
                               selectedTerm,
                               100.0,
                               0.01,
@@ -314,84 +318,7 @@ const EncodeGrade = ({
           </button>
         </footer>
       </main>
-      <EqScale isVisible={isPopupVisible} onClose={closePopup}>
-        <h2>GRADING SYSTEM</h2>
-        <h4>
-          The Norzagaray College {"A.Y. 2023 - 2024"} utilizes the grading
-          system below:
-        </h4>
-        <h5>RAW SCORE COMPUTATION</h5>
-        <p>
-          Class Performance {"(60%)"} + Major Exam {"(30%)"} + Attendance{" "}
-          {"(10%)"} = 100
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>RAW SCORE</th>
-              <th>GRADE EQUIVALENT</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>97 - 100</td>
-              <td>1.00</td>
-            </tr>
-            <tr>
-              <td>94 - 96</td>
-              <td>1.25</td>
-            </tr>
-            <tr>
-              <td>91 - 93</td>
-              <td>1.50</td>
-            </tr>
-            <tr>
-              <td>88 - 90</td>
-              <td>1.75</td>
-            </tr>
-            <tr>
-              <td>85 - 87</td>
-              <td>2.00</td>
-            </tr>
-            <tr>
-              <td>82 - 84</td>
-              <td>2.25</td>
-            </tr>
-            <tr>
-              <td>79 - 81</td>
-              <td>2.50</td>
-            </tr>
-            <tr>
-              <td>76 - 78</td>
-              <td>2.75</td>
-            </tr>
-            <tr>
-              <td>75</td>
-              <td>3.00</td>
-            </tr>
-            <tr>
-              <td>below 75</td>
-              <td>5.00</td>
-            </tr>
-            <tr>
-              <td>AW</td>
-              <td>Authorized Withdrawal</td>
-            </tr>
-            <tr>
-              <td>UW</td>
-              <td>Unauthorized Withdrawal</td>
-            </tr>
-            <tr>
-              <td>NCA</td>
-              <td>No Credit Due to Absences</td>
-            </tr>
-            <tr>
-              <td>INC</td>
-              <td>Incomplete</td>
-            </tr>
-          </tbody>
-        </table>
-      </EqScale>
+      <GradingReference isVisible={isPopupVisible} onClose={closePopup} />
       <AreYousure
         isOpen={showModal}
         onConfirm={handleConfirmSave}
@@ -402,7 +329,7 @@ const EncodeGrade = ({
         onClose={closeSwitch}
         onTermChange={handleTermChange}
         onGoToGradeSheet={handleGoToGradeSheet}
-        terms={term}
+        currentTerm={selectedTerm}
       />
     </>
   );

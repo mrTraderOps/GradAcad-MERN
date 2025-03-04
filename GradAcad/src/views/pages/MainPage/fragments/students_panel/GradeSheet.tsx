@@ -1,25 +1,56 @@
 import styles from "./styles/StudentsPanel.module.scss";
-import { Props } from "../../../../../models/types/Props";
-import { useCombinedData } from "../../../../../hooks/useCombinedData1";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { useTerm } from "../../../../../hooks/useTerm";
+import { useCombinedData } from "../../../../../hooks/useCombinedData";
+import { useMemo, useState } from "react";
+import { GradingReference } from "../../../../components/EqScale";
+import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
+import SwitchPanel from "../../../../components/SwitchPanel";
+import { SubjectData } from "../../../../../models/types/SubjectData";
 
-const GradeSheet = ({ data, onSubjectClick }: Props) => {
+interface GradeSheetProps {
+  onSubjectClick: () => void;
+  onStudentClick: (data: SubjectData[], nextPanel: string) => void;
+  data: any;
+}
+
+const GradeSheet = ({
+  onSubjectClick,
+  data,
+  onStudentClick,
+}: GradeSheetProps) => {
   const { subjectCode, subjectName, dept, section } = data;
-  const { combinedData } = useCombinedData();
-  const { terms, error, loading } = useTerm();
+  const { terms } = useTerm();
+  const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
+  const [switchPanel, setSwitchPanel] = useState(false);
+  const openSwitch = () => setSwitchPanel(true);
+  const closeSwitch = () => setSwitchPanel(false);
+
+  const activeTerms = useMemo(() => {
+    return terms.length > 0
+      ? Object.entries(terms[0].term[0])
+          .filter(([_, value]) => value)
+          .map(([key]) => key.toUpperCase())
+      : [];
+  }, [terms]);
+
+  const { combinedData, errorMessage, loading } = useCombinedData({
+    dept,
+    sect: section,
+    subjCode: subjectCode,
+    terms: activeTerms,
+  });
 
   const calculateAverage = (prelim: number, midterm: number, final: number) => {
     return (prelim + midterm + final) / 3 || 0;
   };
 
-  const activeTerms =
-    terms.length > 0
-      ? Object.entries(terms[0].term[0])
-          .filter(([_, value]) => value) // Keep only true values
-          .map(([key]) => key.toUpperCase()) // Convert to uppercase
-      : [];
+  const handleGotoEncode = (term: string) => {
+    const updatedData = { ...data, term: [term] };
+    // Switch to the EncodeGrade panel
+    onStudentClick([updatedData], "students");
+  };
 
   return (
     <>
@@ -66,79 +97,107 @@ const GradeSheet = ({ data, onSubjectClick }: Props) => {
       <main className={styles.main}>
         <section>
           <div className={styles.StudentList}>
-            <table>
-              <thead>
-                <tr>
-                  <th>
-                    <h5>STUDENT ID</h5>
-                  </th>
-                  <th>
-                    <h5>STUDENT NAME</h5>
-                  </th>
-                  {activeTerms.includes("PRELIM") && (
+            {loading && <p className={styles.loading}>Loading data...</p>}
+            {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+            {!loading && !errorMessage && (
+              <table>
+                <thead>
+                  <tr>
                     <th>
-                      <h5>PRELIM</h5>
+                      <h5>STUDENT ID</h5>
                     </th>
-                  )}
-                  {activeTerms.includes("MIDTERM") && (
                     <th>
-                      <h5>MIDTERM</h5>
+                      <h5>STUDENT NAME</h5>
                     </th>
-                  )}
-                  {activeTerms.includes("FINAL") && (
+                    {activeTerms.includes("PRELIM") && (
+                      <th>
+                        <h5>PRELIM</h5>
+                      </th>
+                    )}
+                    {activeTerms.includes("MIDTERM") && (
+                      <th>
+                        <h5>MIDTERM</h5>
+                      </th>
+                    )}
+                    {activeTerms.includes("FINAL") && (
+                      <th>
+                        <h5>FINAL</h5>
+                      </th>
+                    )}
                     <th>
-                      <h5>FINAL</h5>
+                      <h5>AVERAGE</h5>
                     </th>
-                  )}
-                  <th>
-                    <h5>AVERAGE</h5>
-                  </th>
-                  <th>
-                    <h5>GRADE EQ</h5>
-                  </th>
-                  <th>
-                    <h5>REMARKS</h5>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {combinedData.map((row, index) => {
-                  const average = calculateAverage(
-                    row.prelim ?? 0,
-                    row.midterm ?? 0,
-                    row.final ?? 0
-                  );
-                  const gradeEq = calculateEQ(average);
-                  const remarks = getRemarks(
-                    row.prelim ?? 0,
-                    row.midterm ?? 0,
-                    row.final ?? 0,
-                    gradeEq
-                  );
-                  const isFailed = gradeEq > 3.0;
+                    <th>
+                      <h5>GRADE EQ</h5>
+                    </th>
+                    <th>
+                      <h5>REMARKS</h5>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {combinedData.map((row) => {
+                    const average = calculateAverage(
+                      row.terms.PRELIM ?? 0,
+                      row.terms.MIDTERM ?? 0,
+                      row.terms.FINAL ?? 0
+                    );
+                    const gradeEq = calculateEQ(average);
+                    const remarks = getRemarks(
+                      row.terms.PRELIM ?? 0,
+                      row.terms.MIDTERM ?? 0,
+                      row.terms.FINAL ?? 0,
+                      gradeEq
+                    );
+                    const isFailed = gradeEq > 3.0;
 
-                  return (
-                    <tr key={index}>
-                      <td>{row.studentId}</td>
-                      <td className={styles.studentName}>
-                        {`${row.studentName.lastName}, ${row.studentName.firstName} ${row.studentName.middleInitial}`}
-                      </td>
-                      {activeTerms.includes("PRELIM") && <td>{row.prelim}</td>}
-                      {activeTerms.includes("MIDTERM") && (
-                        <td>{row.midterm}</td>
-                      )}
-                      {activeTerms.includes("FINAL") && <td>{row.final}</td>}
-                      <td>{average.toFixed(2)}</td>
-                      <td>{gradeEq}</td>
-                      <td className={isFailed ? styles.fail : ""}>{remarks}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={row.StudentId}>
+                        <td>{row.StudentId}</td>
+                        <td className={styles.studentName}>
+                          {`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
+                            row.MiddleInitial ?? ""
+                          }.`}
+                        </td>
+                        {activeTerms.includes("PRELIM") && (
+                          <td>{row.terms.PRELIM}</td>
+                        )}
+                        {activeTerms.includes("MIDTERM") && (
+                          <td>{row.terms.MIDTERM}</td>
+                        )}
+                        {activeTerms.includes("FINAL") && (
+                          <td>{row.terms.FINAL}</td>
+                        )}
+                        <td>{average.toFixed(2)}</td>
+                        <td>{gradeEq}</td>
+                        <td className={isFailed ? styles.fail : ""}>
+                          {remarks}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </section>
+        <footer>
+          <button onClick={openSwitch}>
+            <p>Switch Panel</p>
+          </button>
+          <button onClick={openPopup}>
+            <p>Grading Reference</p>
+          </button>
+        </footer>
       </main>
+      <GradingReference isVisible={isPopupVisible} onClose={closePopup} />
+      <SwitchPanel
+        isVisible={switchPanel}
+        onClose={closeSwitch}
+        isGradeSheet={true}
+        isChangeTitle="Go to Grade Encoding (Select Term):"
+        onTermChange={handleGotoEncode}
+      />
     </>
   );
 };

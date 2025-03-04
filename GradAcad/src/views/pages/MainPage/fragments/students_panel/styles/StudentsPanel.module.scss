@@ -381,5 +381,24 @@ p {
 }
 
 .missingGrades {
-  background-color: rgb(247 128 106 / 33%);// Light red
+  background-color: rgb(247 128 106 / 33%);
+}
+
+.termSelector {
+    justify-content: space-evenly;
+    label {
+        color: $darkblue;
+        font-weight: $Bold;
+        font-size: $Medium
+    }
+
+    div {
+        display: flex;
+        flex-direction: row;
+        height: 0px;
+    }
+
+    button {
+        background-color: $darkblue;
+    }
 }

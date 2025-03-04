@@ -40,7 +40,7 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
           ? {
               ...row,
               terms: {
-                ...row.terms, 
+                ...row.terms,
                 [fieldName]: value,
               },
             }
@@ -48,7 +48,6 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
       )
     );
   };
-  
 
   useEffect(() => {
     if (!dept || !sect || !subjCode || !terms || terms.length === 0) {
@@ -97,7 +96,7 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
       return {
         ...student,
         terms: {
-          PRELIM: termGrade?.terms?.PRELIM|| null,
+          PRELIM: termGrade?.terms?.PRELIM || null,
           MIDTERM: termGrade?.terms?.MIDTERM || null,
           FINAL: termGrade?.terms?.FINAL || null,
         },
@@ -108,5 +107,5 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
     setLoading(false);
   }, [students, grades]);
 
-  return { combinedData, handleInputChange, setCombinedData, errorMessage, loading, students};
+  return { combinedData, handleInputChange, setCombinedData, errorMessage, loading, students };
 };
