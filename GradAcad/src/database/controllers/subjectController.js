@@ -17,12 +17,12 @@ export const getSubjectsByUsername = async (req, res) => {
         );
 
         if (result) {
-            res.status(200).json({ subjects: result[username] })
+            res.status(200).json({ success: true, subjects: result[username] })
         } else {
-            return res.status(404).json({ message: "No data found for the given username" });
+            return res.status(404).json({ success: false, message: "No data found for the given username" });
         };
     } catch (error) {
         console.error("Error fetching data:", error);
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };

@@ -1,10 +1,139 @@
 import styles from "../styles/MainPage.module.scss";
 import { useEffect, useState } from "react";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { Props } from "../../../../models/types/Props";
+import { useSubjects } from "../../../../hooks/useSubjects";
+import { StudentGradeAll } from "../../../../services/StudentService";
+import { GradeData } from "../../../../models/types/GradeData";
 
-const Dashboard = ({ LoggedName }: Props) => {
+interface GroupedSubject {
+  subjectCode: string;
+  sections: Set<string>;
+}
+
+interface LabelProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+  index: number;
+}
+
+const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
+  const [roleName, setRoleName] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("0");
+  const [selectedSection, setSelectedSection] = useState("0");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMessage, setError] = useState<string | null>(null);
+  const [grades, setGrades] = useState<GradeData[]>([]);
+
+  const { subjects } = useSubjects(LoggeduserName);
+
+  const uniqueSections = [
+    ...new Set(
+      subjects.map((subject) => `${subject.dept} - ${subject.section}`)
+    ),
+  ];
+
+  const filteredSubjects =
+    selectedSection === "0"
+      ? [...new Set(subjects.map((subject) => subject.subjectCode))]
+      : [
+          ...new Set(
+            subjects
+              .filter(
+                (subject) =>
+                  `${subject.dept} - ${subject.section}` === selectedSection
+              )
+              .map((subject) => subject.subjectCode)
+          ),
+        ];
+
+  const filteredSections =
+    selectedSubject === "0"
+      ? uniqueSections
+      : [
+          ...new Set(
+            subjects
+              .filter((subject) => subject.subjectCode === selectedSubject)
+              .map((subject) => `${subject.dept} - ${subject.section}`)
+          ),
+        ];
+
+  useEffect(() => {
+    if (!selectedSection || !selectedSubject) {
+      setError("Missing required parameters");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const [dept, sect] = selectedSection.split(" - ");
+    const subjCode = selectedSubject === "0" ? "" : selectedSubject;
+
+    StudentGradeAll(
+      dept,
+      sect,
+      subjCode,
+      setGrades,
+      (error: string) => {
+        setError(error);
+        setLoading(false);
+      },
+      () => {
+        setLoading(false);
+      }
+    );
+
+    console.log("useEffect (Dashboard, Line 85 )", grades);
+  }, [selectedSection, selectedSubject]);
+
+  const calculatePassFail = (grades: GradeData[]) => {
+    const studentAverages = grades.map((grade) => {
+      const { PRELIM, MIDTERM, FINAL } = grade.terms;
+
+      const termCount = [PRELIM, MIDTERM, FINAL].filter(
+        (term) => term !== undefined
+      ).length;
+
+      const sum = (PRELIM || 0) + (MIDTERM || 0) + (FINAL || 0);
+
+      const average = termCount > 0 ? sum / termCount : 0;
+
+      return { ...grade, average };
+    });
+
+    const totalStudents = studentAverages.length;
+    const passedStudents = studentAverages.filter(
+      (student) => student.average >= 75
+    ).length;
+    const failedStudents = totalStudents - passedStudents;
+
+    // Calculate pass/fail percentages
+    const passPercentage = ((passedStudents / totalStudents) * 100).toFixed(2);
+    const failPercentage = ((failedStudents / totalStudents) * 100).toFixed(2);
+
+    return [
+      { name: "Passed", value: parseFloat(passPercentage) },
+      { name: "Failed", value: parseFloat(failPercentage) },
+    ];
+  };
+
+  const pieData = calculatePassFail(grades);
+
+  const COLORS = ["#00C49F", "#FF8042"];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,12 +168,73 @@ const Dashboard = ({ LoggedName }: Props) => {
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (userRole === "prof") {
+      setRoleName("INSTRUCTOR");
+    } else if (userRole === "admin") {
+      setRoleName("ADMIN");
+    } else {
+      setRoleName("");
+    }
+  }, [userRole]);
+
+  const groupedSubjects = subjects.reduce<Record<string, GroupedSubject>>(
+    (acc, subject) => {
+      const { subjectCode, section } = subject;
+
+      if (!acc[subjectCode]) {
+        acc[subjectCode] = {
+          subjectCode,
+          sections: new Set(),
+        };
+      }
+
+      acc[subjectCode].sections.add(section);
+
+      return acc;
+    },
+    {}
+  );
+
+  const tableData = Object.values(groupedSubjects).map((subject) => ({
+    subjectCode: subject.subjectCode,
+    sectionCount: subject.sections.size,
+  }));
+
+  const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    index,
+  }: LabelProps) => {
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
+    const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#0F2A71"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        fontWeight={700}
+      >
+        {`${(percent * 100).toFixed(0)}%`} {/* Add "%" symbol */}
+      </text>
+    );
+  };
+
   return (
     <div className={styles.Dashboard}>
       <section className={styles.section1}>
         <div className={styles.dashboard1}>
           <div className={styles.greetings}>
-            <h4>WELCOME</h4>
+            <h4>WELCOME {roleName},</h4>
             <p>Sir {LoggedName}</p>
           </div>
 
@@ -58,85 +248,72 @@ const Dashboard = ({ LoggedName }: Props) => {
       <section className={styles.section2}>
         <div className={styles.analytics}>
           <div>
-            <p>STUDENT GRADE RANKING</p>
+            <p>PERFORMANCE ANALYTICS</p>
             <div className={styles.selectCont}>
               <p>SECTION : </p>
-              <select className={styles.sortSelect}>
+              <select
+                className={styles.sortSelect}
+                value={selectedSection}
+                onChange={(e) => {
+                  setSelectedSection(e.target.value);
+                  setSelectedSubject("0");
+                }}
+              >
                 <option value="0">ALL</option>
+                {filteredSections.map((section, index) => (
+                  <option key={index} value={section}>
+                    {section}
+                  </option>
+                ))}
               </select>
               <p>SUBJECT : </p>
-              <select className={styles.sortSelect}>
+              <select
+                className={styles.sortSelect}
+                value={selectedSubject}
+                onChange={(e) => {
+                  setSelectedSubject(e.target.value);
+                }}
+              >
                 <option value="0">ALL</option>
+                {filteredSubjects.map((subjectCode, index) => (
+                  <option key={index} value={subjectCode}>
+                    {subjectCode}
+                  </option>
+                ))}
               </select>
             </div>
             <div className={styles.tableAnalytics}>
-              <div className={styles.tableContainer}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>STUDENT ID</th>
-                      <th>NAME</th>
-                      <th className={styles.gwa}>GRADE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>2021-0079</td>
-                      <td>PERALTA, WINZKATE H.</td>
-                      <td className={styles.gwa}>98.3</td>
-                    </tr>
-                    <tr>
-                      <td>2020-0019</td>
-                      <td>VERZON, EARL GIERALD B.</td>
-                      <td className={styles.gwa}>97.2</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>TIMPOG, MARK DAVID G.</td>
-                      <td className={styles.gwa}>95.2</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>VASQUEZ, JOHN PAUL P.</td>
-                      <td className={styles.gwa}>93.7</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                    <tr>
-                      <td>2021-0081</td>
-                      <td>DUMALAOG, ALEXIS JHUDIEL N.</td>
-                      <td className={styles.gwa}>96.8</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className={styles.chartContainer}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={renderCustomizedLabel} // Use custom label
+                      labelLine={false}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value) => `${value}%`} // Add "%" to tooltip
+                    />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             </div>
           </div>
         </div>
-
         <div className={styles.courseSum}>
           <div>
             <p>COURSE SUMMARY</p>
@@ -151,41 +328,14 @@ const Dashboard = ({ LoggedName }: Props) => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>FRELEC103</td>
-                      <td>2</td>
-                      <td className={styles.gwa}>64</td>
-                    </tr>
-                    <tr>
-                      <td>FL101</td>
-                      <td>2</td>
-                      <td className={styles.gwa}>58</td>
-                    </tr>
-                    <tr>
-                      <td>ENVISCI</td>
-                      <td>8</td>
-                      <td className={styles.gwa}>364</td>
-                    </tr>
-                    <tr>
-                      <td>PATHFIT101</td>
-                      <td>8</td>
-                      <td className={styles.gwa}>387</td>
-                    </tr>
-                    <tr>
-                      <td>CSC5</td>
-                      <td>3</td>
-                      <td className={styles.gwa}>98</td>
-                    </tr>
-                    <tr>
-                      <td>THS101</td>
-                      <td>7</td>
-                      <td className={styles.gwa}>324</td>
-                    </tr>
-                    <tr>
-                      <td>RES101</td>
-                      <td>8</td>
-                      <td className={styles.gwa}>278</td>
-                    </tr>
+                    {tableData.map((subject, index) => (
+                      <tr key={index}>
+                        <td>{subject.subjectCode}</td>
+                        <td>{subject.sectionCount}</td>
+                        <td className={styles.gwa}>-</td>{" "}
+                        {/* Placeholder for total students */}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -193,13 +343,13 @@ const Dashboard = ({ LoggedName }: Props) => {
             <div className={styles.shortCut}>
               <div>
                 {/* <button>
-                                        <p>Create Subject/s</p>
-                                        <img src="src\assets\icons\add_subject.png" width={20} height={20} alt=""/>
-                                    </button>
-                                    <button>
-                                        <p>Add Student/s</p>
-                                        <img src="src\assets\icons\add_student.png" width={20} height={20} alt=""/>
-                                    </button> */}
+                    <p>Create Subject/s</p>
+                    <img src="src\assets\icons\add_subject.png" width={20} height={20} alt=""/>
+                </button>
+                <button>
+                    <p>Add Student/s</p>
+                    <img src="src\assets\icons\add_student.png" width={20} height={20} alt=""/>
+                </button> */}
                 <button>
                   <p>Generate Report</p>
                   <img

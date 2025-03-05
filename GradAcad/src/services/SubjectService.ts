@@ -10,7 +10,11 @@ export const fetchSubjectsbyUsername = (
             username: loggeduserName,
         })
         .then((response) => {
-            setSubjects(response.data.subjects);
+            if (response.data.success) {
+                setSubjects(response.data.subjects);
+            } else {
+                setError(response.data.message)
+            }
         })
         .catch((error) => {
             const message = error.response?.data?.message || "An error occurred.";

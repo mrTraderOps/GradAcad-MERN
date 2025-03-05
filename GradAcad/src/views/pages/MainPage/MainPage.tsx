@@ -38,7 +38,13 @@ const MainPage = ({ onLogout }: Props) => {
           <Routes>
             <Route
               path="/dashboard"
-              element={<Dashboard LoggedName={user.name} />}
+              element={
+                <Dashboard
+                  LoggedName={user.name}
+                  userRole={user.role}
+                  LoggeduserName={user.username}
+                />
+              }
             />
             <Route
               path="/grade_encoding"

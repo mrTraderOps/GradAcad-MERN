@@ -73,7 +73,6 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
       () => {}
     );
 
-    // Fetch student data
     StudentData(
       dept,
       sect,
@@ -107,5 +106,17 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
     setLoading(false);
   }, [students, grades]);
 
-  return { combinedData, handleInputChange, setCombinedData, setCurrentGrades, setOriginalGrades, errorMessage, loading, students, currentGrades, originalGrades };
+  return { 
+    handleInputChange, 
+    setCombinedData, 
+    setCurrentGrades, 
+    setOriginalGrades, 
+    combinedData, 
+    errorMessage, 
+    loading, 
+    students, 
+    currentGrades, 
+    originalGrades,
+    grades 
+  };
 };
