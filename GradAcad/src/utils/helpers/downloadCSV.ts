@@ -1,4 +1,5 @@
-import { Student } from "../../models/types/StudentData";
+import { CombinedDataProps, DataProps, Student } from "../../models/types/StudentData";
+import Papa from 'papaparse';
 
 export const downloadCSV = (studentList: Student[], grades: string[]) => {
 
@@ -42,4 +43,47 @@ export const downloadCSV = (studentList: Student[], grades: string[]) => {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
+};
+
+export const exportCSV = (studentData: CombinedDataProps[], subjectData: DataProps) => {
+  const metadata = [
+    [`Department: ${subjectData.dept}`],
+    [`Section: ${subjectData.section}`],
+    [`Subject Code: ${subjectData.subjectCode}`],
+    [`Subject Name: ${subjectData.subjectName}`],
+    [], 
+  ];
+
+  
+  const csvData = studentData.map((student) => ({
+    StudentID: student.StudentId,
+    StudentName: `${student.LastName}, ${student.FirstName} ${student.MiddleInitial}.` || "",
+    PRELIM: student.terms.PRELIM || "",
+    MIDTERM: student.terms.MIDTERM || "",
+    FINAL: student.terms.FINAL || "",
+  }));
+
+  const metadataCsv = Papa.unparse(metadata, { header: false });
+  const studentCsv = Papa.unparse(csvData, { header: true });
+
+
+  const combinedCsv = `${metadataCsv}\n${studentCsv}`;
+
+
+  const blob = new Blob([combinedCsv], { type: "text/csv;charset=utf-8;" });
+
+
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `NC_Grade_${subjectData.dept}_${subjectData.section}_${subjectData.subjectCode}_${subjectData.subjectName}.csv`);
+  link.style.visibility = "hidden";
+
+
+  document.body.appendChild(link);
+  link.click();
+
+
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };

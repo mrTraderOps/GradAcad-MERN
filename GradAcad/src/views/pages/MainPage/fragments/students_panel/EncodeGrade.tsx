@@ -1,6 +1,6 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import Papa from "papaparse";
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useEffect } from "react";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
@@ -9,14 +9,8 @@ import AreYousure from "../../../../components/AreYouSure";
 import SwitchPanel from "../../../../components/SwitchPanel";
 import { SubjectData } from "../../../../../models/types/SubjectData";
 import { GradingReference } from "../../../../components/EqScale";
-
-interface DataProps {
-  dept: string;
-  section: string;
-  subjectCode: string;
-  subjectName: string;
-  term: string[];
-}
+import axios from "axios";
+import { DataProps } from "../../../../../models/types/StudentData";
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
@@ -38,9 +32,13 @@ const EncodeGrade = ({
     combinedData,
     setCombinedData,
     handleInputChange,
+    setCurrentGrades,
+    setOriginalGrades,
     errorMessage,
     loading,
     students,
+    currentGrades,
+    originalGrades,
   } = useCombinedData({
     dept,
     sect: section,
@@ -139,9 +137,48 @@ const EncodeGrade = ({
     }
   };
 
-  const handleConfirmSave = () => {
-    setShowModal(false);
-    setIsEditing(false);
+  const changedStudents = Object.keys(currentGrades).filter(
+    (studentId) => currentGrades[studentId] !== originalGrades[studentId]
+  );
+
+  const handleConfirmSave = async () => {
+    if (changedStudents.length === 0) {
+      setShowModal(false);
+      setIsEditing(false);
+      console.log("No Change of Student Grade");
+      return;
+    }
+
+    const updates = changedStudents.map((studentId) => ({
+      dept,
+      sect: section,
+      subjCode: subjectCode,
+      StudentId: studentId,
+      term: selectedTerm,
+      grade: currentGrades[studentId],
+    }));
+
+    console.log(updates);
+
+    try {
+      // Send the updates to the backend
+      const response = await axios.put(
+        "http://localhost:5000/api/v1/grade/updateGrade",
+        {
+          updates,
+        }
+      );
+
+      if (response.status === 200) {
+        setShowModal(false);
+        setIsEditing(false);
+        setOriginalGrades(currentGrades);
+      } else {
+        console.error("Failed to update grades");
+      }
+    } catch (error) {
+      console.error("Error updating grades:", error);
+    }
   };
 
   const handleCancelSave = () => {
@@ -183,6 +220,25 @@ const EncodeGrade = ({
     ),
     [handleInputChange]
   );
+
+  useEffect(() => {
+    if (combinedData.length > 0) {
+      const initialGrades = combinedData.reduce((acc, row) => {
+        const grade = row.terms?.[selectedTerm as keyof typeof row.terms] ?? 0;
+        acc[row.StudentId] = grade;
+        return acc;
+      }, {} as Record<string, number>);
+
+      setCurrentGrades(initialGrades);
+
+      if (changedStudents.length === 0) {
+        setOriginalGrades(initialGrades);
+      }
+
+      console.log("useEffect(EncodeGrade, Line 242), Original", originalGrades);
+      console.log("useEffect(EncodeGrade, Line 243), Current", currentGrades);
+    }
+  }, [combinedData, selectedTerm]);
 
   return (
     <>
@@ -261,9 +317,6 @@ const EncodeGrade = ({
                     const gradeForSelectedTerm = isTermName(selectedTerm)
                       ? row.terms?.[selectedTerm]
                       : undefined;
-
-                    // const hasNoGrades =
-                    //   isTermName(selectedTerm) && !row.terms?.[selectedTerm];
 
                     const gradeEq = calculateEQ(gradeForSelectedTerm ?? 0);
                     const isFailed = gradeEq > 3.0;

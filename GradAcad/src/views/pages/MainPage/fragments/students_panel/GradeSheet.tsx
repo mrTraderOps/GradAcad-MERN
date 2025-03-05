@@ -8,6 +8,8 @@ import { GradingReference } from "../../../../components/EqScale";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import SwitchPanel from "../../../../components/SwitchPanel";
 import { SubjectData } from "../../../../../models/types/SubjectData";
+import { exportCSV } from "../../../../../utils/helpers/downloadCSV";
+import { DataProps } from "../../../../../models/types/StudentData";
 
 interface GradeSheetProps {
   onSubjectClick: () => void;
@@ -20,7 +22,7 @@ const GradeSheet = ({
   data,
   onStudentClick,
 }: GradeSheetProps) => {
-  const { subjectCode, subjectName, dept, section } = data;
+  const { subjectCode, subjectName, dept, section }: DataProps = data;
   const { terms } = useTerm();
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [switchPanel, setSwitchPanel] = useState(false);
@@ -75,20 +77,14 @@ const GradeSheet = ({
         </div>
 
         <div className={styles.div3}>
-          <button className={styles.button1}>
+          <button
+            className={styles.button1}
+            onClick={() => exportCSV(combinedData, data)}
+          >
             <span className={styles.exportIcon}>export_notes</span>
             <p>EXPORT TO EXCEL</p>
           </button>
-          <button
-            className={styles.button2}
-            onClick={() => document.getElementById("fileInput")?.click()}
-          >
-            <input
-              type="file"
-              accept=".csv"
-              id="fileInput"
-              style={{ display: "none" }}
-            />
+          <button className={styles.button2}>
             <span className={styles.printIcon}>print</span>
             <p>PRINT</p>
           </button>

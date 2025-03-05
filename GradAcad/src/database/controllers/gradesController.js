@@ -1,7 +1,6 @@
 import { getDB } from '../config/db.js';
 
 
-
 export const getTerms = async (req, res) => {
 
     const db = getDB();
@@ -38,16 +37,15 @@ export const getAllGrades = async (req, res) => {
             return res.status(404).json({ success: false, message: 'No grades found.' });
         }
 
-        // Filter students' grades based on selected terms
         const filteredGrades = gradesData.grades.map(student => ({
             StudentId: student.StudentId,
             terms: terms && terms.length > 0 
                 ? Object.fromEntries(
                     terms
-                        .filter(term => student.terms.hasOwnProperty(term)) // Only include requested terms
-                        .map(term => [term, student.terms[term]]) // Convert to key-value format
+                        .filter(term => student.terms.hasOwnProperty(term)) 
+                        .map(term => [term, student.terms[term]]) 
                   )
-                : student.terms // If no specific terms are requested, return all
+                : student.terms
         }));
 
         res.json({ success: true, data: filteredGrades });
@@ -58,55 +56,143 @@ export const getAllGrades = async (req, res) => {
     }
 };
 
-export const getAllGradesV2 = async (req, res) => {
+export const updateGrade = async (req, res) => {
+  const { updates } = req.body;
 
-    const { department, section, subjectCode, terms } = req.body;
-    const db = getDB();
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing or invalid updates array",
+    });
+  }
 
-    try {
-        const studentsWithGrades = await db.collection("students").aggregate([
-            {
-                $lookup: {
-                    from: "grades",  // The name of the grades collection
-                    let: { studentId: "$StudentId", dept: "$Department", sect: "$Section" }, // Passing variables
-                    pipeline: [
-                        { $match: { subjCode: subjectCode } }, // Filter by subject code
-                        { $unwind: "$grades" }, // Flatten the grades array
-                        { $match: { $expr: { $eq: ["$grades.StudentId", "$$studentId"] } } }, // Match StudentId
-                        { $match: { dept: department, sect: section } }, // Filter by dept & section
-                        {
-                            $project: {
-                                _id: 0,
-                                terms: {
-                                    $filter: {
-                                        input: { $objectToArray: "$grades.terms" },
-                                        as: "term",
-                                        cond: { $in: ["$$term.k", terms] } // Filter by selected terms
-                                    }
-                                }
-                            }
-                        }
-                    ],
-                    as: "gradesData"
-                }
+  const db = getDB();
+
+  try {
+    const bulkOps = updates.map((update) => {
+
+      if (
+        !update.dept ||
+        !update.sect ||
+        !update.subjCode ||
+        !update.StudentId ||
+        !update.term ||
+        update.grade === undefined
+      ) {
+        throw new Error("Missing required fields in one or more updates");
+      }
+
+      return {
+        updateOne: {
+          filter: {
+            dept: update.dept,
+            sect: update.sect,
+            subjCode: update.subjCode,
+            "grades.StudentId": update.StudentId,
+          },
+          update: {
+            $set: {
+              [`grades.$.terms.${update.term}`]: update.grade,
             },
-            {
-                $project: {
-                    StudentId: 1,
-                    FirstName: 1,
-                    LastName: 1,
-                    MiddleInitial: 1,
-                    grades: { $arrayElemAt: ["$gradesData.terms", 0] } // Extract terms directly
-                }
-            }
-        ]).toArray();
+          },
+        },
+      };
+    });
 
-        res.json({ success: true, data: studentsWithGrades });
+    const result = await db.collection("grades").bulkWrite(bulkOps);
 
-    } catch (err) {
-        console.error("Error fetching student grades:", err);
-        res.status(500).json({ success: false, message: "Internal server error" });
+    if (result.matchedCount === updates.length) {
+      res.status(200).json({
+        success: true,
+        message: "Grades updated successfully",
+        result,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Some students not found",
+        result,
+      });
     }
+  } catch (err) {
+    console.error("Error updating grades:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };
 
+export const insertGrade = async (req, res) => {
+  const { dept, sect, subjCode, StudentId, term, grade } = req.body;
 
+  if (!dept || !sect || !subjCode || !StudentId || !term || !grade) {
+    return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  try {
+    const db = req.db; 
+    const collection = db.collection("grades"); 
+
+
+    const filter = { dept, sect, subjCode };
+
+
+    const existingDoc = await collection.findOne(filter);
+
+    if (existingDoc) {
+     
+      const studentIndex = existingDoc.grades.findIndex(
+        (g) => g.StudentId === StudentId
+      );
+
+      if (studentIndex !== -1) {
+        // If the StudentId exists, update the specific term grade
+        const updateQuery = {
+          $set: {
+            [`grades.${studentIndex}.terms.${term}`]: grade,
+          },
+        };
+
+        await collection.updateOne(filter, updateQuery);
+      } else {
+        const newGradeEntry = {
+          StudentId,
+          terms: {
+            [term]: grade,
+          },
+        };
+
+        const updateQuery = {
+          $push: {
+            grades: newGradeEntry,
+          },
+        };
+
+        await collection.updateOne(filter, updateQuery);
+      }
+    } else {
+      // If the document doesn't exist, create a new one
+      const newDoc = {
+        dept,
+        sect,
+        subjCode,
+        grades: [
+          {
+            StudentId,
+            terms: {
+              [term]: grade,
+            },
+          },
+        ],
+      };
+
+      await collection.insertOne(newDoc);
+    }
+
+    res.status(200).json({ success: "true" , message: "Grade inserted/updated successfully" });
+  } catch (error) {
+    console.error("Error inserting/updating grade:", error);
+    res.status(500).json({ success: "true" , message: "Internal server error" });
+  }
+};

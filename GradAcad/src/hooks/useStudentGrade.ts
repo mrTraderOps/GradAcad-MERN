@@ -7,6 +7,7 @@ interface UseStudentGradeProps {
   sect: string;
   subjCode: string;
   terms: string[];
+  term?: string;
 }
 
 export const useStudentGrade = ({ dept, sect, subjCode, terms }: UseStudentGradeProps) => {
@@ -37,3 +38,5 @@ export const useStudentGrade = ({ dept, sect, subjCode, terms }: UseStudentGrade
 
   return { grades, error, loading };
 };
+
+
