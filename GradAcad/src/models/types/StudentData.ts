@@ -29,4 +29,6 @@ export interface DataProps {
     subjectCode: string;
     subjectName: string;
     term: string[];
+    acadYr?: string;
+    sem?: string;
   }

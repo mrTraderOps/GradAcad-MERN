@@ -31,9 +31,56 @@
     }
 }
 
+.modalContent1 {
+    background: #fff;
+    border-radius: 40px;
+    padding: 20px;
+    width: 60%;
+    height: calc(580px - 3vh);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 10px;
+
+    h3 {
+        color: $black;
+        padding-bottom: 10px;
+    }
+    div {
+        height: 100px;
+        width: 80%;
+
+        label {
+            color: $black;
+            padding-right: 10px;
+        }
+        select {
+            height: 50%;
+        }
+    }
+}
 .modalActions {
     padding-top: 20px;
+
     button {
         color: $darkblue;
     }
+}
+
+.modalActions1 {
+    padding-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+
+    button {
+        color: $darkblue;
+    }
+}
+
+.Cc {
+    width: 60%;
 }

@@ -12,6 +12,7 @@ import { Props } from "../../../../models/types/Props";
 import { useSubjects } from "../../../../hooks/useSubjects";
 import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
+import { GenerateReport } from "../../../components/GenerateReport";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -37,6 +38,7 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setError] = useState<string | null>(null);
   const [grades, setGrades] = useState<GradeData[]>([]);
+  const [showModal, setShowModal] = useState(false);
 
   const { subjects } = useSubjects(LoggeduserName);
 
@@ -229,181 +231,188 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
     );
   };
 
+  const handleConfirmSubmit = () => {
+    setShowModal(true);
+  };
+
+  const handleCancelSubmit = () => {
+    setShowModal(false);
+  };
+
   return (
-    <div className={styles.Dashboard}>
-      <section className={styles.section1}>
-        <div className={styles.dashboard1}>
-          <div className={styles.greetings}>
-            <h4>WELCOME {roleName},</h4>
-            <p>Sir {LoggedName}</p>
-          </div>
-
-          <div className={styles.timeDay}>
-            <p>{currentTime}</p>
-            <p>{currentDate}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.section2}>
-        <div className={styles.analytics}>
-          <div>
-            <p>PERFORMANCE ANALYTICS</p>
-            <div className={styles.selectCont}>
-              <p>SECTION : </p>
-              <select
-                className={styles.sortSelect}
-                value={selectedSection}
-                onChange={(e) => {
-                  setSelectedSection(e.target.value);
-                  setSelectedSubject("0");
-                }}
-              >
-                <option value="0">ALL</option>
-                {filteredSections.map((section, index) => (
-                  <option key={index} value={section}>
-                    {section}
-                  </option>
-                ))}
-              </select>
-              <p>SUBJECT : </p>
-              <select
-                className={styles.sortSelect}
-                value={selectedSubject}
-                onChange={(e) => {
-                  setSelectedSubject(e.target.value);
-                }}
-              >
-                <option value="0">ALL</option>
-                {filteredSubjects.map((subjectCode, index) => (
-                  <option key={index} value={subjectCode}>
-                    {subjectCode}
-                  </option>
-                ))}
-              </select>
+    <>
+      <div className={styles.Dashboard}>
+        <section className={styles.section1}>
+          <div className={styles.dashboard1}>
+            <div className={styles.greetings}>
+              <h4>WELCOME {roleName},</h4>
+              <p>Sir {LoggedName}</p>
             </div>
-            <div className={styles.tableAnalytics}>
-              <div className={styles.chartContainer}>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={renderCustomizedLabel} // Use custom label
-                      labelLine={false}
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => `${value}%`} // Add "%" to tooltip
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+
+            <div className={styles.timeDay}>
+              <p>{currentTime}</p>
+              <p>{currentDate}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className={styles.section2}>
+          <div className={styles.analytics}>
+            <div>
+              <p>PERFORMANCE ANALYTICS</p>
+              <div className={styles.selectCont}>
+                <p>SECTION : </p>
+                <select
+                  className={styles.sortSelect}
+                  value={selectedSection}
+                  onChange={(e) => {
+                    setSelectedSection(e.target.value);
+                    setSelectedSubject("0");
+                  }}
+                >
+                  <option value="0">ALL</option>
+                  {filteredSections.map((section, index) => (
+                    <option key={index} value={section}>
+                      {section}
+                    </option>
+                  ))}
+                </select>
+                <p>SUBJECT : </p>
+                <select
+                  className={styles.sortSelect}
+                  value={selectedSubject}
+                  onChange={(e) => {
+                    setSelectedSubject(e.target.value);
+                  }}
+                >
+                  <option value="0">ALL</option>
+                  {filteredSubjects.map((subjectCode, index) => (
+                    <option key={index} value={subjectCode}>
+                      {subjectCode}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.tableAnalytics}>
+                <div className={styles.chartContainer}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={renderCustomizedLabel} // Use custom label
+                        labelLine={false}
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => `${value}%`} // Add "%" to tooltip
+                      />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className={styles.courseSum}>
-          <div>
-            <p>COURSE SUMMARY</p>
-            <div className={styles.tableAnalytics}>
-              <div className={styles.tableContainer}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>SUBJECT CODE</th>
-                      <th>SECTIONS</th>
-                      <th className={styles.gwa}>TOTAL STUDENTS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableData.map((subject, index) => (
-                      <tr key={index}>
-                        <td>{subject.subjectCode}</td>
-                        <td>{subject.sectionCount}</td>
-                        <td className={styles.gwa}>-</td>{" "}
-                        {/* Placeholder for total students */}
+          <div className={styles.courseSum}>
+            <div>
+              <p>COURSE SUMMARY</p>
+              <div className={styles.tableAnalytics}>
+                <div className={styles.tableContainer}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>SUBJECT CODE</th>
+                        <th>SECTIONS</th>
+                        <th className={styles.gwa}>TOTAL STUDENTS</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {tableData.map((subject, index) => (
+                        <tr key={index}>
+                          <td>{subject.subjectCode}</td>
+                          <td>{subject.sectionCount}</td>
+                          <td className={styles.gwa}>-</td>{" "}
+                          {/* Placeholder for total students */}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-            <div className={styles.shortCut}>
-              <div>
-                {/* <button>
-                    <p>Create Subject/s</p>
-                    <img src="src\assets\icons\add_subject.png" width={20} height={20} alt=""/>
-                </button>
-                <button>
-                    <p>Add Student/s</p>
-                    <img src="src\assets\icons\add_student.png" width={20} height={20} alt=""/>
-                </button> */}
-                <button>
-                  <p>Generate Report</p>
-                  <img
-                    src="src\assets\icons\generate_report.png"
-                    width={20}
-                    height={20}
-                    alt=""
-                  />
-                </button>
+              <div className={styles.shortCut}>
+                <div>
+                  <button onClick={() => setShowModal(true)}>
+                    <p>Generate Report</p>
+                    <img
+                      src="src\assets\icons\generate_report.png"
+                      width={20}
+                      height={20}
+                      alt=""
+                    />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className={styles.section3}>
-        <footer className={styles.nc_footer}>
-          <div>
-            <div className={styles.nc_logo_name}>
-              <img
-                src="src\assets\images\nc_logo.png"
-                alt=""
-                width={45}
-                height={45}
-              />
-              <h2>NORZAGARAY COLLEGE</h2>
+        <section className={styles.section3}>
+          <footer className={styles.nc_footer}>
+            <div>
+              <div className={styles.nc_logo_name}>
+                <img
+                  src="src\assets\images\nc_logo.png"
+                  alt=""
+                  width={45}
+                  height={45}
+                />
+                <h2>NORZAGARAY COLLEGE</h2>
+              </div>
+              <div className={styles.nc_org}>
+                <img
+                  src="src\assets\images\ccs_logo.png"
+                  alt=""
+                  width={35}
+                  height={35}
+                />
+                <img
+                  src="src\assets\images\charms_logo.png"
+                  alt=""
+                  width={35}
+                  height={35}
+                />
+                <img
+                  src="src\assets\images\safe_logo.png"
+                  alt=""
+                  width={35}
+                  height={35}
+                />
+              </div>
+              <button className={styles.concerns}>
+                <p>CONCERNS AND QUESTIONS?</p>
+              </button>
             </div>
-            <div className={styles.nc_org}>
-              <img
-                src="src\assets\images\ccs_logo.png"
-                alt=""
-                width={35}
-                height={35}
-              />
-              <img
-                src="src\assets\images\charms_logo.png"
-                alt=""
-                width={35}
-                height={35}
-              />
-              <img
-                src="src\assets\images\safe_logo.png"
-                alt=""
-                width={35}
-                height={35}
-              />
-            </div>
-            <button className={styles.concerns}>
-              <p>CONCERNS AND QUESTIONS?</p>
-            </button>
-          </div>
-        </footer>
-      </section>
-    </div>
+          </footer>
+        </section>
+      </div>
+      <GenerateReport
+        isOpen={showModal}
+        onConfirm={handleConfirmSubmit}
+        onCancel={handleCancelSubmit}
+      />
+    </>
   );
 };
 

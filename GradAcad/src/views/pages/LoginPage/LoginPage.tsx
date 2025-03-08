@@ -1,7 +1,6 @@
 import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./LoginPage.scss";
-import { UserContext } from "../../../models/context/UserContext";
+import { UserContext } from "../../../context/UserContext";
 
 import logo from "../../../assets/images/nc_logo_large.png";
 import qrGrade from "../../../assets/images/qr-grade.png";

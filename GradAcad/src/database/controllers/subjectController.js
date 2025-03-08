@@ -26,3 +26,25 @@ export const getSubjectsByUsername = async (req, res) => {
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+
+export const getAcadYrSem = async (req, res) => {
+
+    const db = getDB();
+
+    try {
+        const YrSem = await db.collection('global')
+            .findOne(
+                { acadYr: { $exists: true }, sem: { $exists: true } }, // Filter for documents with acadYr and sem fields
+                { projection: { acadYr: 1, sem: 1, _id: 0 } } // Include only acadYr and sem fields in the result
+            );
+    
+        if (YrSem) {
+            res.json({ success: true, data: YrSem });
+        } else {
+            res.status(404).json({ success: false, message: 'No matching document found' });
+        }
+    } catch (err) {
+        console.error('Error fetching academic year and semester:', err);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+}

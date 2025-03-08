@@ -2,7 +2,7 @@ import { useContext } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./views/pages/LoginPage/LoginPage";
 import MainPage from "./views/pages/MainPage/MainPage";
-import { UserProvider, UserContext } from "./models/context/UserContext";
+import { UserProvider, UserContext } from "./context/UserContext";
 
 function App() {
   const context = useContext(UserContext);

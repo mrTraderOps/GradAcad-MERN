@@ -5,4 +5,6 @@ export interface SubjectData {
   course?: string;
   section: string;
   terms?: [string];
+  acadYr?: string;
+  sem?: string;
 }

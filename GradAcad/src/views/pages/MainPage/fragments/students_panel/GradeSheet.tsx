@@ -3,13 +3,17 @@ import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { useTerm } from "../../../../../hooks/useTerm";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { GradingReference } from "../../../../components/EqScale";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import SwitchPanel from "../../../../components/SwitchPanel";
 import { SubjectData } from "../../../../../models/types/SubjectData";
-import { exportCSV } from "../../../../../utils/helpers/downloadCSV";
 import { DataProps } from "../../../../../models/types/StudentData";
+import ExportExcel from "../../../../../utils/ExportExcel";
+import { UserContext } from "../../../../../context/UserContext";
+import { calculateAverage } from "../../../../../utils/helpers/calculateAve";
+import { PDFDocument, StandardFonts } from "pdf-lib";
+import * as ExcelJS from "exceljs";
 
 interface GradeSheetProps {
   onSubjectClick: () => void;
@@ -22,7 +26,16 @@ const GradeSheet = ({
   data,
   onStudentClick,
 }: GradeSheetProps) => {
+  const context = useContext(UserContext);
+
+  if (!context) {
+    throw new Error("ExportExcel must be used within a UserProvider");
+  }
+
+  const { user } = context;
+
   const { subjectCode, subjectName, dept, section }: DataProps = data;
+
   const { terms } = useTerm();
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [switchPanel, setSwitchPanel] = useState(false);
@@ -43,10 +56,6 @@ const GradeSheet = ({
     subjCode: subjectCode,
     terms: activeTerms,
   });
-
-  const calculateAverage = (prelim: number, midterm: number, final: number) => {
-    return (prelim + midterm + final) / 3 || 0;
-  };
 
   const handleGotoEncode = (term: string) => {
     const updatedData = { ...data, term: [term] };
@@ -77,17 +86,14 @@ const GradeSheet = ({
         </div>
 
         <div className={styles.div3}>
-          <button
-            className={styles.button1}
-            onClick={() => exportCSV(combinedData, data)}
-          >
-            <span className={styles.exportIcon}>export_notes</span>
-            <p>EXPORT TO EXCEL</p>
-          </button>
-          <button className={styles.button2}>
-            <span className={styles.printIcon}>print</span>
-            <p>PRINT</p>
-          </button>
+          <ExportExcel
+            combinedData={combinedData}
+            loggedName={user?.name ?? ""}
+            dept={dept}
+            subjectCode={subjectCode}
+            subjectName={subjectName}
+            section={section}
+          />
         </div>
       </header>
       <main className={styles.main}>

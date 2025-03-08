@@ -15,7 +15,7 @@ interface Props {
 
 const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
   const [activeTab, setActiveTab] = useState("encode");
-  const { subjects, errorMessage } = useSubjects(LoggeduserName);
+  const { subjects, errorMessage, acadYr, sem } = useSubjects(LoggeduserName);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const { terms, error, loading, hasActiveTerms } = useTerm();
   const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
@@ -68,7 +68,9 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
                         <p>{`${subject.dept} - ${subject.section}`}</p>
                       </div>
                       <footer>
-                        <p>First Semester A.Y. 2023 - 2024</p>
+                        <p>
+                          {sem} Semester A.Y. {acadYr}
+                        </p>
                       </footer>
                     </div>
                   </button>
@@ -139,6 +141,8 @@ const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
                 const combinedData = {
                   ...selectedSubject,
                   term: [selectedTerm],
+                  acadYr: acadYr,
+                  sem: sem,
                 };
 
                 if (activeTab === "encode") {

@@ -23,7 +23,15 @@ const EncodeGrade = ({
   data,
   onStudentClick,
 }: EncodeGradeProps) => {
-  const { subjectCode, subjectName, dept, section, term }: DataProps = data;
+  const {
+    subjectCode,
+    subjectName,
+    dept,
+    section,
+    term,
+    acadYr,
+    sem,
+  }: DataProps = data;
   const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
 
   const terms = useMemo(() => [selectedTerm], [selectedTerm]);
@@ -244,7 +252,9 @@ const EncodeGrade = ({
     <>
       <div className={styles.preloader}>
         <p>Subject &gt; Section </p>
-        <p>First Semester A.Y. 2023-2024</p>
+        <p>
+          {sem} Semester A.Y. {acadYr}
+        </p>
       </div>
       <header className={styles.headerStudentsPanel}>
         <div className={styles.div1}>

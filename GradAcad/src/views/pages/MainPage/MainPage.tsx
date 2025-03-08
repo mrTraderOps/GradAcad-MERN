@@ -6,7 +6,7 @@ import Dashboard from "./fragments/Dashboard";
 import Settings from "./fragments/Settings";
 import GradeEncode from "./fragments/GradeEncode";
 import styles from "../MainPage/styles/MainPage.module.scss";
-import { UserContext } from "../../../models/context/UserContext";
+import { UserContext } from "../../../context/UserContext";
 import AccountApproval from "./fragments/AccountsApproval";
 import UserManagement from "./fragments/UserManagement";
 import AuditTrail from "./fragments/AuditTrail";
