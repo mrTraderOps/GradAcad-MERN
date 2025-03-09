@@ -1,136 +1,238 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import styles from "./styles/AreYouSure.module.scss";
+import { useGrade } from "../../hooks/useGrade";
+import { UserContext } from "../../context/UserContext";
+import loadingAnimation from "../../assets/webM/loading.webm";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   isOpen: boolean;
-  onConfirm: (filters: {
-    semester: string;
-    academicYear: string;
-    department: string;
-    section: string;
-    courseCode: string;
-  }) => void;
   onCancel: () => void;
+  loggedUserName: string;
 }
 
-export const GenerateReport = ({ isOpen, onConfirm, onCancel }: Props) => {
-  // State to manage selected filters
-  const [semester, setSemester] = useState("");
-  const [academicYear, setAcademicYear] = useState("");
-  const [department, setDepartment] = useState("");
-  const [section, setSection] = useState("");
-  const [courseCode, setCourseCode] = useState("");
+export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
+  const navigate = useNavigate();
+  const { addConfirmData }: any = useContext(UserContext);
+  const { data, errorMessage, loading } = useGrade(loggedUserName);
+  const [ModalContentLoading, setModalContent1Loading] = useState(false);
+  const [errorModal, setErrorMessage] = useState("");
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
+  const [selectedSem, setSelectedSem] = useState<string>("");
+  const [selectedDept, setSelectedDept] = useState<string>("");
+  const [selectedCourse, setSelectedCourse] = useState<string>("");
+  const [selectedSection, setSelectedSection] = useState<string>("");
 
-  // Handle confirm button click
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (errorMessage) {
+    return <div>Error: {errorMessage}</div>;
+  }
+
+  // Extract unique academic years and semesters from data
+  const uniqueAcadYrs = [...new Set(data?.map((item) => item.acadYr) || [])];
+  const uniqueSems = [...new Set(data?.map((item) => item.sem) || [])];
+
+  const filteredData =
+    data
+      ?.filter(
+        (item) => item.acadYr === selectedAcadYr && item.sem === selectedSem
+      )
+      .flatMap((item) => item.details) || [];
+
+  // Extract unique departments from filtered data
+  const uniqueDepts = [...new Set(filteredData.map((detail) => detail.dept))];
+
+  const filteredCourses = filteredData
+    .filter((detail) => detail.dept === selectedDept)
+    .map((detail) => ({
+      courseCode: detail.subjectCode,
+      courseSubject: detail.subjectName,
+    }));
+
+  // Extract unique course codes and subjects
+  const uniqueCourses = [
+    ...new Set(
+      filteredCourses.map(
+        (course) => `${course.courseCode} - ${course.courseSubject}`
+      )
+    ),
+  ];
+
+  const filteredSections = filteredData
+    .filter(
+      (detail) =>
+        detail.dept === selectedDept &&
+        `${detail.subjectCode} - ${detail.subjectName}` === selectedCourse
+    )
+    .map((detail) => detail.section);
+
+  const uniqueSections = [...new Set(filteredSections)];
+
+  const isGenerateDisabled =
+    !selectedAcadYr ||
+    !selectedSem ||
+    !selectedDept ||
+    !selectedCourse ||
+    !selectedSection;
+
   const handleConfirm = () => {
-    onConfirm({
-      semester,
-      academicYear,
-      department,
-      section,
-      courseCode,
-    });
+    setModalContent1Loading(true);
+
+    const [subjectCode, subjectName] = selectedCourse.split(" - ");
+
+    const confirmData = {
+      sem: selectedSem,
+      acadYr: selectedAcadYr,
+      dept: selectedDept,
+      sect: selectedSection,
+      subjCode: subjectCode,
+      subjName: subjectName,
+    };
+
+    const isDataValid = Object.values(confirmData).every(
+      (value) => value !== null && value !== ""
+    );
+
+    if (!isDataValid) {
+      setErrorMessage("No data found. Invalid data.");
+      setModalContent1Loading(false);
+      return;
+    }
+
+    addConfirmData(confirmData);
+
+    setTimeout(() => {
+      setModalContent1Loading(false);
+      // Navigate to GradeSheet.tsx or perform the next action
+      navigate("/reportsheet");
+    }, 2000); // Adjust the delay as needed
   };
 
   if (!isOpen) return null;
 
   return (
     <div className={styles.modalOverlay}>
-      <div className={styles.modalContent1}>
-        <h3>Select Filter</h3>
-
-        {/* Academic Year Dropdown */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="academicYear">Academic Year:</label>
-          <select
-            id="academicYear"
-            value={academicYear}
-            onChange={(e) => setAcademicYear(e.target.value)}
+      {ModalContentLoading ? (
+        <div className={styles.modalContent1}>
+          <h2>Loading.. Please Wait</h2>
+          <video
+            autoPlay
+            loop
+            muted
+            className={styles.loadingAnimation}
+            height={100}
           >
-            <option value="">Select Academic Year</option>
-            <option value="2022-2023">2022-2023</option>
-            <option value="2023-2024">2023-2024</option>
-            <option value="2024-2025">2024-2025</option>
-          </select>
+            <source src={loadingAnimation} type="video/webm" />
+            Your browser does not support the video tag.
+          </video>
         </div>
+      ) : (
+        <div className={styles.modalContent1}>
+          <h3>Generate Report</h3>
 
-        {/* Semester Dropdown */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="semester">Semester:</label>
-          <select
-            id="semester"
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
-          >
-            <option value="">Select Semester</option>
-            <option value="1st Semester">1st Semester</option>
-            <option value="2nd Semester">2nd Semester</option>
-            <option value="Summer">Summer</option>
-          </select>
-        </div>
+          {/* Academic Year Dropdown */}
+          <div className={styles.filterGroup}>
+            <label htmlFor="academicYear">Academic Year:</label>
+            <select
+              id="academicYear"
+              value={selectedAcadYr}
+              onChange={(e) => setSelectedAcadYr(e.target.value)}
+            >
+              <option value="">Select Academic Year</option>
+              {uniqueAcadYrs.map((acadYr, index) => (
+                <option key={index} value={acadYr}>
+                  {acadYr}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Department Dropdown */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="department">Department:</label>
-          <select
-            id="department"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-          >
-            <option value="">Select Department</option>
-            <option value="Computer Science">Computer Science</option>
-            <option value="Engineering">Engineering</option>
-            <option value="Business Administration">
-              Business Administration
-            </option>
-          </select>
-        </div>
+          {/* Semester Dropdown */}
+          <div className={styles.filterGroup}>
+            <label htmlFor="semester">Semester:</label>
+            <select
+              id="semester"
+              value={selectedSem}
+              onChange={(e) => setSelectedSem(e.target.value)}
+            >
+              <option value="">Select Semester</option>
+              {uniqueSems.map((sem, index) => (
+                <option key={index} value={sem}>
+                  {sem}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Section Dropdown */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="section">Section:</label>
-          <select
-            id="section"
-            value={section}
-            onChange={(e) => setSection(e.target.value)}
-          >
-            <option value="">Select Section</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-          </select>
-        </div>
+          {/* Department Dropdown */}
+          <div className={styles.filterGroup}>
+            <label htmlFor="department">Department:</label>
+            <select
+              id="department"
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+            >
+              <option value="">Select Department</option>
+              {uniqueDepts.map((dept, index) => (
+                <option key={index} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Course Code - Course Subject Dropdown */}
-        <div className={styles.filterGroup}>
-          <label htmlFor="courseCode">Course Code & Subject:</label>
-          <select
-            className={styles.Cc}
-            id="courseCode"
-            value={courseCode}
-            onChange={(e) => setCourseCode(e.target.value)}
-          >
-            <option value="">Select Course</option>
-            <option value="CS101 - Introduction to Computer Science">
-              CS101 - Introduction to Computer Science
-            </option>
-            <option value="MATH101 - Calculus">MATH101 - Calculus</option>
-            <option value="ENG101 - English Composition">
-              ENG101 - English Composition
-            </option>
-          </select>
-        </div>
+          {/* Course Code - Course Subject Dropdown */}
+          <div className={styles.filterGroup}>
+            <label htmlFor="courseCode">Course Code & Subject:</label>
+            <select
+              className={styles.Cc}
+              id="courseCode"
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+            >
+              <option value="">Select Course</option>
+              {uniqueCourses.map((course, index) => (
+                <option key={index} value={course}>
+                  {course}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Modal Actions */}
-        <div className={styles.modalActions1}>
-          <button className={styles.cancel} onClick={onCancel}>
-            Cancel
-          </button>
-          <button className={styles.confirm} onClick={handleConfirm}>
-            Generate
-          </button>
+          {/* Section Dropdown */}
+          <div className={styles.filterGroup}>
+            <label htmlFor="section">Section:</label>
+            <select
+              id="section"
+              value={selectedSection}
+              onChange={(e) => setSelectedSection(e.target.value)}
+            >
+              <option value="">Select Section</option>
+              {uniqueSections.map((section, index) => (
+                <option key={index} value={section}>
+                  {section}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.modalActions1}>
+            <button className={styles.cancel} onClick={onCancel}>
+              Cancel
+            </button>
+            <button
+              className={styles.confirm}
+              onClick={handleConfirm}
+              disabled={isGenerateDisabled} // Disable the button if any field is not selected
+            >
+              Generate
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

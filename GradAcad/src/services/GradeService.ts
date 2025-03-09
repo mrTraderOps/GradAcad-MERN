@@ -35,3 +35,35 @@ export const InsertGrade = (
               setLoading(false);
             });
 }
+
+export const GenerateReportService = async (
+  loggedUsername: string,
+  setResponse: React.Dispatch<React.SetStateAction<any>>,
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  try {
+    setLoading(true); // Indicate loading starts
+
+    // Send only the loggedUsername in the request body
+    const response = await axios.post(
+      "http://localhost:5000/api/v1/grade/generateReport",
+      { username: loggedUsername } // Only include the username
+    );
+
+    if (response.data?.success) {
+      setResponse(response.data.data)
+      ; // Set the response data
+    } else {
+      setError(response.data?.message || "Failed to fetch grades."); // Set error message
+    }
+  } catch (error: any) {
+    const errorMessage =
+      error.response?.data?.message || "An error occurred while fetching grades.";
+    setError(errorMessage); // Set error message
+    console.error("Generate Report API Error:", error);
+  } finally {
+    setLoading(false); // Indicate loading ends
+  }
+};
+

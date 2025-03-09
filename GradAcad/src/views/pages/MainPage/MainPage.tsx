@@ -10,6 +10,8 @@ import { UserContext } from "../../../context/UserContext";
 import AccountApproval from "./fragments/AccountsApproval";
 import UserManagement from "./fragments/UserManagement";
 import AuditTrail from "./fragments/AuditTrail";
+import ReportSheet from "./fragments/ReportSheet";
+import Sheet from "./fragments/Sheet";
 
 interface Props {
   onLogout: () => void;
@@ -36,6 +38,7 @@ const MainPage = ({ onLogout }: Props) => {
         <MainpageHeader />
         <div className={styles.MainPage}>
           <Routes>
+            <Route path="reportsheet" element={<ReportSheet />} />
             <Route
               path="/dashboard"
               element={
@@ -45,7 +48,7 @@ const MainPage = ({ onLogout }: Props) => {
                   LoggeduserName={user.username}
                 />
               }
-            />
+            ></Route>
             <Route
               path="/grade_encoding"
               element={<GradeEncode LoggeduserName={user.username} />}
@@ -62,6 +65,7 @@ const MainPage = ({ onLogout }: Props) => {
                 />
               }
             />
+            <Route path="/grade_sheet" element={<Sheet />} />
           </Routes>
         </div>
       </main>

@@ -6,6 +6,11 @@ p {
     font-family: $primaryFont;
 }
 
+.reportsheet {
+    padding: 0px 30px 30px 30px;
+    height: 100%;
+} 
+
 .preloader {
     display: flex;
     flex-direction: row;

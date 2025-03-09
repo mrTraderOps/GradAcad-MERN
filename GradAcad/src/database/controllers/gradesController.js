@@ -196,3 +196,60 @@ export const insertGrade = async (req, res) => {
     res.status(500).json({ success: "true" , message: "Internal server error" });
   }
 };
+
+export const generateReport = async (req, res) => {
+  const { username } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ success: false, message: "Username is required." });
+  }
+
+  try {
+    const db = getDB();
+
+    // Step 1: Find all instructor documents where the username exists
+    const instructorDocs = await db.collection("instructors").find({
+      [username]: { $exists: true }
+    }).toArray();
+
+    if (!instructorDocs.length) {
+      return res.status(404).json({ success: false, message: "No records found." });
+    }
+
+    // Step 2: Process data and group by acadYr & sem
+    const groupedData = {};
+
+    instructorDocs.forEach((doc) => {
+      const acadYrKey = doc.acadYr;
+      const semKey = doc.sem;
+
+      if (!groupedData[acadYrKey]) {
+        groupedData[acadYrKey] = {};
+      }
+      if (!groupedData[acadYrKey][semKey]) {
+        groupedData[acadYrKey][semKey] = [];
+      }
+
+      // Step 3: Extract subject details (without filtering)
+      let subjects = doc[username] || [];
+
+      // Step 4: Add subjects to the correct acadYr & sem group
+      groupedData[acadYrKey][semKey].push(...subjects);
+    });
+
+    // Step 5: Convert groupedData into response format
+    const formattedData = Object.entries(groupedData).map(([acadYr, semesters]) =>
+      Object.entries(semesters).map(([sem, details]) => ({
+        acadYr,
+        sem,
+        details
+      }))
+    ).flat();
+
+    res.status(200).json({ success: true, data: formattedData });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error.", error: error.message });
+  }
+};
+

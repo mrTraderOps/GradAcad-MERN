@@ -3,7 +3,7 @@ import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 import { useTerm } from "../../../../../hooks/useTerm";
 import { useCombinedData } from "../../../../../hooks/useCombinedData";
-import { useContext, useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { GradingReference } from "../../../../components/EqScale";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import SwitchPanel from "../../../../components/SwitchPanel";
@@ -12,8 +12,6 @@ import { DataProps } from "../../../../../models/types/StudentData";
 import ExportExcel from "../../../../../utils/ExportExcel";
 import { UserContext } from "../../../../../context/UserContext";
 import { calculateAverage } from "../../../../../utils/helpers/calculateAve";
-import { PDFDocument, StandardFonts } from "pdf-lib";
-import * as ExcelJS from "exceljs";
 
 interface GradeSheetProps {
   onSubjectClick: () => void;

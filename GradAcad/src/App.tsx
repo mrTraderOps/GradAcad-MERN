@@ -22,8 +22,10 @@ function App() {
             user ? (
               user.role === "prof" ? (
                 <Navigate to="/grade_encoding" replace />
-              ) : (
+              ) : user.role === "admin" ? (
                 <Navigate to="/account_approvals" replace />
+              ) : (
+                <Navigate to="/grade_sheet" replace />
               )
             ) : (
               <LoginPage onLogin={() => {}} />

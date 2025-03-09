@@ -22,7 +22,7 @@ export const useSubjects = (loggedUserName: string | undefined) => {
      
       fetchSubjectsbyUsername(loggedUserName, setSubjects, setErrorMessage);
     }
-  }, [loggedUserName, acadYr, sem]);
+  }, [loggedUserName]);
 
   return { subjects, errorMessage, acadYr, sem};
 };

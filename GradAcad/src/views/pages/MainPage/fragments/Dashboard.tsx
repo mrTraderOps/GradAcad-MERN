@@ -1,5 +1,5 @@
 import styles from "../styles/MainPage.module.scss";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -13,6 +13,7 @@ import { useSubjects } from "../../../../hooks/useSubjects";
 import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
+import { UserContext } from "../../../../context/UserContext";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -41,6 +42,14 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
   const [showModal, setShowModal] = useState(false);
 
   const { subjects } = useSubjects(LoggeduserName);
+
+  const context = useContext(UserContext);
+
+  if (!context) {
+    throw new Error("User role can't read");
+  }
+
+  const { user } = context;
 
   const uniqueSections = [
     ...new Set(
@@ -98,8 +107,6 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
         setLoading(false);
       }
     );
-
-    console.log("useEffect (Dashboard, Line 85 )", grades);
   }, [selectedSection, selectedSubject]);
 
   const calculatePassFail = (grades: GradeData[]) => {
@@ -231,10 +238,6 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
     );
   };
 
-  const handleConfirmSubmit = () => {
-    setShowModal(true);
-  };
-
   const handleCancelSubmit = () => {
     setShowModal(false);
   };
@@ -246,7 +249,9 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
           <div className={styles.dashboard1}>
             <div className={styles.greetings}>
               <h4>WELCOME {roleName},</h4>
-              <p>Sir {LoggedName}</p>
+              <p>
+                {user?.role === "registrar" ? "Ma'am" : "Sir"} {LoggedName}
+              </p>
             </div>
 
             <div className={styles.timeDay}>
@@ -259,112 +264,186 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
         <section className={styles.section2}>
           <div className={styles.analytics}>
             <div>
-              <p>PERFORMANCE ANALYTICS</p>
-              <div className={styles.selectCont}>
-                <p>SECTION : </p>
-                <select
-                  className={styles.sortSelect}
-                  value={selectedSection}
-                  onChange={(e) => {
-                    setSelectedSection(e.target.value);
-                    setSelectedSubject("0");
-                  }}
-                >
-                  <option value="0">ALL</option>
-                  {filteredSections.map((section, index) => (
-                    <option key={index} value={section}>
-                      {section}
-                    </option>
-                  ))}
-                </select>
-                <p>SUBJECT : </p>
-                <select
-                  className={styles.sortSelect}
-                  value={selectedSubject}
-                  onChange={(e) => {
-                    setSelectedSubject(e.target.value);
-                  }}
-                >
-                  <option value="0">ALL</option>
-                  {filteredSubjects.map((subjectCode, index) => (
-                    <option key={index} value={subjectCode}>
-                      {subjectCode}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className={styles.tableAnalytics}>
-                <div className={styles.chartContainer}>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={renderCustomizedLabel} // Use custom label
-                        labelLine={false}
-                      >
-                        {pieData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={COLORS[index % COLORS.length]}
+              {user?.role === "prof" ? (
+                <div>
+                  <p>PERFORMANCE ANALYTICS</p>
+                  <div className={styles.selectCont}>
+                    <p>SECTION : </p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSection}
+                      onChange={(e) => {
+                        setSelectedSection(e.target.value);
+                        setSelectedSubject("0");
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {filteredSections.map((section, index) => (
+                        <option key={index} value={section}>
+                          {section}
+                        </option>
+                      ))}
+                    </select>
+                    <p>SUBJECT : </p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSubject}
+                      onChange={(e) => {
+                        setSelectedSubject(e.target.value);
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {filteredSubjects.map((subjectCode, index) => (
+                        <option key={index} value={subjectCode}>
+                          {subjectCode}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className={styles.tableAnalytics}>
+                    <div className={styles.chartContainer}>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            label={renderCustomizedLabel} // Use custom label
+                            labelLine={false}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={COLORS[index % COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(value) => `${value}%`} // Add "%" to tooltip
                           />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => `${value}%`} // Add "%" to tooltip
-                      />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : user?.role === "admin" ? (
+                <div>
+                  <p>TOTAL PENDING AND APPROVED ACCOUNTS</p>
+                  <div>
+                    <p>Pending Accounts: 10</p>
+                    <p>Approved Accounts: 50</p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p>You do not have access to this panel.</p>
+                </div>
+              )}
             </div>
           </div>
           <div className={styles.courseSum}>
-            <div>
-              <p>COURSE SUMMARY</p>
-              <div className={styles.tableAnalytics}>
-                <div className={styles.tableContainer}>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>SUBJECT CODE</th>
-                        <th>SECTIONS</th>
-                        <th className={styles.gwa}>TOTAL STUDENTS</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tableData.map((subject, index) => (
-                        <tr key={index}>
-                          <td>{subject.subjectCode}</td>
-                          <td>{subject.sectionCount}</td>
-                          <td className={styles.gwa}>-</td>{" "}
-                          {/* Placeholder for total students */}
+            {user?.role === "prof" ? (
+              <div>
+                <p>COURSE SUMMARY</p>
+                <div className={styles.tableAnalytics}>
+                  <div className={styles.tableContainer}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>SUBJECT CODE</th>
+                          <th>SECTIONS</th>
+                          <th className={styles.gwa}>TOTAL STUDENTS</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {tableData.map((subject, index) => (
+                          <tr key={index}>
+                            <td>{subject.subjectCode}</td>
+                            <td>{subject.sectionCount}</td>
+                            <td className={styles.gwa}>-</td>{" "}
+                            {/* Placeholder for total students */}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className={styles.shortCut}>
+                  <div>
+                    <button onClick={() => setShowModal(true)}>
+                      <p>Generate Report</p>
+                      <img
+                        src="src\assets\icons\generate_report.png"
+                        width={20}
+                        height={20}
+                        alt=""
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div className={styles.shortCut}>
-                <div>
-                  <button onClick={() => setShowModal(true)}>
-                    <p>Generate Report</p>
-                    <img
-                      src="src\assets\icons\generate_report.png"
-                      width={20}
-                      height={20}
-                      alt=""
-                    />
-                  </button>
+            ) : user?.role === "admin" ? (
+              <div>
+                <p>ACCOUNT SUMMARY</p>
+                <div className={styles.tableAnalytics}>
+                  <div className={styles.tableContainer}>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ACCOUNT TYPE</th>
+                          <th>STATUS</th>
+                          <th className={styles.gwa}>TOTAL ACCOUNTS</th>{" "}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Student</td>
+                          <td>Active</td>
+                          <td className={styles.gwa}>150</td>
+                        </tr>
+                        <tr>
+                          <td>Student</td>
+                          <td>Pending</td>
+                          <td className={styles.gwa}>20</td>
+                        </tr>
+                        <tr>
+                          <td>Professor</td>
+                          <td>Active</td>
+                          <td className={styles.gwa}>30</td>
+                        </tr>
+                        <tr>
+                          <td>Admin</td>
+                          <td>Active</td>
+                          <td className={styles.gwa}>5</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className={styles.shortCut}>
+                  <div>
+                    <button onClick={() => {}}>
+                      <p>Generate Report</p>
+                      <img
+                        src="src\assets\icons\generate_report.png"
+                        width={20}
+                        height={20}
+                        alt=""
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <p>You do not have access to this panel.</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -409,8 +488,8 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
       </div>
       <GenerateReport
         isOpen={showModal}
-        onConfirm={handleConfirmSubmit}
         onCancel={handleCancelSubmit}
+        loggedUserName={LoggeduserName ?? ""}
       />
     </>
   );

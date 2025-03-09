@@ -30,6 +30,12 @@
             padding: 40px;
             gap: 10px;
             
+            .tab1 {
+                margin-top: 80px;
+            }
+            .tab2 {
+                margin-top: 10px;
+            }
             button {
                 font-size: $semiMedium;
                 color: $black;
@@ -59,9 +65,24 @@
                     }
 
                     div {
-                        h2 {
-                            padding-left: 0px;
+                        flex-direction: column;
+                        display: flex;
+                        padding-left: 25px;
+                        justify-content: center;
+                        gap: 6px;
+
+                        h2, p {
+                            margin: 0;
                         }
+
+                        p {
+                            color: $black;
+                        }
+
+                        h2 {
+                        padding-left: 0px;
+                        }
+
                     }
                 }
             }

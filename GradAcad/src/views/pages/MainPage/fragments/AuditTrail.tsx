@@ -81,7 +81,7 @@ const AuditTrail = () => {
       {/* Filters */}
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
-          <label>Action:</label>
+          <label style={{ color: "black" }}>Action:</label>
           <select value={filterAction} onChange={handleFilterActionChange}>
             <option value="">All Actions</option>
             <option value="Account Approved">Account Approved</option>
@@ -91,7 +91,7 @@ const AuditTrail = () => {
           </select>
         </div>
         <div className={styles.filterGroup}>
-          <label>User:</label>
+          <label style={{ color: "black" }}>User:</label>
           <input
             type="text"
             placeholder="Filter by user..."
