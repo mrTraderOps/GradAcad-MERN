@@ -1,96 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "../styles/AccountApproval.module.scss";
 import searchIcon from "../../../../assets/images/search_Icon.png";
 import arrow from "../../../../assets/icons/arrow.png";
 import closeIcon from "../../../../assets/icons/x-button.png";
+import { handlePending } from "../../../../services/UserService";
+import axios from "axios";
 
 interface Account {
-  id: number;
+  _id: string;
+  studentId?: string;
   name: string;
   email: string;
   role: string;
+  createdAt?: string;
   approvedAt?: string;
 }
-// Modal Component
 
 const AccountApproval = () => {
-  // Example data for pending accounts (replace with data from your backend)
-  const [pendingAccounts, setPendingAccounts] = useState<Account[]>([
-    {
-      id: 20200219,
-      name: "Verzon, Earl Gierald B.",
-      email: "earlbandiola@gmail.com",
-      role: "Student", // Add role field
-    },
-    {
-      id: 20200218,
-      name: "Torres, Christian O.",
-      email: "christiantorres@gmail.com",
-      role: "Instructor", // Add role field
-    },
-    {
-      id: 20200217,
-      name: "Nicolas, Jeanita",
-      email: "jeanitanicolas@gmail.com",
-      role: "Registrar", // Add role field
-    },
-  ]);
-
-  // State for approved accounts
+  const [pendingAccounts, setPendingAccounts] = useState<Account[]>([]);
+  const [error, setErrorMessage] = useState("");
   const [approvedAccounts, setApprovedAccounts] = useState<Account[]>([]);
-
   const [currentPanel, setCurrentPanel] = useState("pending");
-
-  // State for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
 
+  useEffect(() => {
+    handlePending(setPendingAccounts, setErrorMessage);
+  }, []);
+
   const formatDate = (): string => {
     const now = new Date();
-
-    // Format the date as MM/DD/YYYY
     const datePart = now.toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
     });
-
-    // Format the time as HH:mm AM/PM
     const timePart = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true, // Ensures 12-hour format
+      hour12: true,
     });
-
     return `${datePart} - ${timePart}`;
   };
 
-  const handleApprove = (id: number) => {
-    const accountToApprove = pendingAccounts.find(
-      (account) => account.id === id
-    );
-
-    if (accountToApprove) {
-      // Move account from pending to approved with a timestamp
-      setPendingAccounts((prevAccounts) =>
-        prevAccounts.filter((account) => account.id !== id)
+  const handleApprove = async (id: string) => {
+    // Ensure id is string
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/user/approveAccount",
+        {
+          id: id.toString(), // Send id as string
+        }
       );
 
-      setApprovedAccounts((prevAccounts) => [
-        ...prevAccounts,
-        { ...accountToApprove, approvedAt: formatDate() }, // Add timestamp
-      ]);
+      if (response.data.success) {
+        setPendingAccounts((prevAccounts) =>
+          prevAccounts.filter((account) => account._id !== id)
+        );
+
+        const accountToApprove = pendingAccounts.find(
+          (account) => account._id === id
+        );
+        if (accountToApprove) {
+          setApprovedAccounts((prevAccounts) => [
+            ...prevAccounts,
+            { ...accountToApprove, approvedAt: formatDate() },
+          ]);
+        }
+
+        alert("Account approved successfully!");
+      } else {
+        alert("Failed to approve account: " + response.data.message);
+      }
+    } catch (error) {
+      console.error("Error approving account:", error);
+      alert("An error occurred while approving the account.");
     }
   };
 
-  // Handle account rejection
   const handleReject = (id: any) => {
     setPendingAccounts((prevAccounts) =>
-      prevAccounts.filter((account) => account.id !== id)
+      prevAccounts.filter((account) => account._id !== id)
     );
   };
 
-  // Close modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedAccount(null);
@@ -99,6 +92,14 @@ const AccountApproval = () => {
   const handleAccountClick = (account: any) => {
     setSelectedAccount(account);
     setIsModalOpen(true);
+  };
+
+  // Role mapping object
+  const roleMapping: any = {
+    prof: "Instructor",
+    registrar: "Registrar",
+    admin: "Admin",
+    student: "Student",
   };
 
   return (
@@ -140,76 +141,84 @@ const AccountApproval = () => {
           pendingAccounts.length === 0 ? (
             <p>No pending accounts.</p>
           ) : (
-            pendingAccounts.map((account) => (
-              <div
-                key={account.id}
-                className={styles.accountItem}
-                // onClick={() => handleAccountClick(account)}
-              >
-                <div className={styles.accountInfo}>
-                  <p>
-                    <strong>Role: </strong>
-                    {account.role}
-                  </p>
-                  <span className={styles.divider}>|</span>
-                  {account.role === "Student" && (
-                    <>
-                      <p>
-                        <strong>Student ID: </strong>
-                        {account.id}
-                      </p>
-                      <span className={styles.divider}>|</span>
-                    </>
-                  )}
-                  <p>
-                    <strong>Registered Name: </strong>
-                    {account.name}
-                  </p>
-                  <span className={styles.divider}>|</span>
-                  <p>
-                    <strong>Registered E-mail Address: </strong>
-                    {account.email}
-                  </p>
+            pendingAccounts.map((account) => {
+              const displayRole = roleMapping[account.role] || account.role; // Transform the role
+              return (
+                <div
+                  key={account._id}
+                  className={styles.accountItem}
+                  // onClick={() => handleAccountClick(account)}
+                >
+                  <div className={styles.accountInfo}>
+                    <p>
+                      <strong>Role: </strong>
+                      {displayRole} {/* Use the transformed role here */}
+                    </p>
+                    <span className={styles.divider}>|</span>
+                    {account.role === "student" && (
+                      <>
+                        <p>
+                          <strong>Student ID: </strong>
+                          {account.studentId}
+                        </p>
+                        <span className={styles.divider}>|</span>
+                      </>
+                    )}
+                    <p>
+                      <strong>Registered Name: </strong>
+                      {account.name}
+                    </p>
+                    <span className={styles.divider}>|</span>
+                    <p>
+                      <strong>Registered E-mail Address: </strong>
+                      {account.email}
+                    </p>
+                    <p>
+                      <strong>Created At: </strong>
+                      {account.createdAt}
+                    </p>
+                  </div>
+                  <div className={styles.actions}>
+                    <button
+                      className={styles.approveButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApprove(account._id);
+                      }}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className={styles.rejectButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReject(account._id);
+                      }}
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
-                <div className={styles.actions}>
-                  <button
-                    className={styles.approveButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleApprove(account.id);
-                    }}
-                  >
-                    Approve
-                  </button>
-                  <button
-                    className={styles.rejectButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReject(account.id);
-                    }}
-                  >
-                    Reject
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )
         ) : approvedAccounts.length === 0 ? (
           <p>No approved accounts.</p>
         ) : (
           approvedAccounts.map((account) => (
-            <div key={account.id} className={styles.accountItem}>
+            <div key={account._id} className={styles.accountItem}>
               <div className={styles.accountInfo}>
                 <p>
                   <strong>Role: </strong>
-                  {account.role}
+                  {roleMapping[account.role] || account.role}{" "}
+                  {/* Transform the role here as well */}
                 </p>
                 <span className={styles.divider}>|</span>
-                {account.role === "Student" && (
+                {account.role === "student" && (
                   <>
                     <p>
                       <strong>Student ID: </strong>
-                      {account.id}
+                      {account.studentId}
                     </p>
                     <span className={styles.divider}>|</span>
                   </>
@@ -233,7 +242,6 @@ const AccountApproval = () => {
           ))
         )}
       </div>
-      {/* Modal */}
       {isModalOpen && (
         <AccountModal account={selectedAccount} onClose={closeModal} />
       )}

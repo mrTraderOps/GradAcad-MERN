@@ -47,3 +47,22 @@ export const handleRegister = (
     });
 };
 
+export const handlePending = (
+  setPending: React.Dispatch<React.SetStateAction<any>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
+  axios
+    .get("http://localhost:5000/api/v1/user/getUsersPending")
+    .then((response) => {
+      if (response.data.success) {
+        setPending(response.data.pending); 
+      } else {
+        setErrorMessage(response.data.message || "Invalid credentials.");
+      }
+    })
+    .catch((error) => {
+      const message = error.response?.data?.message || "An error occurred.";
+      setErrorMessage(message);
+    });
+}
+

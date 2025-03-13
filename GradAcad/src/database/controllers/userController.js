@@ -1,6 +1,6 @@
 import { getDB } from '../config/db.js';
 import bcrypt from "bcrypt";
-
+import { ObjectId } from "mongodb";
 
 // Login User
 export const loginUser = async (req, res) => {
@@ -117,8 +117,58 @@ export const registerUser = async (req, res) => {
 };
 
 export const getAllUsers = async (req, res) => {
+  try {
+      const db = getDB();
+      const collection = db.collection("pending");
 
-}
+      // Fetch all documents, excluding the password field
+      const pending = await collection.find({}, { projection: { password: 0 } }).toArray();
+
+      if (pending.length > 0) {
+          res.status(200).json({ success: true, pending });
+      } else {
+          res.status(404).json({ success: false, message: "No users found" });
+      }
+  } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const approveAccount = async (req, res) => {
+  const { id } = req.body;
+
+  if (!id) {
+    return res.status(400).json({ success: false, message: "Account ID is required" });
+  }
+
+  try {
+    const db = getDB();
+    const pendingCollection = db.collection("pending");
+    const usersCollection = db.collection("users");
+
+    const accountToApprove = await pendingCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!accountToApprove) {
+      return res.status(404).json({ success: false, message: "Account not found in pending collection" });
+    }
+
+    // Add `approvedAt` timestamp before inserting into `users`
+    await usersCollection.insertOne({
+      ...accountToApprove,
+      approvedAt: new Date().toISOString() 
+    });
+
+    // Remove from `pending`
+    await pendingCollection.deleteOne({ _id: new ObjectId(id) });
+
+    res.status(200).json({ success: true, message: "Account approved and moved to users collection" });
+  } catch (error) {
+    console.error("Error approving account:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 
 export const getUserById = async (req, res) => {
 
