@@ -5,6 +5,9 @@ export const fetchSubjectsbyUsername = (
     setSubjects: React.Dispatch<React.SetStateAction<any>>,
     setError: React.Dispatch<React.SetStateAction<string>>
 ) => {
+
+    
+
     axios
         .post("http://localhost:5000/api/v1/subject/getSubjectsByUsername", {
             username: loggeduserName,

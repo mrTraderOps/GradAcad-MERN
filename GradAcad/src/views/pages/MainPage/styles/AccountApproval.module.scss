@@ -1,6 +1,7 @@
 @import '/src/views/variables_css/variables';
 
 .accountApproval {
+
     padding: 20px;
     background-color: #f9f9f9;
     border-radius: 8px;
@@ -10,12 +11,27 @@
       color: $blue;
     }
   }
+
+  .container1 {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+  }
   
   .searchBar {
+    width: 33%;
     margin-bottom: 20px;
-  
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    
+    img {
+      align-self: center;
+    }
     input {
       width: 100%;
+      height: 10%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
@@ -27,6 +43,13 @@
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+
+    img {
+      align-self: center;
+    }
+    select {
+      width: 40%;
+    }
   
     button {
       padding: 10px 20px;
@@ -36,12 +59,16 @@
       font-size: 14px;
   
       &.pendingButton {
-        background-color: #3498db;
+        background-color: $yellow;
         color: white;
       }
   
       &.approvedButton {
         background-color: #2ecc71;
+        color: white;
+      }
+      &.printButton {
+        background-color: $blue;
         color: white;
       }
     }
@@ -57,15 +84,38 @@
       background-color: white;
       border: 1px solid #ddd;
       border-radius: 4px;
+      cursor: pointer; 
+      transition: background-color 0.3s ease;
+
+      
+
+      &:hover:not(:has(button:hover)) {
+        background-color: rgba(0, 0, 0, 0.05);
+    
+        .viewLabel {
+          opacity: 1;
+          color: $black
+        }
+      }
   
       .accountInfo {
+        display: flex;
+        align-items: center;
+        gap: 10px; // Adds space between items
+
         p {
           margin: 0;
-          font-size: 14px;
-  
-          &:first-child {
+          font-size: $smallClamp;
+          color: $black;
+
+          &:nth-child(2) {
             font-weight: bold;
           }
+        }
+        .divider {
+          color: $black; // Light gray color for the divider
+          font-size: 14px;
+          font-weight: 700;
         }
       }
   
@@ -90,6 +140,51 @@
             color: white;
           }
         }
+      }
+    }
+  }
+
+  .modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 50%;
+    height: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative; /* Required for positioning the close button */
+  
+    h3 {
+      margin-top: 0;
+    }
+  
+    .closeButton {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  
+      img {
+        width: 15px;
+        height: 15px;
       }
     }
   }

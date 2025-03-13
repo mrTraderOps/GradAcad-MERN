@@ -11,16 +11,23 @@ export const getSubjectsByUsername = async (req, res) => {
         const db = getDB();
         const collection = db.collection("instructors");
 
-        const result = await collection.findOne(
-            { [username]: { $exists: true } },
-            { projection: { [username]: 1, _id: 0 } }
-        );
+        // Find all documents in the collection
+        const documents = await collection.find({}).toArray();
 
-        if (result) {
-            res.status(200).json({ success: true, subjects: result[username] })
+        // Check if any document contains the username as a key
+        let subjects = null;
+        for (const doc of documents) {
+            if (doc[username]) {
+                subjects = doc[username];
+                break;
+            }
+        }
+
+        if (subjects) {
+            res.status(200).json({ success: true, subjects });
         } else {
             return res.status(404).json({ success: false, message: "No data found for the given username" });
-        };
+        }
     } catch (error) {
         console.error("Error fetching data:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });

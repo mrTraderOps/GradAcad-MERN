@@ -49,10 +49,7 @@ const MainPage = ({ onLogout }: Props) => {
                 />
               }
             ></Route>
-            <Route
-              path="/grade_encoding"
-              element={<GradeEncode LoggeduserName={user.username} />}
-            />
+            <Route path="/grade_encoding" element={<GradeEncode />} />
             <Route path="/account_approvals" element={<AccountApproval />} />
             <Route path="/user_management" element={<UserManagement />} />
             <Route path="/audit_trail" element={<AuditTrail />} />

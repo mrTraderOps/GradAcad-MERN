@@ -47,7 +47,7 @@ const Settings = ({ LoggedName, LoggeduserName }: Props) => {
                     ? user.role === "registrar"
                       ? "Registrar"
                       : user.role === "prof"
-                      ? "Professor"
+                      ? "Instructor"
                       : "Pending"
                     : "User role can't read"}
                 </p>

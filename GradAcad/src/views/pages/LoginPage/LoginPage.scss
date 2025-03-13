@@ -17,6 +17,7 @@ body, html {
   }
   
   .left-section {
+    width: 40%;
     flex: 1;
     display: flex;
     flex-direction: row;
@@ -80,6 +81,7 @@ body, html {
   }
   
   .right-section {
+    width: 60%;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -87,6 +89,11 @@ body, html {
     background: url('path_to_background_image.jpg') no-repeat center center;
     background-size: cover;
     padding: 20px;
+    transition: width 0.5s ease-in-out;
+  }
+
+  .right-section.expand {
+    width: 70%; // Expand when Sign Up is clicked
   }
   
   .nav-bar {
@@ -111,6 +118,7 @@ body, html {
     width: 100%;
     max-width: 400px;
     margin: auto;
+    transition: opacity 0.3s ease-in-out;
   }
   
   .login-form h2 {
@@ -126,8 +134,6 @@ body, html {
     margin-bottom: 20px;
   }
   
-  .form-group {
-  }
   
   .form-group label {
     display: block;
@@ -137,6 +143,7 @@ body, html {
   
   .form-group input {
     width: 95%;
+    height: 4vh;
     padding: 10px;
     font-size: 1rem;
     border: 1px solid #ccc;
@@ -168,6 +175,7 @@ body, html {
   }
   
   .login-form a {
+    cursor: pointer;
     color: #007bff;
     text-decoration: none;
   }
@@ -185,4 +193,19 @@ body, html {
       text-align: center;
       color: $darkblue;
     }
+  }
+
+  .register-btn {
+    background-color: $darkblue;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  label {
+    color: $black;
+    padding-top: 10px;
+  }
+
+  input {
+    height: 4vh;
   }

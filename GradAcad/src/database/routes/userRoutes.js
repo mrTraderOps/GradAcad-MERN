@@ -10,15 +10,12 @@ router.post('/login', loginUser);
 router.post('/register', registerUser);
 
 // Get all users
-router.get('/', getAllUsers);
-
-// Get a user by ID
-router.get('/:id', getUserById);
+router.get('/getAllusers', getAllUsers);
 
 // Update a user
-router.put('/:id', updateUser);
+router.put('/updateByUsername', updateUser);
 
 // Delete a user
-router.delete('/:id', deleteUser);
+router.delete('/deleteByUsername', deleteUser);
 
 export default router;

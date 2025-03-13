@@ -5,17 +5,25 @@ import { useSubjects } from "../../../../hooks/useSubjects";
 import SelectCourseSection from "./students_panel/C_S";
 import { usePopupVisibility } from "../../../../hooks/usePopupVisibility";
 import c_s from "../fragments/students_panel/styles/C_S.module.scss";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useTerm } from "../../../../hooks/useTerm";
+import { UserContext } from "../../../../context/UserContext";
 
 interface Props {
-  LoggeduserName: string | undefined;
   onStudentClick: (data: SubjectData[], nextPanel: string) => void;
 }
 
-const Subjects: React.FC<Props> = ({ LoggeduserName, onStudentClick }) => {
+const Subjects: React.FC<Props> = ({ onStudentClick }) => {
+  const context = useContext(UserContext);
+
+  if (!context) {
+    throw new Error("LoginPage must be used within a UserProvider");
+  }
+
+  const { user } = context;
+
   const [activeTab, setActiveTab] = useState("encode");
-  const { subjects, errorMessage, acadYr, sem } = useSubjects(LoggeduserName);
+  const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const { terms, error, loading, hasActiveTerms } = useTerm();
   const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
