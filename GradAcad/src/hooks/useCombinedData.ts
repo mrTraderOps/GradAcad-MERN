@@ -7,10 +7,12 @@ interface Props {
   dept: string;
   sect: string;
   subjCode: string;
+  sem?: string;
+  acadYr?: string;
   terms?: string[];
 }
 
-export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
+export const useCombinedData = ({ dept, sect, subjCode, terms, sem, acadYr }: Props) => {
   const [combinedData, setCombinedData] = useState<CombinedDataProps[]>([]);
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -52,7 +54,7 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
   
 
   useEffect(() => {
-    if (!dept || !sect || !subjCode || !terms || terms.length === 0) {
+    if (!dept || !acadYr || !sem || !sect || !subjCode || !terms || terms.length === 0) {
       setError("Missing required parameters");
       setLoading(false);
       return;
@@ -62,6 +64,8 @@ export const useCombinedData = ({ dept, sect, subjCode, terms }: Props) => {
 
     StudentGrade(
       dept,
+      acadYr,
+      sem,
       sect,
       subjCode,
       terms,

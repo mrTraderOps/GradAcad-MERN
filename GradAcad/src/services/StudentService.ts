@@ -23,6 +23,8 @@ export const StudentData = (
 
 export const StudentGrade = ( 
   dept: string,
+  acadYr: string,
+  sem: string,
   sect: string,
   subjCode: string,
   terms: string[],
@@ -33,6 +35,8 @@ export const StudentGrade = (
   axios
         .post("http://localhost:5000/api/v1/grade/getAllGrades", {
           dept: dept,
+          acadYr: acadYr,
+          sem: sem,
           sect: sect,
           subjCode: subjCode,
           terms: terms,

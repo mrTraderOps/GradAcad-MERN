@@ -201,7 +201,6 @@ const LoginPage = ({ onLogin }: Props) => {
                     value={username}
                     onChange={(e) => {
                       setUsername(e.target.value);
-                      console.log(username);
                     }}
                     required
                   />

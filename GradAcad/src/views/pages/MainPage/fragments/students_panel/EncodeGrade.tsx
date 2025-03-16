@@ -49,6 +49,8 @@ const EncodeGrade = ({
     originalGrades,
   } = useCombinedData({
     dept,
+    acadYr,
+    sem,
     sect: section,
     subjCode: subjectCode,
     terms,
@@ -159,6 +161,8 @@ const EncodeGrade = ({
 
     const updates = changedStudents.map((studentId) => ({
       dept,
+      acadYr: acadYr,
+      sem: sem,
       sect: section,
       subjCode: subjectCode,
       StudentId: studentId,

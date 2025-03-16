@@ -2,10 +2,7 @@ import courseStyles from "../styles/Subjects.module.scss";
 import style from "../styles/department.module.scss";
 import { SubjectData } from "../../../../models/types/SubjectData";
 import { useSubjects } from "../../../../hooks/useSubjects";
-import SelectCourseSection from "./students_panel/C_S";
-import { usePopupVisibility } from "../../../../hooks/usePopupVisibility";
-import c_s from "../fragments/students_panel/styles/C_S.module.scss";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useTerm } from "../../../../hooks/useTerm";
 import { UserContext } from "../../../../context/UserContext";
 
@@ -17,20 +14,62 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   const context = useContext(UserContext);
 
   if (!context) {
-    throw new Error("LoginPage must be used within a UserProvider");
+    throw new Error("Subjects must be used within a UserProvider");
   }
 
   const { user } = context;
 
-  const [activeTab, setActiveTab] = useState("encode");
+  // Fetch subjects and terms
   const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
-  const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
-  const { terms, error, loading, hasActiveTerms } = useTerm();
-  const [selectedSubject, setSelectedSubject] = useState<SubjectData | null>(
-    null
-  );
-  const [selectedTerm, setSelectedTerm] = useState<string>("PRELIM");
+  const {
+    error,
+    loading,
+    hasActiveTerms,
+    activeTerms,
+    initialTerm,
+    activeAcadYrs,
+    initialAcadYr,
+    activeSems,
+    initialSem,
+  } = useTerm();
 
+  // State for selected academic year, semester, and term
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
+  const [selectedSem, setSelectedSem] = useState<string>(initialSem);
+  const [selectedTerm, setSelectedTerm] = useState<string>(initialTerm);
+
+  // Sync selected values with initial values
+  useEffect(() => {
+    setSelectedAcadYr(initialAcadYr);
+  }, [initialAcadYr]);
+
+  useEffect(() => {
+    setSelectedSem(initialSem);
+  }, [initialSem]);
+
+  useEffect(() => {
+    setSelectedTerm(initialTerm);
+  }, [initialTerm]);
+
+  // Handle subject click
+  const handleSubjectClick = (subject: SubjectData) => {
+    if (!hasActiveTerms) {
+      alert("No active terms available.");
+      return;
+    }
+
+    // Combine subject data with selected academic year, semester, and term
+    const combinedData = {
+      ...subject,
+      term: [selectedTerm],
+      acadYr: selectedAcadYr,
+      sem: selectedSem,
+    };
+
+    // Set the active panel to "encode" and pass the data
+    onStudentClick([combinedData], "students");
+  };
+  // Get department-specific class for styling
   const getClassForDept = (dept: string) => {
     switch (dept) {
       case "Gen":
@@ -51,7 +90,55 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
     <>
       <header>
         <h2>Subjects</h2>
+        <div>
+          <label htmlFor="academicYear">Academic Year:</label>
+          <select
+            id="academicYear"
+            value={selectedAcadYr}
+            onChange={(e) => setSelectedAcadYr(e.target.value)}
+          >
+            {activeAcadYrs.map((acadYr) => (
+              <option key={acadYr} value={acadYr}>
+                {acadYr}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="sem">Semester:</label>
+          <select
+            id="sem"
+            value={selectedSem}
+            onChange={(e) => setSelectedSem(e.target.value)}
+          >
+            {activeSems.map((sem) => (
+              <option key={sem} value={sem}>
+                {sem}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="term">Term:</label>
+          <select
+            id="term"
+            value={selectedTerm}
+            onChange={(e) => setSelectedTerm(e.target.value)}
+          >
+            {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
+              if (activeTerms.includes(term.toLowerCase())) {
+                return (
+                  <option key={term} value={term}>
+                    {term}
+                  </option>
+                );
+              }
+              return null;
+            })}
+          </select>
+        </div>
       </header>
+
       <main className={courseStyles.mainSubjects}>
         {errorMessage ? (
           <p className={courseStyles.error}>{errorMessage}</p>
@@ -62,12 +149,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
             <ul>
               {subjects.map((subject, index) => (
                 <li key={index}>
-                  <button
-                    onClick={() => {
-                      setSelectedSubject(subject); // Store the selected subject
-                      openPopup();
-                    }}
-                  >
+                  <button onClick={() => handleSubjectClick(subject)}>
                     <div>
                       <div className={getClassForDept(subject.dept)}></div>
                       <div className={style.deptName}>
@@ -88,86 +170,6 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
           </div>
         )}
       </main>
-      <SelectCourseSection isVisible={isPopupVisible} onClose={closePopup}>
-        <div className={courseStyles.header}>
-          <h3>Select Filter</h3>
-          <section className={c_s.buttonGroup}>
-            <button
-              className={
-                activeTab === "encode" ? c_s.inactiveButton : c_s.activeButton
-              }
-              onClick={() => setActiveTab("encode")}
-            >
-              Encode Grade
-            </button>
-            <button
-              className={
-                activeTab === "gradesheet"
-                  ? c_s.inactiveButton
-                  : c_s.activeButton
-              }
-              onClick={() => setActiveTab("gradesheet")}
-            >
-              Grade Sheet
-            </button>
-          </section>
-
-          <select
-            value={selectedTerm}
-            onChange={(e) => setSelectedTerm(e.target.value)}
-            className={activeTab === "encode" ? "" : c_s.unselect}
-          >
-            {error ? (
-              <option disabled>Error loading terms</option>
-            ) : loading ? (
-              <option>Loading terms...</option>
-            ) : terms.length > 0 ? (
-              terms.map((termData, index) =>
-                termData.term && termData.term.length > 0
-                  ? Object.entries(termData.term[0]).map(
-                      ([termKey, termValue]) =>
-                        termValue ? (
-                          <option
-                            key={`${index}-${termKey}`}
-                            value={termKey.toUpperCase()}
-                          >
-                            {termKey.toUpperCase()}
-                          </option>
-                        ) : null
-                    )
-                  : null
-              )
-            ) : (
-              <option disabled>No terms available</option>
-            )}
-          </select>
-
-          <button
-            className={c_s.submitButton}
-            onClick={() => {
-              if (selectedSubject) {
-                const combinedData = {
-                  ...selectedSubject,
-                  term: [selectedTerm],
-                  acadYr: acadYr,
-                  sem: sem,
-                };
-
-                if (activeTab === "encode") {
-                  onStudentClick([combinedData], "students");
-                } else if (activeTab === "gradesheet") {
-                  onStudentClick([combinedData], "gradesheet");
-                }
-
-                closePopup();
-              }
-            }}
-            disabled={!hasActiveTerms}
-          >
-            Submit
-          </button>
-        </div>
-      </SelectCourseSection>
     </>
   );
 };

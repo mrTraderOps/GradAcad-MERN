@@ -3,32 +3,74 @@ import axios from 'axios';
 import { TermData } from '../models/types/GradeData';
 
 export const useTerm = () => {
-    const [terms, setTerms] = useState<TermData[]>([]); 
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(true); 
-    const [hasActiveTerms, setHasActiveTerms] = useState(false);
+  const [terms, setTerms] = useState<TermData[]>([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [hasActiveTerms, setHasActiveTerms] = useState(false);
+  const [activeTerms, setActiveTerms] = useState<string[]>([]);
+  const [initialTerm, setInitialTerm] = useState<string>("PRELIM");
 
-    useEffect(() => {
-        axios.get('http://localhost:5000/api/v1/grade/getTerms')
-          .then((response) => {
-            if (response.data.success && Array.isArray(response.data.data)) {
-              setTerms(response.data.data);
-              const active = response.data.data.some((TermData: { term: any[]; }) =>
-                TermData.term?.some(term => Object.values(term).includes(true))
-              );
-              setHasActiveTerms(active);
-            } else {
-              setError('Failed to fetch terms.');
-            }
-          })
-          .catch((error) => {
-            setError('An error occurred while fetching terms.');
-            console.error(error);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-    }, []);
+  // Add states for academic year and semester
+  const [activeAcadYrs, setActiveAcadYrs] = useState<string[]>([]);
+  const [initialAcadYr, setInitialAcadYr] = useState<string>("");
+  const [activeSems, setActiveSems] = useState<string[]>([]);
+  const [initialSem, setInitialSem] = useState<string>("");
 
-    return { terms, error, loading, hasActiveTerms };
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/v1/grade/getTerms')
+      .then((response) => {
+        if (response.data.success && Array.isArray(response.data.data)) {
+          const data = response.data.data[0]; // Assuming only one document is returned
+
+          // Set academic year
+          setActiveAcadYrs([data.acadYr]); // Wrap the string in an array
+          setInitialAcadYr(data.acadYr); // Set the academic year as initial
+
+          // Extract active semesters
+          const activeSemsList = Object.keys(data.sem).filter(
+            (key) => data.sem[key] === true
+          );
+          setActiveSems(activeSemsList);
+          setInitialSem(activeSemsList[0]); // Set the first active semester as initial
+
+          // Extract active terms
+          const activeTermsList = Object.keys(data.term).filter(
+            (key) => data.term[key] === true
+          );
+          setActiveTerms(activeTermsList);
+          setHasActiveTerms(activeTermsList.length > 0);
+
+          // Determine the initial term based on conditions
+          if (activeTermsList.includes("prelim") && !activeTermsList.includes("midterm") && !activeTermsList.includes("final")) {
+            setInitialTerm("PRELIM");
+          } else if (activeTermsList.includes("prelim") && activeTermsList.includes("midterm") && !activeTermsList.includes("final")) {
+            setInitialTerm("MIDTERM");
+          } else if (activeTermsList.includes("prelim") && activeTermsList.includes("midterm") && activeTermsList.includes("final")) {
+            setInitialTerm("FINAL");
+          }
+        } else {
+          setError('Failed to fetch terms.');
+        }
+      })
+      .catch((error) => {
+        setError('An error occurred while fetching terms.');
+        console.error(error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  return {
+    terms,
+    error,
+    loading,
+    hasActiveTerms,
+    activeTerms,
+    initialTerm,
+    activeAcadYrs,
+    initialAcadYr,
+    activeSems,
+    initialSem,
+  };
 };

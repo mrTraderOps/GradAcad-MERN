@@ -21,8 +21,6 @@ export const loginUser = async (req, res) => {
 
   const query = getUsername();
 
-  console.log(query)
-
   if (!query) {
     return res.status(400).json({ success: false, message: 'Email or Student ID is required' });
   }

@@ -2,58 +2,70 @@ import { getDB } from '../config/db.js';
 
 
 export const getTerms = async (req, res) => {
+  const db = getDB();
 
-    const db = getDB();
+  try {
+    const data = await db.collection('grades')
+      .find(
+        { currentTerm: { $exists: true } },
+        { projection: { currentAcadYr: 1, currentSem: 1, currentTerm: 1, _id: 0 } }
+      )
+      .toArray();
 
-    try {
+    // Format the response
+    const formattedData = data.map((doc) => {
+      return {
+        acadYr: doc.currentAcadYr, // Directly use the string value
+        sem: doc.currentSem[0], // Extract the first object from currentSem
+        term: doc.currentTerm[0], // Extract the first object from currentTerm
+      };
+    });
 
-        const term = await db.collection('grades')
-            .find({ term: { $exists: true } }, { projection: { term: 1, _id: 0 } })
-            .toArray();
-
-        res.json({ success: true, data: term });
-    } catch (err) {
-        console.error('Error fetching terms:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-}
+    res.json({ success: true, data: formattedData });
+  } catch (err) {
+    console.error('Error fetching terms:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
 
 export const getAllGrades = async (req, res) => {
-    const { dept, sect, subjCode, terms } = req.body;
+  const { dept, acadYr, sem, sect, subjCode, terms } = req.body;
 
-    const db = getDB();
+  const db = getDB();
 
-    try {
-        const gradesData = await db.collection('grades').findOne(
-            { 
-                dept: dept,
-                sect: sect,
-                subjCode: subjCode 
-            },
-            { projection: { _id: 0, subjCode: 1, grades: 1 } }
-        );
+  try {
+    const gradesData = await db.collection('grades').findOne(
+      {
+        dept: dept,
+        acadYr: acadYr,
+        sem: sem,
+        sect: sect,
+        subjCode: subjCode
+      },
+      { projection: { _id: 0, subjCode: 1, grades: 1 } }
+    );
 
-        if (!gradesData) {
-            return res.status(404).json({ success: false, message: 'No grades found.' });
-        }
-
-        const filteredGrades = gradesData.grades.map(student => ({
-            StudentId: student.StudentId,
-            terms: terms && terms.length > 0 
-                ? Object.fromEntries(
-                    terms
-                        .filter(term => student.terms.hasOwnProperty(term)) 
-                        .map(term => [term, student.terms[term]]) 
-                  )
-                : student.terms
-        }));
-
-        res.json({ success: true, data: filteredGrades });
-
-    } catch (err) {
-        console.error('Error fetching grades:', err);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+    if (!gradesData) {
+      return res.status(404).json({ success: false, message: 'No grades found.' });
     }
+
+    const filteredGrades = gradesData.grades.map(student => ({
+      StudentId: student.StudentId,
+      terms: terms && terms.length > 0
+        ? Object.fromEntries(
+          terms
+            .filter(term => student.terms.hasOwnProperty(term))
+            .map(term => [term, student.terms[term]])
+        )
+        : student.terms
+    }));
+
+    res.json({ success: true, data: filteredGrades });
+
+  } catch (err) {
+    console.error('Error fetching grades:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 };
 
 export const updateGrade = async (req, res) => {
@@ -73,6 +85,8 @@ export const updateGrade = async (req, res) => {
 
       if (
         !update.dept ||
+        !update.acadYr ||
+        !update.sem ||
         !update.sect ||
         !update.subjCode ||
         !update.StudentId ||
@@ -86,6 +100,8 @@ export const updateGrade = async (req, res) => {
         updateOne: {
           filter: {
             dept: update.dept,
+            acadYr: update.acadYr,
+            sem: update.sem,
             sect: update.sect,
             subjCode: update.subjCode,
             "grades.StudentId": update.StudentId,
@@ -131,8 +147,8 @@ export const insertGrade = async (req, res) => {
   }
 
   try {
-    const db = req.db; 
-    const collection = db.collection("grades"); 
+    const db = req.db;
+    const collection = db.collection("grades");
 
 
     const filter = { dept, sect, subjCode };
@@ -141,7 +157,7 @@ export const insertGrade = async (req, res) => {
     const existingDoc = await collection.findOne(filter);
 
     if (existingDoc) {
-     
+
       const studentIndex = existingDoc.grades.findIndex(
         (g) => g.StudentId === StudentId
       );
@@ -190,10 +206,10 @@ export const insertGrade = async (req, res) => {
       await collection.insertOne(newDoc);
     }
 
-    res.status(200).json({ success: "true" , message: "Grade inserted/updated successfully" });
+    res.status(200).json({ success: "true", message: "Grade inserted/updated successfully" });
   } catch (error) {
     console.error("Error inserting/updating grade:", error);
-    res.status(500).json({ success: "true" , message: "Internal server error" });
+    res.status(500).json({ success: "true", message: "Internal server error" });
   }
 };
 
@@ -252,4 +268,3 @@ export const generateReport = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error.", error: error.message });
   }
 };
-
