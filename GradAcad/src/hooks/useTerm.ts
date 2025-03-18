@@ -17,7 +17,7 @@ export const useTerm = () => {
   const [initialSem, setInitialSem] = useState<string>("");
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/v1/grade/getTerms')
+    axios.get('http://localhost:5000/api/v1/grade/getTermsV2')
       .then((response) => {
         if (response.data.success && Array.isArray(response.data.data)) {
           const data = response.data.data[0]; // Assuming only one document is returned

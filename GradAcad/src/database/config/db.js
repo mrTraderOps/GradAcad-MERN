@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 
 const mongoURL = process.env.MONGO_URI || 'mongodb://localhost:27017';
-const dbName = 'gradacad';
+const dbName = 'GradAcadv2';
 
 let db;
 

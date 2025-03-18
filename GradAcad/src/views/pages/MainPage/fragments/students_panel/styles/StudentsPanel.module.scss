@@ -11,6 +11,22 @@ p {
     height: 100%;
 } 
 
+.selectHidden {
+    appearance: none; /* Removes default styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    color: transparent; /* Hides the text */
+    cursor: pointer;
+    width: 80px;
+    color: $darkblue;
+    font-size: $smallClamp;
+    font-weight: 700;
+    text-align: center;
+  }
+
 .preloader {
     display: flex;
     flex-direction: row;
@@ -201,6 +217,13 @@ p {
     }
 
     .StudentList {
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
         h5 {
             color: $darkblue;
             font-size: $smallClamp;

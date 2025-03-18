@@ -21,7 +21,7 @@ function App() {
           element={
             user ? (
               user.role === "prof" ? (
-                <Navigate to="/grade_encoding" replace />
+                <Navigate to="/subjects" replace />
               ) : user.role === "admin" ? (
                 <Navigate to="/account_approvals" replace />
               ) : (

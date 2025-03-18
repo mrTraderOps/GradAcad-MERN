@@ -17,7 +17,7 @@ export interface CombinedDataProps {
     FirstName?: string;
     MiddleInitial?: string;
     terms: {
-      PRELIM?: number;
+    PRELIM?: number;
       MIDTERM?: number;
       FINAL?: number;
     };

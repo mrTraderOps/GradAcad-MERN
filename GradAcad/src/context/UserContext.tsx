@@ -1,6 +1,7 @@
 import React, { createContext, useState } from "react";
 
 interface User {
+  refId?: string;
   id: string;
   username?: string;
   studentId?: string;

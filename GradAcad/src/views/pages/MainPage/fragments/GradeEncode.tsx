@@ -6,12 +6,12 @@ import GradeSheet from "./students_panel/GradeSheet";
 import EncodeGrade from "./students_panel/EncodeGrade";
 
 const GradeEncode = () => {
-  const [activePanel, setActivePanel] = useState("grade_encoding");
+  const [activePanel, setActivePanel] = useState("subjects");
   const [subjectData, setSubjectData] = useState<SubjectData[]>([]);
 
   const renderPanel = () => {
     switch (activePanel) {
-      case "grade_encoding":
+      case "subjects":
         return (
           <Subjects
             onStudentClick={(data: SubjectData[], nextPanel = "students") => {
@@ -25,7 +25,7 @@ const GradeEncode = () => {
           <EncodeGrade
             data={subjectData[0]}
             onSubjectClick={() => {
-              setActivePanel("grade_encoding");
+              setActivePanel("subjects");
             }}
             onStudentClick={(data: SubjectData[], nextPanel = "gradesheet") => {
               setSubjectData(data);
@@ -38,7 +38,7 @@ const GradeEncode = () => {
           <GradeSheet
             data={subjectData[0]}
             onSubjectClick={() => {
-              setActivePanel("grade_encoding");
+              setActivePanel("subjects");
             }}
             onStudentClick={(data: SubjectData[], nextPanel = "students") => {
               setSubjectData(data);

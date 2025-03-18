@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { CombinedDataProps, Student } from "../models/types/StudentData"; 
 import { GradeData } from "../models/types/GradeData"; 
 import { StudentData, StudentGrade } from "../services/StudentService";
+import axios from "axios";
 
 interface Props {
   dept: string;
@@ -124,3 +125,155 @@ export const useCombinedData = ({ dept, sect, subjCode, terms, sem, acadYr }: Pr
     grades 
   };
 };
+
+export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms }: Props) => {
+  const [combinedData, setCombinedData] = useState<CombinedDataProps[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [errorMessage, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [currentGrades, setCurrentGrades] = useState<Record<string, number>>({});
+  const [originalGrades, setOriginalGrades] = useState<Record<string, number>>({});
+
+  // Handle Input Change
+  const handleInputChange = (index: number, fieldName: string, value: number | undefined) => {
+    const studentId = combinedData[index].StudentId;
+
+    setCurrentGrades((prev) => ({
+      ...prev,
+      [studentId]: value ?? 0,
+    }));
+
+    setCombinedData((prevData) =>
+      prevData.map((row, i) =>
+        i === index
+          ? {
+              ...row,
+              terms: {
+                ...row.terms,
+                [fieldName]: value,
+              },
+            }
+          : row
+      )
+    );
+  };
+
+  useEffect(() => {
+    if (!acadYr || !sem || !subjCode || !terms || terms.length === 0) {
+      setError("Missing required parameters");
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    axios
+      .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+        acadYr,
+        sem,
+        subjectId: subjCode,
+        selectedTerms: terms,
+      })
+      .then((response) => {
+        if (response.data.success) {
+          setCombinedData(response.data.data);
+
+           // Extract student details from response and map it to Student interface
+           const studentList: Student[] = response.data.data.map((student: CombinedDataProps) => ({
+            StudentId: student.StudentId,
+            LastName: student.LastName,
+            FirstName: student.FirstName,
+            MiddleInitial: student.MiddleInitial,
+          }));
+
+          setStudents(studentList);
+        } else {
+          setError(response.data.message || "Failed to fetch student grades.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching student grades:", error);
+        setError("An error occurred while fetching student grades.");
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setLoading(false); // Hide loading after delay
+        }, 1000);        
+      });
+  }, [acadYr, sem, subjCode, terms]);
+
+  return {
+    handleInputChange,
+    setCombinedData,
+    setCurrentGrades,
+    setOriginalGrades,
+    combinedData,
+    students,
+    errorMessage,
+    loading,
+    currentGrades,
+    originalGrades,
+  };
+};
+
+export const useCombinedDatav2ForExport = ({ acadYr, sem, subjCode, terms }: Props) => {
+  const [combinedDataForXport, setCombinedDataForXport] = useState<CombinedDataProps[]>([]);
+  const [errorMessageXport, setErrorXport] = useState<string | null>(null);
+  const [loadingXport, setLoadingXport] = useState<boolean>(true);
+
+  // Determine newTerms based on conditions
+  let newTerms: string[] = [];
+
+  if (terms?.includes("PRELIM")) {
+    newTerms = ["PRELIM"];
+  }
+  if (terms?.includes("MIDTERM")) {
+    newTerms = ["PRELIM", "MIDTERM"];
+  }
+  if (terms?.includes("FINAL")) {
+    newTerms = [];
+  }
+
+  useEffect(() => {
+    if (!acadYr || !sem || !subjCode || !terms?.length) {
+      setErrorXport("Missing required parameters");
+      setLoadingXport(false);
+      return;
+    }
+
+    setLoadingXport(true);
+
+    axios
+      .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+        acadYr,
+        sem,
+        subjectId: subjCode,
+        selectedTerms: newTerms, // Use the dynamically computed newTerms
+      })
+      .then((response) => {
+        if (response.data.success) {
+          setCombinedDataForXport(response.data.data);
+        } else {
+          setErrorXport(response.data.message || "Failed to fetch student grades.");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching student grades:", error);
+        setErrorXport("An error occurred while fetching student grades.");
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setLoadingXport(false); // Hide loading after delay
+        }, 1000);
+      });
+  }, [acadYr, sem, subjCode, terms]);
+
+  return {
+    combinedDataForXport,
+    errorMessageXport,
+    loadingXport,
+    setLoadingXport
+  };
+};
+

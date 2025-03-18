@@ -28,6 +28,33 @@ export const getTerms = async (req, res) => {
   }
 };
 
+export const getTermsV2 = async (req, res) => {
+  const db = getDB();
+
+  try {
+    const data = await db.collection('global')
+      .find(
+        { currentTerm: { $exists: true } },
+        { projection: { currentAcadYr: 1, currentSem: 1, currentTerm: 1, _id: 0 } }
+      )
+      .toArray();
+
+    // Format the response
+    const formattedData = data.map((doc) => {
+      return {
+        acadYr: doc.currentAcadYr, // Directly use the string value
+        sem: doc.currentSem[0], // Extract the first object from currentSem
+        term: doc.currentTerm[0], // Extract the first object from currentTerm
+      };
+    });
+
+    res.json({ success: true, data: formattedData });
+  } catch (err) {
+    console.error('Error fetching terms:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 export const getAllGrades = async (req, res) => {
   const { dept, acadYr, sem, sect, subjCode, terms } = req.body;
 
@@ -268,3 +295,125 @@ export const generateReport = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error.", error: error.message });
   }
 };
+
+export const getStudentGrades = async (req, res) => {
+  try {
+    const { acadYr, sem, subjectId, selectedTerms } = req.body;
+
+    if (!acadYr || !sem || !subjectId) {
+      return res.status(400).json({ success: false, message: "Invalid request parameters." });
+    }
+
+    const db = getDB();
+
+    // Find students enrolled in a subject for a given academic year and semester
+    const enrollment = await db.collection("enrollment").findOne({ acadYr, sem, subjectId });
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: "No enrollment records found." });
+    }
+
+    const enrolledStudentIds = enrollment.enrollee;
+
+    // Fetch students from the students collection
+    const students = await db.collection("students")
+      .find({ _id: { $in: enrolledStudentIds } })
+      .toArray();
+
+    // Fetch grades for the enrolled students
+    const grades = await db.collection("grades")
+      .find({ StudentId: { $in: enrolledStudentIds }, SubjectId: subjectId })
+      .toArray();
+
+    // Determine whether to filter terms or return all
+    const shouldFetchAllTerms = !selectedTerms || !Array.isArray(selectedTerms) || selectedTerms.length === 0 || selectedTerms.every(term => term.trim() === "");
+
+    // Merge student details with grades
+    const combinedData = enrolledStudentIds.map((studentId) => {
+      const student = students.find((s) => s._id === studentId);
+      const grade = grades.find((g) => g.StudentId === studentId);
+
+      return {
+        StudentId: studentId,
+        LastName: student?.LastName || "",
+        FirstName: student?.FirstName || "",
+        MiddleInitial: student?.MiddleInitial || "",
+        terms: shouldFetchAllTerms
+          ? grade?.terms || {} // Fetch all terms if no filter is applied
+          : Object.fromEntries(
+              Object.entries(grade?.terms || {}).filter(([key]) => selectedTerms.includes(key))
+            ),
+      };
+    });
+
+    return res.status(200).json({ success: true, data: combinedData });
+
+  } catch (error) {
+    console.error("Error fetching student grades:", error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+export const updateGradeV2 = async (req, res) => {
+  const { updates } = req.body;
+
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing or invalid updates array",
+    });
+  }
+
+  const db = getDB();
+
+  try {
+    const bulkOps = updates.map((update) => {
+
+      if (
+        !update.SubjectId ||
+        !update.StudentId ||
+        !update.term ||
+        update.grade === undefined
+      ) {
+        throw new Error("Missing required fields in one or more updates");
+      }
+
+      return {
+        updateOne: {
+          filter: {
+            subjCode: update.subjCode,
+            "grades.StudentId": update.StudentId,
+          },
+          update: {
+            $set: {
+              [`grades.$.terms.${update.term}`]: update.grade,
+            },
+          },
+        },
+      };
+    });
+
+    const result = await db.collection("grades").bulkWrite(bulkOps);
+
+    if (result.matchedCount === updates.length) {
+      res.status(200).json({
+        success: true,
+        message: "Grades updated successfully",
+        result,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Some students not found",
+        result,
+      });
+    }
+  } catch (err) {
+    console.error("Error updating grades:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+

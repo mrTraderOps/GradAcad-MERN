@@ -1,16 +1,23 @@
 import styles from "./styles/StudentsPanel.module.scss";
 import Papa from "papaparse";
-import { useCallback, useState, useMemo, useEffect } from "react";
-import { useCombinedData } from "../../../../../hooks/useCombinedData";
+import { useCallback, useState, useMemo, useEffect, useContext } from "react";
+import {
+  useCombinedDatav2,
+  useCombinedDatav2ForExport,
+} from "../../../../../hooks/useCombinedData";
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import AreYousure from "../../../../components/AreYouSure";
-import SwitchPanel from "../../../../components/SwitchPanel";
 import { SubjectData } from "../../../../../models/types/SubjectData";
 import { GradingReference } from "../../../../components/EqScale";
 import axios from "axios";
 import { DataProps } from "../../../../../models/types/StudentData";
+import loadingAnimation from "../../../../../assets/webM/loading.webm";
+import loadingHorizontal from "../../../../../assets/webM/loadingHorizontal.webm";
+import dropdownIcon from "../../../../../assets/icons/dropdown_icon.png";
+import ExportExcel from "../../../../../utils/ExportExcel";
+import { UserContext } from "../../../../../context/UserContext";
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
@@ -18,11 +25,14 @@ interface EncodeGradeProps {
   data: any;
 }
 
-const EncodeGrade = ({
-  onSubjectClick,
-  data,
-  onStudentClick,
-}: EncodeGradeProps) => {
+const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("ExportExcel must be used within a UserProvider");
+  }
+
+  const { user } = context;
+
   const {
     subjectCode,
     subjectName,
@@ -33,6 +43,7 @@ const EncodeGrade = ({
     sem,
   }: DataProps = data;
   const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
+  // const [loadingExporting, setLoadingExporting] = useState(false);
 
   const terms = useMemo(() => [selectedTerm], [selectedTerm]);
 
@@ -47,7 +58,7 @@ const EncodeGrade = ({
     students,
     currentGrades,
     originalGrades,
-  } = useCombinedData({
+  } = useCombinedDatav2({
     dept,
     acadYr,
     sem,
@@ -55,21 +66,24 @@ const EncodeGrade = ({
     subjCode: subjectCode,
     terms,
   });
+
+  const {
+    combinedDataForXport,
+    loadingXport,
+    errorMessageXport,
+    setLoadingXport,
+  } = useCombinedDatav2ForExport({
+    dept,
+    acadYr,
+    sem,
+    sect: section,
+    subjCode: subjectCode,
+    terms,
+  });
+
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
-  const [switchPanel, setSwitchPanel] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
-
-  const openSwitch = () => setSwitchPanel(true);
-  const closeSwitch = () => setSwitchPanel(false);
-
-  const handleTermChange = (term: string) => {
-    setSelectedTerm(term);
-  };
-
-  const handleGoToGradeSheet = () => {
-    onStudentClick([data], "gradesheet");
-  };
 
   type TermName = "PRELIM" | "MIDTERM" | "FINAL";
 
@@ -303,7 +317,21 @@ const EncodeGrade = ({
       <main className={styles.main}>
         <section>
           <div className={styles.StudentList}>
-            {loading && <p className={styles.loading}>Loading data...</p>}
+            {loading && (
+              <div className={styles.loading}>
+                <h2>Loading.. Please Wait</h2>
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  className={styles.loadingAnimation}
+                  height={100}
+                >
+                  <source src={loadingAnimation} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
             {errorMessage && <p className={styles.error}>{errorMessage}</p>}
             {!loading && !errorMessage && (
               <table>
@@ -316,7 +344,21 @@ const EncodeGrade = ({
                       <h5>STUDENT NAME</h5>
                     </th>
                     <th>
-                      <h5>{selectedTerm}</h5>
+                      <select
+                        className={styles.selectHidden}
+                        value={selectedTerm}
+                        onChange={(e) => setSelectedTerm(e.target.value)}
+                      >
+                        <option value="PRELIM">PRELIM</option>
+                        <option value="MIDTERM">MIDTERM</option>
+                        <option value="FINAL">FINAL</option>
+                      </select>
+                      <img
+                        src={dropdownIcon}
+                        alt="select a term"
+                        height={10}
+                        width={10}
+                      />
                     </th>
                     <th>
                       <h5>GRADE EQ</h5>
@@ -377,9 +419,38 @@ const EncodeGrade = ({
           <div onClick={toggleMode}>
             <span>{isEditing ? "Save" : "Edit"}</span>
           </div>
-          <button onClick={openSwitch}>
-            <p>Switch Panel</p>
-          </button>
+          {loadingXport && (
+            <div className={styles.loading}>
+              <video
+                autoPlay
+                loop
+                muted
+                className={styles.loadingAnimation}
+                width={60}
+              >
+                <source src={loadingHorizontal} type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+          {errorMessageXport && (
+            <p className={styles.error}>{errorMessageXport}</p>
+          )}
+          {!loadingXport && !errorMessageXport && (
+            <ExportExcel
+              combinedData={combinedDataForXport}
+              loggedName={user?.name ?? ""}
+              dept={dept}
+              subjectCode={subjectCode}
+              subjectName={subjectName}
+              section={section}
+              sem={sem ?? ""}
+              acadYr={acadYr ?? ""}
+              buttonName="Print Report"
+              isDefault={false}
+              setLoadingExporting={setLoadingXport}
+            />
+          )}
           <button onClick={openPopup}>
             <p>Grading Reference</p>
           </button>
@@ -390,13 +461,6 @@ const EncodeGrade = ({
         isOpen={showModal}
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
-      />
-      <SwitchPanel
-        isVisible={switchPanel}
-        onClose={closeSwitch}
-        onTermChange={handleTermChange}
-        onGoToGradeSheet={handleGoToGradeSheet}
-        currentTerm={selectedTerm}
       />
     </>
   );

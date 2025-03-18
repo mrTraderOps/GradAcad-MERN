@@ -5,6 +5,13 @@
     height: 84%;
     max-height: 84%;
 
+    .loading {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
     h3,
     h5 {
         margin: 0;
@@ -34,19 +41,17 @@
             align-self: center;
             display: flex;
             flex-wrap: wrap;
-            /* Allow items to wrap to the next line */
             gap: 50px;
-            /* Optional: Space between items */
             padding: 0;
             margin: 0;
+            width: 100%;
             max-height: clamp(316px, 70vh, 576px);
             list-style: none;
             overflow-y: auto;
 
             li {
                 width: 20%;
-                /* Button spans full width of the list item */
-                height: 200px;
+                height: 220px;
                 background: rgba(15, 42, 113, 0.63);
                 border-radius: 4px;
                 cursor: pointer;

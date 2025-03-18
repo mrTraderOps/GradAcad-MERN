@@ -48,6 +48,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        refId: user.refId
       },
     });
   } catch (err) {
@@ -166,7 +167,6 @@ export const approveAccount = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 export const getUserById = async (req, res) => {
 
