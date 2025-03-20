@@ -18,6 +18,7 @@ import loadingHorizontal from "../../../../../assets/webM/loadingHorizontal.webm
 import dropdownIcon from "../../../../../assets/icons/dropdown_icon.png";
 import ExportExcel from "../../../../../utils/ExportExcel";
 import { UserContext } from "../../../../../context/UserContext";
+import { useTerm } from "../../../../../hooks/useTerm";
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
@@ -43,7 +44,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     sem,
   }: DataProps = data;
   const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
-  // const [loadingExporting, setLoadingExporting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const terms = useMemo(() => [selectedTerm], [selectedTerm]);
 
@@ -53,6 +54,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     handleInputChange,
     setCurrentGrades,
     setOriginalGrades,
+    setLoading,
     errorMessage,
     loading,
     students,
@@ -81,6 +83,12 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     terms,
   });
 
+  const { activeTerms } = useTerm();
+
+  const handleTermChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTerm(e.target.value);
+  };
+
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [isEditing, setIsEditing] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -104,10 +112,8 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       complete: (result) => {
         const uploadedData = result.data;
 
-        // Expected headers: STUDENT_ID, STUDENT NAME, and the specific term (e.g., PRELIM, MIDTERM, FINAL)
-        const expectedHeaders = ["STUDENT_ID", "STUDENT NAME", term[0]]; // term[0] is the current term (e.g., PRELIM)
+        const expectedHeaders = ["STUDENT_ID", "STUDENT NAME", selectedTerm];
 
-        // Validate headers
         const parsedHeaders = Object.keys(uploadedData[0] || {});
         const missingHeaders = expectedHeaders.filter(
           (header) => !parsedHeaders.includes(header)
@@ -127,23 +133,31 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           const validateGrade = (grade: number) =>
             !isNaN(grade) && grade >= 0 && grade <= 100;
 
-          // Update the specific term grade
-          const updatedTerms = {
-            ...row.terms,
-            [term[0]]:
-              isTermName(term[0]) &&
-              validateGrade(parseFloat(matchingRow?.[term[0]]))
-                ? parseFloat(matchingRow[term[0]])
-                : row.terms[term[0] as TermName],
-          };
+          const updatedGrade = matchingRow?.[selectedTerm]
+            ? parseFloat(matchingRow[selectedTerm])
+            : row.terms[selectedTerm as keyof typeof row.terms];
 
           return {
             ...row,
-            terms: updatedTerms, // Update the terms object
+            terms: {
+              ...row.terms,
+              [selectedTerm]: validateGrade(updatedGrade ?? 0)
+                ? updatedGrade ?? 0
+                : row.terms[selectedTerm as keyof typeof row.terms] ?? 0,
+            },
           };
         });
 
         setCombinedData(updatedTableData);
+
+        // ✅ Immediately update `currentGrades` so it's ready for `handleConfirmSave`
+        const updatedGrades = updatedTableData.reduce((acc, row) => {
+          acc[row.StudentId] =
+            row.terms[selectedTerm as keyof typeof row.terms] ?? 0;
+          return acc;
+        }, {} as Record<string, number>);
+
+        setCurrentGrades(updatedGrades);
         setIsEditing(true);
       },
       error: (err) => {
@@ -166,6 +180,13 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
   );
 
   const handleConfirmSave = async () => {
+    setLoading(true);
+    setLoadingXport(true);
+
+    console.log("changedStudents before save:", changedStudents);
+    console.log("currentGrades before save:", currentGrades);
+    console.log("originalGrades before save:", originalGrades);
+
     if (changedStudents.length === 0) {
       setShowModal(false);
       setIsEditing(false);
@@ -174,22 +195,16 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     }
 
     const updates = changedStudents.map((studentId) => ({
-      dept,
-      acadYr: acadYr,
-      sem: sem,
-      sect: section,
-      subjCode: subjectCode,
+      SubjectId: subjectCode,
       StudentId: studentId,
       term: selectedTerm,
       grade: currentGrades[studentId],
     }));
 
-    console.log(updates);
-
     try {
       // Send the updates to the backend
       const response = await axios.put(
-        "http://localhost:5000/api/v1/grade/updateGrade",
+        "http://localhost:5000/api/v1/grade/updateGradeV2",
         {
           updates,
         }
@@ -204,6 +219,13 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       }
     } catch (error) {
       console.error("Error updating grades:", error);
+    } finally {
+      setIsSaved(true);
+
+      setTimeout(() => {
+        setLoading(false);
+        setLoadingXport(false);
+      }, 1000);
     }
   };
 
@@ -248,7 +270,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
   );
 
   useEffect(() => {
-    if (combinedData.length > 0) {
+    if (combinedData.length > 0 && isEditing) {
       const initialGrades = combinedData.reduce((acc, row) => {
         const grade = row.terms?.[selectedTerm as keyof typeof row.terms] ?? 0;
         acc[row.StudentId] = grade;
@@ -261,10 +283,10 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         setOriginalGrades(initialGrades);
       }
 
-      console.log("useEffect(EncodeGrade, Line 242), Original", originalGrades);
-      console.log("useEffect(EncodeGrade, Line 243), Current", currentGrades);
+      console.log("Updated Original Grades:", originalGrades);
+      console.log("Updated Current Grades:", currentGrades);
     }
-  }, [combinedData, selectedTerm]);
+  }, [combinedData, selectedTerm, isEditing]);
 
   return (
     <>
@@ -345,13 +367,21 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                     </th>
                     <th>
                       <select
-                        className={styles.selectHidden}
+                        id="term"
                         value={selectedTerm}
-                        onChange={(e) => setSelectedTerm(e.target.value)}
+                        onChange={handleTermChange}
+                        className={styles.selectHidden}
                       >
-                        <option value="PRELIM">PRELIM</option>
-                        <option value="MIDTERM">MIDTERM</option>
-                        <option value="FINAL">FINAL</option>
+                        {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
+                          if (activeTerms.includes(term.toLowerCase())) {
+                            return (
+                              <option key={term} value={term}>
+                                {term}
+                              </option>
+                            );
+                          }
+                          return null;
+                        })}
                       </select>
                       <img
                         src={dropdownIcon}
@@ -383,7 +413,9 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                       <tr
                         key={row.StudentId}
                         className={
-                          !gradeForSelectedTerm ? styles.missingGrades : ""
+                          !gradeForSelectedTerm && isSaved
+                            ? styles.missingGrades
+                            : ""
                         }
                       >
                         <td>{row.StudentId}</td>

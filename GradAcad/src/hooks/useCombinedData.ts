@@ -126,7 +126,7 @@ export const useCombinedData = ({ dept, sect, subjCode, terms, sem, acadYr }: Pr
   };
 };
 
-export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms }: Props) => {
+export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms, sect, dept }: Props) => {
   const [combinedData, setCombinedData] = useState<CombinedDataProps[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [errorMessage, setError] = useState<string | null>(null);
@@ -172,6 +172,8 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms }: Props) => {
       .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
         acadYr,
         sem,
+        dept,
+        sect,
         subjectId: subjCode,
         selectedTerms: terms,
       })
@@ -208,6 +210,7 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms }: Props) => {
     setCombinedData,
     setCurrentGrades,
     setOriginalGrades,
+    setLoading,
     combinedData,
     students,
     errorMessage,
@@ -217,7 +220,7 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms }: Props) => {
   };
 };
 
-export const useCombinedDatav2ForExport = ({ acadYr, sem, subjCode, terms }: Props) => {
+export const useCombinedDatav2ForExport = ({ acadYr, sem, subjCode, terms, dept, sect }: Props) => {
   const [combinedDataForXport, setCombinedDataForXport] = useState<CombinedDataProps[]>([]);
   const [errorMessageXport, setErrorXport] = useState<string | null>(null);
   const [loadingXport, setLoadingXport] = useState<boolean>(true);
@@ -248,6 +251,8 @@ export const useCombinedDatav2ForExport = ({ acadYr, sem, subjCode, terms }: Pro
       .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
         acadYr,
         sem,
+        dept,
+        sect,
         subjectId: subjCode,
         selectedTerms: newTerms, // Use the dynamically computed newTerms
       })

@@ -63,12 +63,10 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
       // Reset everything if "All" is selected in Academic Year
       setSelectedAcadYr("");
       setSelectedSem("");
-      setSelectedTerm("");
     } else {
       // Reset Semester & Term to "All" when selecting another Academic Year
       setSelectedAcadYr(selectedValue);
       setSelectedSem("");
-      setSelectedTerm("");
     }
   };
 
@@ -77,10 +75,8 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
 
     if (selectedValue === "") {
       setSelectedSem("");
-      setSelectedTerm("");
     } else {
       setSelectedSem(selectedValue);
-      setSelectedTerm(""); // Reset Term to "All"
     }
   };
 
@@ -106,7 +102,11 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   };
 
   // Handle subject click
-  const handleSubjectClick = (subject: SubjectData) => {
+  const handleSubjectClick = (
+    subject: SubjectData,
+    acadYr: string,
+    sem: string
+  ) => {
     if (!hasActiveTerms) {
       alert("No active terms available.");
       return;
@@ -116,8 +116,8 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
     const combinedData = {
       ...subject,
       term: [selectedTerm],
-      acadYr: selectedAcadYr,
-      sem: selectedSem,
+      acadYr: selectedAcadYr !== "" ? selectedAcadYr : acadYr,
+      sem: selectedSem !== "" ? selectedSem : sem,
     };
 
     // Set the active panel to "encode" and pass the data
@@ -195,7 +195,11 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
             <ul>
               {subjects.map((subject, index) => (
                 <li key={index}>
-                  <button onClick={() => handleSubjectClick(subject)}>
+                  <button
+                    onClick={() =>
+                      handleSubjectClick(subject, subject.acadYr, subject.sem)
+                    }
+                  >
                     <div>
                       <div className={getClassForDept(subject.dept)}></div>
                       <div className={style.deptName}>

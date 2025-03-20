@@ -63,7 +63,6 @@ export const getAllGrades = async (req, res) => {
   try {
     const gradesData = await db.collection('grades').findOne(
       {
-        dept: dept,
         acadYr: acadYr,
         sem: sem,
         sect: sect,
@@ -298,7 +297,7 @@ export const generateReport = async (req, res) => {
 
 export const getStudentGrades = async (req, res) => {
   try {
-    const { acadYr, sem, subjectId, selectedTerms } = req.body;
+    const { acadYr, sem, subjectId, selectedTerms, dept, section } = req.body;
 
     if (!acadYr || !sem || !subjectId) {
       return res.status(400).json({ success: false, message: "Invalid request parameters." });
@@ -307,7 +306,7 @@ export const getStudentGrades = async (req, res) => {
     const db = getDB();
 
     // Find students enrolled in a subject for a given academic year and semester
-    const enrollment = await db.collection("enrollment").findOne({ acadYr, sem, subjectId });
+    const enrollment = await db.collection("enrollment").findOne({ acadYr, sem, subjectId, section, dept });
 
     if (!enrollment) {
       return res.status(404).json({ success: false, message: "No enrollment records found." });
@@ -368,7 +367,6 @@ export const updateGradeV2 = async (req, res) => {
 
   try {
     const bulkOps = updates.map((update) => {
-
       if (
         !update.SubjectId ||
         !update.StudentId ||
@@ -381,12 +379,12 @@ export const updateGradeV2 = async (req, res) => {
       return {
         updateOne: {
           filter: {
-            subjCode: update.subjCode,
-            "grades.StudentId": update.StudentId,
+            SubjectId: update.SubjectId,
+            StudentId: update.StudentId
           },
           update: {
             $set: {
-              [`grades.$.terms.${update.term}`]: update.grade,
+              [`terms.${update.term}`]: update.grade, 
             },
           },
         },
@@ -416,4 +414,5 @@ export const updateGradeV2 = async (req, res) => {
     });
   }
 };
+
 

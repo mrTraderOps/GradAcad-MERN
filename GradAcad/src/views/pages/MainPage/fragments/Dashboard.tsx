@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Props } from "../../../../models/types/Props";
-import { useSubjects } from "../../../../hooks/useSubjects";
+import { useSubjects, useSubjectsV2 } from "../../../../hooks/useSubjects";
 import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
@@ -41,15 +41,15 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  const { subjects } = useSubjects(LoggeduserName);
-
   const context = useContext(UserContext);
+
+  const { user }: any = context;
 
   if (!context) {
     throw new Error("User role can't read");
   }
 
-  const { user } = context;
+  const { subjects } = useSubjectsV2(user.refId);
 
   const uniqueSections = [
     ...new Set(
@@ -268,6 +268,52 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
                 <div>
                   <p>PERFORMANCE ANALYTICS</p>
                   <div className={styles.selectCont}>
+                    <p>A.Y : </p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSubject}
+                      onChange={(e) => {
+                        setSelectedSubject(e.target.value);
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {filteredSubjects.map((subjectCode, index) => (
+                        <option key={index} value={subjectCode}>
+                          {subjectCode}
+                        </option>
+                      ))}
+                    </select>
+                    <p>SEM : </p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSubject}
+                      onChange={(e) => {
+                        setSelectedSubject(e.target.value);
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {filteredSubjects.map((subjectCode, index) => (
+                        <option key={index} value={subjectCode}>
+                          {subjectCode}
+                        </option>
+                      ))}
+                    </select>
+
+                    <p>SUBJECT : </p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSubject}
+                      onChange={(e) => {
+                        setSelectedSubject(e.target.value);
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {filteredSubjects.map((subjectCode, index) => (
+                        <option key={index} value={subjectCode}>
+                          {subjectCode}
+                        </option>
+                      ))}
+                    </select>
                     <p>SECTION : </p>
                     <select
                       className={styles.sortSelect}
@@ -281,21 +327,6 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
                       {filteredSections.map((section, index) => (
                         <option key={index} value={section}>
                           {section}
-                        </option>
-                      ))}
-                    </select>
-                    <p>SUBJECT : </p>
-                    <select
-                      className={styles.sortSelect}
-                      value={selectedSubject}
-                      onChange={(e) => {
-                        setSelectedSubject(e.target.value);
-                      }}
-                    >
-                      <option value="0">ALL</option>
-                      {filteredSubjects.map((subjectCode, index) => (
-                        <option key={index} value={subjectCode}>
-                          {subjectCode}
                         </option>
                       ))}
                     </select>

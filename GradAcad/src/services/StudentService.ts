@@ -59,18 +59,22 @@ export const StudentGrade = (
 };
 
 export const StudentGradeAll = ( 
+  acadYr: string,
+  sem: string,
   dept: string,
   sect: string,
-  subjCode: string,
+  subjectId: string,
   setGrades: React.Dispatch<React.SetStateAction<any>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   axios
-        .post("http://localhost:5000/api/v1/grade/getAllGrades", {
-          dept: dept,
-          sect: sect,
-          subjCode: subjCode,
+        .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+          acadYr,
+          sem,
+          dept,
+          sect,
+          subjectId
         })
         .then((response) => {
           if (response.data.success && Array.isArray(response.data.data)) {
