@@ -53,15 +53,7 @@ const MainPage = ({ onLogout }: Props) => {
             <Route path="/account_approvals" element={<AccountApproval />} />
             <Route path="/user_management" element={<UserManagement />} />
             <Route path="/audit_trail" element={<AuditTrail />} />
-            <Route
-              path="/settings"
-              element={
-                <Settings
-                  LoggedName={user.name}
-                  LoggeduserName={user.username}
-                />
-              }
-            />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/grade_sheet" element={<Sheet />} />
           </Routes>
         </div>

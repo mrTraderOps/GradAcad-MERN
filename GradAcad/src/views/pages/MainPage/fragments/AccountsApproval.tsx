@@ -3,12 +3,13 @@ import styles from "../styles/AccountApproval.module.scss";
 import searchIcon from "../../../../assets/images/search_Icon.png";
 import arrow from "../../../../assets/icons/arrow.png";
 import closeIcon from "../../../../assets/icons/x-button.png";
-import { handlePending } from "../../../../services/UserService";
+import { getAllUsers, handlePending } from "../../../../services/UserService";
 import axios from "axios";
 
 interface Account {
   _id: string;
   studentId?: string;
+  refId?: string;
   name: string;
   email: string;
   role: string;
@@ -26,7 +27,8 @@ const AccountApproval = () => {
 
   useEffect(() => {
     handlePending(setPendingAccounts, setErrorMessage);
-  }, []);
+    getAllUsers(setApprovedAccounts, setErrorMessage);
+  }, [currentPanel]);
 
   const formatDate = (): string => {
     const now = new Date();
@@ -44,26 +46,23 @@ const AccountApproval = () => {
   };
 
   const handleApprove = async (id: string) => {
-    // Ensure id is string
     try {
       const response = await axios.post(
         "http://localhost:5000/api/v1/user/approveAccount",
-        {
-          id: id.toString(), // Send id as string
-        }
+        { id }
       );
 
       if (response.data.success) {
-        setPendingAccounts((prevAccounts) =>
-          prevAccounts.filter((account) => account._id !== id)
+        setPendingAccounts((prev) =>
+          prev.filter((account) => account._id !== id)
         );
 
         const accountToApprove = pendingAccounts.find(
           (account) => account._id === id
         );
         if (accountToApprove) {
-          setApprovedAccounts((prevAccounts) => [
-            ...prevAccounts,
+          setApprovedAccounts((prev) => [
+            ...prev,
             { ...accountToApprove, approvedAt: formatDate() },
           ]);
         }
@@ -78,10 +77,25 @@ const AccountApproval = () => {
     }
   };
 
-  const handleReject = (id: any) => {
-    setPendingAccounts((prevAccounts) =>
-      prevAccounts.filter((account) => account._id !== id)
-    );
+  const handleReject = async (id: string) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/user/rejectAccount",
+        { id }
+      );
+
+      if (response.data.success) {
+        setPendingAccounts((prev) =>
+          prev.filter((account) => account._id !== id)
+        );
+        alert("Account rejected successfully!");
+      } else {
+        alert("Failed to reject account: " + response.data.message);
+      }
+    } catch (error) {
+      console.error("Error rejecting account:", error);
+      alert("An error occurred while rejecting the account.");
+    }
   };
 
   const closeModal = () => {
@@ -152,30 +166,31 @@ const AccountApproval = () => {
                   <div className={styles.accountInfo}>
                     <p>
                       <strong>Role: </strong>
-                      {displayRole} {/* Use the transformed role here */}
+                      <p style={{ fontWeight: "normal" }}> {displayRole}</p>
                     </p>
-                    <span className={styles.divider}>|</span>
                     {account.role === "student" && (
                       <>
                         <p>
                           <strong>Student ID: </strong>
-                          {account.studentId}
+                          <p style={{ fontWeight: "normal" }}>
+                            {account.studentId}
+                          </p>
                         </p>
-                        <span className={styles.divider}>|</span>
                       </>
                     )}
                     <p>
                       <strong>Registered Name: </strong>
-                      {account.name}
+                      <p style={{ fontWeight: "normal" }}>{account.name}</p>
                     </p>
-                    <span className={styles.divider}>|</span>
                     <p>
                       <strong>Registered E-mail Address: </strong>
-                      {account.email}
+                      <p style={{ fontWeight: "normal" }}>{account.email}</p>
                     </p>
                     <p>
                       <strong>Created At: </strong>
-                      {account.createdAt}
+                      <p style={{ fontWeight: "normal" }}>
+                        {account.createdAt}
+                      </p>
                     </p>
                   </div>
                   <div className={styles.actions}>
@@ -210,32 +225,32 @@ const AccountApproval = () => {
               <div className={styles.accountInfo}>
                 <p>
                   <strong>Role: </strong>
-                  {roleMapping[account.role] || account.role}{" "}
-                  {/* Transform the role here as well */}
+                  <p style={{ fontWeight: "normal" }}>
+                    {roleMapping[account.role] || account.role}{" "}
+                  </p>
                 </p>
-                <span className={styles.divider}>|</span>
                 {account.role === "student" && (
                   <>
                     <p>
                       <strong>Student ID: </strong>
-                      {account.studentId}
+                      <p style={{ fontWeight: "normal" }}>
+                        {account.studentId}
+                      </p>
                     </p>
-                    <span className={styles.divider}>|</span>
                   </>
                 )}
                 <p>
                   <strong>Registered Name: </strong>
-                  {account.name}
+                  <p style={{ fontWeight: "normal" }}>{account.name}</p>
                 </p>
-                <span className={styles.divider}>|</span>
+
                 <p>
                   <strong>Registered E-mail Address: </strong>
-                  {account.email}
+                  <p style={{ fontWeight: "normal" }}>{account.email}</p>
                 </p>
-                <span className={styles.divider}>|</span>
                 <p>
                   <strong>Approved At: </strong>
-                  {account.approvedAt}
+                  <p style={{ fontWeight: "normal" }}>{account.approvedAt}</p>
                 </p>
               </div>
             </div>

@@ -52,7 +52,7 @@ export const handlePending = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   axios
-    .get("http://localhost:5000/api/v1/user/getUsersPending")
+    .get("http://localhost:5000/api/v1/user/getPendingUsers")
     .then((response) => {
       if (response.data.success) {
         setPending(response.data.pending); 
@@ -65,4 +65,23 @@ export const handlePending = (
       setErrorMessage(message);
     });
 }
+
+export const getAllUsers = ( 
+  setUsers: React.Dispatch<React.SetStateAction<any>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+) => {
+  axios
+    .get("http://localhost:5000/api/v1/user/getAllUsers")
+    .then((response) => {
+      if (response.data.success) {
+        setUsers(response.data.users); 
+      } else {
+        setErrorMessage(response.data.message || "Invalid credentials.");
+      }
+    })
+    .catch((error) => {
+      const message = error.response?.data?.message || "An error occurred.";
+      setErrorMessage(message);
+    });
+  }
 

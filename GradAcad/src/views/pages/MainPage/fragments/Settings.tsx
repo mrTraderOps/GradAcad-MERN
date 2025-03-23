@@ -1,10 +1,9 @@
 import style from "../styles/Settings.module.scss";
-import { Props } from "../../../../models/types/Props";
 import { useContext, useState } from "react";
 import see from "../../../../assets/images/see.png";
 import unsee from "../../../../assets/images/unsee.png";
 import { UserContext } from "../../../../context/UserContext";
-const Settings = ({ LoggedName, LoggeduserName }: Props) => {
+const Settings = () => {
   const [isProfile, setProfile] = useState(true);
   const [isUnsee, setUnsee] = useState(true);
 
@@ -41,7 +40,7 @@ const Settings = ({ LoggedName, LoggeduserName }: Props) => {
                 width={100}
               />
               <div>
-                <h2>{LoggedName}</h2>
+                <h2>{user?.name}</h2>
                 <p style={{ color: "rgb(37, 35, 35)", fontWeight: 500 }}>
                   {user
                     ? user.role === "registrar"
@@ -51,7 +50,7 @@ const Settings = ({ LoggedName, LoggeduserName }: Props) => {
                       : "Pending"
                     : "User role can't read"}
                 </p>
-                <p>{LoggeduserName}@gmail.com</p>
+                <p>{user?.email}@gmail.com</p>
               </div>
             </div>
           </div>
@@ -61,17 +60,6 @@ const Settings = ({ LoggedName, LoggeduserName }: Props) => {
                 <h3>PERSONAL INFORMATION</h3>
                 <span>
                   <section>
-                    <p style={{ color: "rgb(37, 35, 35)", fontWeight: 700 }}>
-                      Full Name:
-                      <p
-                        style={{
-                          color: "rgba(37, 35, 35, 0.8)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {user?.name}
-                      </p>
-                    </p>
                     <p style={{ color: "rgb(37, 35, 35)", fontWeight: 700 }}>
                       Contact Number:
                       <p
