@@ -34,6 +34,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
   const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedTerm, setSelectedTerm] = useState<string>(initialTerm);
+  const [isSorting, setIsSorting] = useState(true);
 
   // Fetch subjects and terms
   // const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
@@ -43,18 +44,16 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
     loading: subjectsLoading,
   } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem);
 
-  // Sync selected values with initial values
   useEffect(() => {
+    setIsSorting(true); // Start sorting
     setSelectedAcadYr(initialAcadYr);
-  }, [initialAcadYr]);
-
-  useEffect(() => {
     setSelectedSem(initialSem);
-  }, [initialSem]);
-
-  useEffect(() => {
     setSelectedTerm(initialTerm);
-  }, [initialTerm]);
+
+    setTimeout(() => {
+      setIsSorting(false);
+    }, 2000); // Adjust time as needed
+  }, [initialAcadYr, initialSem, initialTerm]);
 
   const handleAcadYrChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
@@ -126,10 +125,12 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
 
   return (
     <>
-      <header>
+      <header style={{ gap: "100px" }}>
         <h2>Subjects</h2>
         <div>
-          <label htmlFor="academicYear">Academic Year:</label>
+          <label htmlFor="academicYear" style={{ textWrap: "nowrap" }}>
+            Academic Year:
+          </label>
           <select
             id="academicYear"
             value={selectedAcadYr}
@@ -145,7 +146,12 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
         </div>
         <div>
           <label htmlFor="sem">Semester:</label>
-          <select id="sem" value={selectedSem} onChange={handleSemChange}>
+          <select
+            id="sem"
+            value={selectedSem}
+            onChange={handleSemChange}
+            style={{}}
+          >
             <option value="">All</option>
             {activeSems.map((sem) => (
               <option key={sem} value={sem}>
@@ -172,7 +178,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
       </header>
 
       <main className={courseStyles.mainSubjects}>
-        {subjectsLoading ? (
+        {subjectsLoading || isSorting ? (
           <div className={courseStyles.loading}>
             <h2>Loading.. Please Wait</h2>
             <video

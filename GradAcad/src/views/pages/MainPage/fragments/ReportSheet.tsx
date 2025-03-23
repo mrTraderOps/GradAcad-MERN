@@ -2,14 +2,16 @@ import styles from "../fragments/students_panel/styles/StudentsPanel.module.scss
 import style from "../styles/Department.module.scss";
 import { useContext, useMemo } from "react";
 import { UserContext } from "../../../../context/UserContext";
-import { useTerm } from "../../../../hooks/useTerm";
-import { useCombinedData } from "../../../../hooks/useCombinedData";
+import {
+  useCombinedDatav2,
+  useCombinedDatav2ForExport,
+} from "../../../../hooks/useCombinedData";
 import ExportExcel from "../../../../utils/ExportExcel";
 import { calculateAverage } from "../../../../utils/helpers/calculateAve";
 import { calculateEQ } from "../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../utils/helpers/getRemarks";
 import { useNavigate } from "react-router-dom";
-
+import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 const ReportSheet = () => {
   const context = useContext(UserContext);
   const nav = useNavigate();
@@ -20,31 +22,38 @@ const ReportSheet = () => {
 
   const { user, confirmData } = context;
 
-  const { subjCode, subjName, dept, sect } = confirmData[0];
+  const { subjCode, subjName, dept, sect, acadYr, sem } = confirmData[0];
 
-  const { terms } = useTerm();
+  const requestParams = useMemo(
+    () => ({
+      acadYr,
+      sem,
+      dept,
+      sect,
+      subjCode,
+      terms: [""],
+    }),
+    [acadYr, sem, dept, sect, subjCode]
+  );
 
-  const activeTerms = useMemo(() => {
-    return terms.length > 0
-      ? Object.entries(terms[0].term[0])
-          .filter(([_, value]) => value)
-          .map(([key]) => key.toUpperCase())
-      : [];
-  }, [terms]);
+  const { combinedData, errorMessage, loading } =
+    useCombinedDatav2(requestParams);
 
-  const { combinedData, errorMessage, loading } = useCombinedData({
-    dept,
-    sect: sect,
-    subjCode: subjCode,
-    terms: activeTerms,
-  });
+  const {
+    combinedDataForXport,
+    loadingXport,
+    errorMessageXport,
+    setLoadingXport,
+  } = useCombinedDatav2ForExport(requestParams);
 
   return (
     <>
       <div className={style.department}>
         <div className={styles.preloader}>
           <p>Subject &gt; Section </p>
-          <p>First Semester A.Y. 2023-2024</p>
+          <p>
+            {sem} Semester A.Y. {acadYr}
+          </p>
         </div>
         <header className={styles.headerStudentsPanel}>
           <div className={styles.div1}>
@@ -62,19 +71,44 @@ const ReportSheet = () => {
 
           <div className={styles.div2}>
             <p>
-              COURSE & SECTION : {dept} - {sect}
+              COURSE & SECTION :{" "}
+              <strong>
+                {dept} - {sect}
+              </strong>
             </p>
           </div>
 
           <div className={styles.div3}>
-            <ExportExcel
-              combinedData={combinedData}
-              loggedName={user?.name ?? ""}
-              dept={dept}
-              subjectCode={subjCode}
-              subjectName={subjName}
-              section={sect}
-            />
+            {loadingXport && (
+              <div className={styles.loading}>
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  className={styles.loadingAnimation}
+                  width={60}
+                >
+                  <source src={loadingHorizontal} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+            {errorMessageXport && (
+              <p className={styles.error}>{errorMessageXport}</p>
+            )}
+            {!loadingXport && !errorMessageXport && (
+              <ExportExcel
+                combinedData={combinedDataForXport}
+                loggedName={user?.name ?? ""}
+                dept={dept}
+                subjectCode={subjCode}
+                subjectName={subjName}
+                section={sect}
+                sem={sem}
+                acadYr={acadYr}
+                setLoadingExporting={setLoadingXport}
+              />
+            )}
           </div>
         </header>
         <main className={styles.main}>
@@ -92,21 +126,15 @@ const ReportSheet = () => {
                       <th>
                         <h5>STUDENT NAME</h5>
                       </th>
-                      {activeTerms.includes("PRELIM") && (
-                        <th>
-                          <h5>PRELIM</h5>
-                        </th>
-                      )}
-                      {activeTerms.includes("MIDTERM") && (
-                        <th>
-                          <h5>MIDTERM</h5>
-                        </th>
-                      )}
-                      {activeTerms.includes("FINAL") && (
-                        <th>
-                          <h5>FINAL</h5>
-                        </th>
-                      )}
+                      <th>
+                        <h5>PRELIM</h5>
+                      </th>
+                      <th>
+                        <h5>MIDTERM</h5>
+                      </th>
+                      <th>
+                        <h5>FINAL</h5>
+                      </th>
                       <th>
                         <h5>AVERAGE</h5>
                       </th>
@@ -142,15 +170,9 @@ const ReportSheet = () => {
                               row.MiddleInitial ?? ""
                             }.`}
                           </td>
-                          {activeTerms.includes("PRELIM") && (
-                            <td>{row.terms.PRELIM}</td>
-                          )}
-                          {activeTerms.includes("MIDTERM") && (
-                            <td>{row.terms.MIDTERM}</td>
-                          )}
-                          {activeTerms.includes("FINAL") && (
-                            <td>{row.terms.FINAL}</td>
-                          )}
+                          <td>{row.terms.PRELIM}</td>
+                          <td>{row.terms.MIDTERM}</td>
+                          <td>{row.terms.FINAL}</td>
                           <td>{average.toFixed(2)}</td>
                           <td>{gradeEq}</td>
                           <td className={isFailed ? styles.fail : ""}>

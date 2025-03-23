@@ -24,9 +24,6 @@
                 padding: 10px;
             }
         
-        nav {
-            
-        }
             ul {
                 padding-left: 10px;
                 margin: 0;
@@ -136,11 +133,11 @@
         }
 
         .analytics {
-            width: 57%;
+            width: 67%;
         }
 
         .courseSum {
-            width: 40%;
+            width: 30%;
         }
 
         .analytics, .courseSum {     
@@ -154,8 +151,9 @@
                     font-weight: $extraBold;
                 }
                 .selectCont {
-                    padding: 8px 0px;
+                    padding: 15px 0px;
                     display: flex;
+                    justify-content: center;
                     gap: 10px;
                     align-items: center;
                 

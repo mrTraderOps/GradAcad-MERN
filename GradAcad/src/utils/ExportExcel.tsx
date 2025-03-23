@@ -332,8 +332,19 @@ const ExportExcel = ({
         });
       });
 
-      // **Add "Approved by" and "Noted by:" below the last student**
-      // const lastRowIndex = combinedData.length + 1; // Index after the last student row
+      const nothingfollows = worksheet.addRow([]);
+      nothingfollows.getCell(4).value = "***NOTHING FOLLOWS***";
+      nothingfollows.getCell(4).font = {
+        name: "Arial",
+        bold: true,
+        size: 11,
+        italic: true,
+      };
+
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+      worksheet.addRow([]);
+
       const approvedByRow = worksheet.addRow([]); // Empty row
       approvedByRow.getCell(4).value = "Approved by:"; // Column 4 (PRELIM)
       approvedByRow.getCell(7).value = "Noted by:"; // Column 7 (FINAL GRADE)

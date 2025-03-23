@@ -240,60 +240,52 @@ export const insertGrade = async (req, res) => {
 };
 
 export const generateReport = async (req, res) => {
-  const { username } = req.body;
+  const { refId } = req.body;
 
-  if (!username) {
-    return res.status(400).json({ success: false, message: "Username is required." });
+  if (!refId) {
+    return res.status(400).json({ success: false, message: "Instructor ID is required." });
   }
 
   try {
     const db = getDB();
 
-    // Step 1: Find all instructor documents where the username exists
-    const instructorDocs = await db.collection("instructors").find({
-      [username]: { $exists: true }
-    }).toArray();
+    // 🔍 Step 1: Query enrollment collection and join with subjects collection
+    const instructorDocs = await db.collection("enrollment").aggregate([
+      {
+        $match: { profId: refId }, // 🔥 Filter by Instructor ID
+      },
+      {
+        $lookup: {
+          from: "subjects", // 🔗 Join with subjects collection
+          localField: "subjectId", // 🔍 Match 'subjectId' in 'enrollment'
+          foreignField: "_id", // 🔍 Match '_id' in 'subjects'
+          as: "subjectDetails", // 🔄 Store result in 'subjectDetails'
+        },
+      },
+      {
+        $project: {
+          acadYr: 1,
+          sem: 1,
+          subjectId: 1,
+          dept: 1,
+          sect: 1,
+          subjectName: { $arrayElemAt: ["$subjectDetails.subjectName", 0] }, // 🎯 Extract subjectName
+        },
+      },
+    ]).toArray();
 
     if (!instructorDocs.length) {
       return res.status(404).json({ success: false, message: "No records found." });
     }
 
-    // Step 2: Process data and group by acadYr & sem
-    const groupedData = {};
-
-    instructorDocs.forEach((doc) => {
-      const acadYrKey = doc.acadYr;
-      const semKey = doc.sem;
-
-      if (!groupedData[acadYrKey]) {
-        groupedData[acadYrKey] = {};
-      }
-      if (!groupedData[acadYrKey][semKey]) {
-        groupedData[acadYrKey][semKey] = [];
-      }
-
-      // Step 3: Extract subject details (without filtering)
-      let subjects = doc[username] || [];
-
-      // Step 4: Add subjects to the correct acadYr & sem group
-      groupedData[acadYrKey][semKey].push(...subjects);
-    });
-
-    // Step 5: Convert groupedData into response format
-    const formattedData = Object.entries(groupedData).map(([acadYr, semesters]) =>
-      Object.entries(semesters).map(([sem, details]) => ({
-        acadYr,
-        sem,
-        details
-      }))
-    ).flat();
-
-    res.status(200).json({ success: true, data: formattedData });
+    res.status(200).json({ success: true, data: instructorDocs });
 
   } catch (error) {
+    console.error("Error generating report:", error);
     res.status(500).json({ success: false, message: "Server error.", error: error.message });
   }
 };
+
 
 export const getStudentGrades = async (req, res) => {
   try {

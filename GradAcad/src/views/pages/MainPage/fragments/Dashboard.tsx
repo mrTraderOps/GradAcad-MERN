@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Props } from "../../../../models/types/Props";
-import { useSubjects, useSubjectsV2 } from "../../../../hooks/useSubjects";
+import { useSubjectsV2 } from "../../../../hooks/useSubjects";
 import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
@@ -30,12 +30,14 @@ interface LabelProps {
   index: number;
 }
 
-const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
+const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   const [roleName, setRoleName] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("0");
   const [selectedSection, setSelectedSection] = useState("0");
+  const [selectedAcadYr, setSelectedAcadYr] = useState("0");
+  const [selectedSem, setSelectedSem] = useState("0");
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setError] = useState<string | null>(null);
   const [grades, setGrades] = useState<GradeData[]>([]);
@@ -51,9 +53,18 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
 
   const { subjects } = useSubjectsV2(user.refId);
 
+  const uniqueAcadYrs = [...new Set(subjects.map((subject) => subject.acadYr))];
+  const uniqueSems = [...new Set(subjects.map((subject) => subject.sem))];
+
   const uniqueSections = [
     ...new Set(
-      subjects.map((subject) => `${subject.dept} - ${subject.section}`)
+      subjects
+        .filter(
+          (subject) =>
+            (selectedAcadYr === "0" || subject.acadYr === selectedAcadYr) &&
+            (selectedSem === "0" || subject.sem === selectedSem)
+        )
+        .map((subject) => `${subject.dept} - ${subject.section}`)
     ),
   ];
 
@@ -65,7 +76,10 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
             subjects
               .filter(
                 (subject) =>
-                  `${subject.dept} - ${subject.section}` === selectedSection
+                  `${subject.dept} - ${subject.section}` === selectedSection &&
+                  (selectedAcadYr === "0" ||
+                    subject.acadYr === selectedAcadYr) &&
+                  (selectedSem === "0" || subject.sem === selectedSem)
               )
               .map((subject) => subject.subjectCode)
           ),
@@ -77,13 +91,32 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
       : [
           ...new Set(
             subjects
-              .filter((subject) => subject.subjectCode === selectedSubject)
+              .filter(
+                (subject) =>
+                  subject.subjectCode === selectedSubject &&
+                  (selectedAcadYr === "0" ||
+                    subject.acadYr === selectedAcadYr) &&
+                  (selectedSem === "0" || subject.sem === selectedSem)
+              )
               .map((subject) => `${subject.dept} - ${subject.section}`)
           ),
         ];
 
+  // Sync Selected Values
   useEffect(() => {
-    if (!selectedSection || !selectedSubject) {
+    setSelectedAcadYr("0");
+    setSelectedSem("0");
+    setSelectedSubject("0");
+    setSelectedSection("0");
+  }, [subjects]);
+
+  useEffect(() => {
+    if (
+      !selectedAcadYr ||
+      !selectedSem ||
+      !selectedSection ||
+      !selectedSubject
+    ) {
       setError("Missing required parameters");
       setLoading(false);
       return;
@@ -95,6 +128,8 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
     const subjCode = selectedSubject === "0" ? "" : selectedSubject;
 
     StudentGradeAll(
+      selectedAcadYr,
+      selectedSem,
       dept,
       sect,
       subjCode,
@@ -107,7 +142,7 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
         setLoading(false);
       }
     );
-  }, [selectedSection, selectedSubject]);
+  }, [selectedAcadYr, selectedSem, selectedSection, selectedSubject]);
 
   const calculatePassFail = (grades: GradeData[]) => {
     const studentAverages = grades.map((grade) => {
@@ -268,27 +303,50 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
                 <div>
                   <p>PERFORMANCE ANALYTICS</p>
                   <div className={styles.selectCont}>
-                    <p>A.Y : </p>
+                    <p>A.Y:</p>
                     <select
                       className={styles.sortSelect}
-                      value={selectedSubject}
+                      value={selectedAcadYr}
                       onChange={(e) => {
-                        setSelectedSubject(e.target.value);
+                        setSelectedAcadYr(e.target.value);
+                        setSelectedSem("0");
+                        setSelectedSection("0");
+                        setSelectedSubject("0");
                       }}
                     >
                       <option value="0">ALL</option>
-                      {filteredSubjects.map((subjectCode, index) => (
-                        <option key={index} value={subjectCode}>
-                          {subjectCode}
+                      {uniqueAcadYrs.map((acadYr, index) => (
+                        <option key={index} value={acadYr}>
+                          {acadYr}
                         </option>
                       ))}
                     </select>
-                    <p>SEM : </p>
+
+                    <p>SEM:</p>
+                    <select
+                      className={styles.sortSelect}
+                      value={selectedSem}
+                      onChange={(e) => {
+                        setSelectedSem(e.target.value);
+                        setSelectedSection("0");
+                        setSelectedSubject("0");
+                      }}
+                    >
+                      <option value="0">ALL</option>
+                      {uniqueSems.map((sem, index) => (
+                        <option key={index} value={sem}>
+                          {sem}
+                        </option>
+                      ))}
+                    </select>
+
+                    <p>SUBJECT:</p>
                     <select
                       className={styles.sortSelect}
                       value={selectedSubject}
                       onChange={(e) => {
                         setSelectedSubject(e.target.value);
+                        setSelectedSection("0");
                       }}
                     >
                       <option value="0">ALL</option>
@@ -299,28 +357,12 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
                       ))}
                     </select>
 
-                    <p>SUBJECT : </p>
-                    <select
-                      className={styles.sortSelect}
-                      value={selectedSubject}
-                      onChange={(e) => {
-                        setSelectedSubject(e.target.value);
-                      }}
-                    >
-                      <option value="0">ALL</option>
-                      {filteredSubjects.map((subjectCode, index) => (
-                        <option key={index} value={subjectCode}>
-                          {subjectCode}
-                        </option>
-                      ))}
-                    </select>
-                    <p>SECTION : </p>
+                    <p>SECTION:</p>
                     <select
                       className={styles.sortSelect}
                       value={selectedSection}
                       onChange={(e) => {
                         setSelectedSection(e.target.value);
-                        setSelectedSubject("0");
                       }}
                     >
                       <option value="0">ALL</option>
@@ -520,7 +562,7 @@ const Dashboard = ({ LoggedName, userRole, LoggeduserName }: Props) => {
       <GenerateReport
         isOpen={showModal}
         onCancel={handleCancelSubmit}
-        loggedUserName={LoggeduserName ?? ""}
+        userId={user.refId}
       />
     </>
   );

@@ -27,15 +27,14 @@
 }
 
 .closeButton {
-    color: $darkblue;
+    color: #00173F;
     position: fixed;
-    top: 10px;
-    right: 10px;
+    top: 7%;
+    right: 29%;
     background: none;
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: white;
 }
 
 .content {
@@ -179,10 +178,6 @@
         }
     }
 }
-
-// select {
-//     height: 20%;
-// }
 
 .submitButton {
     background-color: $darkblue;

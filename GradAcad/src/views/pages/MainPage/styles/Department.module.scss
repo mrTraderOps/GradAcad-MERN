@@ -15,11 +15,11 @@
         align-items: center;
         height: 10%;
         padding-top: 10px;
-        gap: 111px;
+        gap: 20px;
 
         div {
 
-            width: 30%;
+            width: 40%;
             label {
                 align-self: center;
                 padding-top: 0px;
@@ -28,8 +28,12 @@
             }
     
             select {
+                
+                padding: 6px;
+                
+                font-size: $semiMedium;
                 height: 60%;
-                width: 50%;
+                width: 65%;
             }
         }
     }
@@ -91,7 +95,7 @@
 
                             footer {
                                 p {
-                                    font-size: $Small - 2px;
+                                    font-size: $Small + 1;
                                     color: $black;
                                 }
                             }

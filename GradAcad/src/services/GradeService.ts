@@ -37,7 +37,7 @@ export const InsertGrade = (
 }
 
 export const GenerateReportService = async (
-  loggedUsername: string,
+  refId: string,
   setResponse: React.Dispatch<React.SetStateAction<any>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
   setLoading: React.Dispatch<React.SetStateAction<boolean>>
@@ -48,7 +48,7 @@ export const GenerateReportService = async (
     // Send only the loggedUsername in the request body
     const response = await axios.post(
       "http://localhost:5000/api/v1/grade/generateReport",
-      { username: loggedUsername } // Only include the username
+      { refId } // Only include the username
     );
 
     if (response.data?.success) {

@@ -17,6 +17,7 @@ interface ConfirmData {
   sect: string;
   subjCode: string;
   subjName: string;
+  terms?: [string];
 }
 
 interface UserContextType {
@@ -37,16 +38,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Default value for confirmData
-  const [confirmData, setConfirmData] = useState<ConfirmData[]>([
-    {
-      sem: "First",
-      acadYr: "2024-2025",
-      dept: "BSCS",
-      sect: "1A",
-      subjCode: "CSC 1",
-      subjName: "Introduction to Computing",
-    },
-  ]);
+  const [confirmData, setConfirmData] = useState<ConfirmData[]>([]);
 
   // Function to add confirmation data to the array
   const addConfirmData = (data: ConfirmData) => {

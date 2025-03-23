@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "./styles/AreYouSure.module.scss";
-import { useGrade } from "../../hooks/useGrade";
+import { DetailProps, useGrade } from "../../hooks/useGrade";
 import { UserContext } from "../../context/UserContext";
 import loadingAnimation from "../../assets/webM/loading.webm";
 import { useNavigate } from "react-router-dom";
@@ -8,13 +8,17 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   isOpen: boolean;
   onCancel: () => void;
-  loggedUserName: string;
+  userId: string;
 }
 
-export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
+export const GenerateReport = ({ isOpen, onCancel, userId }: Props) => {
   const navigate = useNavigate();
-  const { addConfirmData }: any = useContext(UserContext);
-  const { data, errorMessage, loading } = useGrade(loggedUserName);
+
+  const context = useContext(UserContext);
+  const { addConfirmData }: any = context;
+
+  const { data, errorMessage, loading } = useGrade(userId);
+
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
   const [errorModal, setErrorMessage] = useState("");
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
@@ -23,53 +27,84 @@ export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (errorMessage) {
-    return <div>Error: {errorMessage}</div>;
-  }
+  const [filteredData, setFilteredData] = useState<DetailProps[]>([]);
+  const [filteredCourses, setFilteredCourses] = useState<string[]>([]);
+  const [filteredSections, setFilteredSections] = useState<string[]>([]);
+  const [uniqueDept, setUniqueDepts] = useState<string[]>([]);
 
   // Extract unique academic years and semesters from data
   const uniqueAcadYrs = [...new Set(data?.map((item) => item.acadYr) || [])];
   const uniqueSems = [...new Set(data?.map((item) => item.sem) || [])];
 
-  const filteredData =
-    data
-      ?.filter(
+  useEffect(() => {
+    setFilteredData([]);
+    setUniqueDepts([]);
+    setFilteredCourses([]);
+    setFilteredSections([]);
+
+    if (!selectedAcadYr || !selectedSem) return;
+
+    // ✅ Step 1: Filter data based on Academic Year & Semester
+    const newFilteredData =
+      data?.filter(
         (item) => item.acadYr === selectedAcadYr && item.sem === selectedSem
+      ) || [];
+
+    setFilteredData(newFilteredData);
+
+    // ✅ Step 2: Extract unique departments
+    setUniqueDepts([
+      ...new Set(newFilteredData.map((item) => item.dept) || []),
+    ]);
+
+    // ✅ Reset Course and Section when AcadYr/Sem changes
+    setSelectedDept("");
+    setSelectedCourse("");
+    setSelectedSection("");
+  }, [selectedAcadYr, selectedSem, data]);
+
+  useEffect(() => {
+    if (!selectedDept) {
+      setFilteredCourses([]);
+      setFilteredSections([]);
+      return;
+    }
+
+    // ✅ Step 3: Filter Courses based on selected Department
+    const newFilteredCourses = filteredData
+      .filter((item) => item.dept === selectedDept)
+      .map((item) => ({
+        courseCode: item.subjectId,
+        courseSubject: item.subjectName || "Unknown",
+      }));
+
+    setFilteredCourses([
+      ...new Set(
+        newFilteredCourses.map(
+          (course) => `${course.courseCode} - ${course.courseSubject}`
+        )
+      ),
+    ]);
+
+    setSelectedCourse(""); // Reset course selection when dept changes
+  }, [selectedDept, filteredData]);
+
+  useEffect(() => {
+    if (!selectedCourse) {
+      setFilteredSections([]);
+      return;
+    }
+
+    // ✅ Step 4: Filter Sections based on selected Course
+    const newFilteredSections = filteredData
+      .filter(
+        (item) =>
+          `${item.subjectId} - ${item.subjectName}` === selectedCourse.trim()
       )
-      .flatMap((item) => item.details) || [];
+      .map((item) => item.sect);
 
-  // Extract unique departments from filtered data
-  const uniqueDepts = [...new Set(filteredData.map((detail) => detail.dept))];
-
-  const filteredCourses = filteredData
-    .filter((detail) => detail.dept === selectedDept)
-    .map((detail) => ({
-      courseCode: detail.subjectCode,
-      courseSubject: detail.subjectName,
-    }));
-
-  // Extract unique course codes and subjects
-  const uniqueCourses = [
-    ...new Set(
-      filteredCourses.map(
-        (course) => `${course.courseCode} - ${course.courseSubject}`
-      )
-    ),
-  ];
-
-  const filteredSections = filteredData
-    .filter(
-      (detail) =>
-        detail.dept === selectedDept &&
-        `${detail.subjectCode} - ${detail.subjectName}` === selectedCourse
-    )
-    .map((detail) => detail.section);
-
-  const uniqueSections = [...new Set(filteredSections)];
+    setFilteredSections([...new Set(newFilteredSections)]);
+  }, [selectedCourse, filteredData]);
 
   const isGenerateDisabled =
     !selectedAcadYr ||
@@ -115,7 +150,11 @@ export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
 
   return (
     <div className={styles.modalOverlay}>
-      {ModalContentLoading ? (
+      {loading ? (
+        <div>Loading...</div>
+      ) : errorMessage ? (
+        <div>Error: {errorMessage}</div>
+      ) : ModalContentLoading ? (
         <div className={styles.modalContent1}>
           <h2>Loading.. Please Wait</h2>
           <video
@@ -176,7 +215,7 @@ export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
               onChange={(e) => setSelectedDept(e.target.value)}
             >
               <option value="">Select Department</option>
-              {uniqueDepts.map((dept, index) => (
+              {uniqueDept.map((dept, index) => (
                 <option key={index} value={dept}>
                   {dept}
                 </option>
@@ -194,7 +233,7 @@ export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
               onChange={(e) => setSelectedCourse(e.target.value)}
             >
               <option value="">Select Course</option>
-              {uniqueCourses.map((course, index) => (
+              {filteredCourses.map((course, index) => (
                 <option key={index} value={course}>
                   {course}
                 </option>
@@ -211,7 +250,7 @@ export const GenerateReport = ({ isOpen, onCancel, loggedUserName }: Props) => {
               onChange={(e) => setSelectedSection(e.target.value)}
             >
               <option value="">Select Section</option>
-              {uniqueSections.map((section, index) => (
+              {filteredSections.map((section, index) => (
                 <option key={index} value={section}>
                   {section}
                 </option>

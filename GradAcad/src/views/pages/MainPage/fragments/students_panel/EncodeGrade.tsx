@@ -8,7 +8,6 @@ import {
 import { downloadCSV } from "../../../../../utils/helpers/downloadCSV";
 import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
-import AreYousure from "../../../../components/AreYouSure";
 import { SubjectData } from "../../../../../models/types/SubjectData";
 import { GradingReference } from "../../../../components/EqScale";
 import axios from "axios";
@@ -19,6 +18,8 @@ import dropdownIcon from "../../../../../assets/icons/dropdown_icon.png";
 import ExportExcel from "../../../../../utils/ExportExcel";
 import { UserContext } from "../../../../../context/UserContext";
 import { useTerm } from "../../../../../hooks/useTerm";
+import pencilIcon from "../../../../../assets/icons/pencil.png";
+import saveIcon from "../../.././../../assets/icons/diskette.png";
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
@@ -54,7 +55,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     handleInputChange,
     setCurrentGrades,
     setOriginalGrades,
-    setLoading,
     errorMessage,
     loading,
     students,
@@ -91,7 +91,17 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
   const [isEditing, setIsEditing] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+
+  const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
+  const [loadingRows, setLoadingRows] = useState<Record<string, boolean>>({});
+  const editingCount = Object.values(editingRows).filter(Boolean).length;
+
+  const toggleEdit = (studentId: string) => {
+    setEditingRows((prev) => ({
+      ...prev,
+      [studentId]: !prev[studentId],
+    }));
+  };
 
   type TermName = "PRELIM" | "MIDTERM" | "FINAL";
 
@@ -167,34 +177,68 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     });
   };
 
-  const toggleMode = () => {
-    if (isEditing) {
-      setShowModal(true); // Open modal before saving
-    } else {
-      setIsEditing(true);
-    }
-  };
-
   const changedStudents = Object.keys(currentGrades).filter(
     (studentId) => currentGrades[studentId] !== originalGrades[studentId]
   );
 
-  const handleConfirmSave = async () => {
-    setLoading(true);
-    setLoadingXport(true);
+  const handleConfirmSave = async (studentId: string) => {
+    setLoadingRows((prev) => ({ ...prev, [studentId]: true })); // Start loading
 
-    console.log("changedStudents before save:", changedStudents);
-    console.log("currentGrades before save:", currentGrades);
-    console.log("originalGrades before save:", originalGrades);
-
-    if (changedStudents.length === 0) {
-      setShowModal(false);
-      setIsEditing(false);
-      console.log("No Change of Student Grade");
+    if (!changedStudents.includes(studentId)) {
+      setEditingRows((prev) => ({ ...prev, [studentId]: false }));
+      setLoadingRows((prev) => ({ ...prev, [studentId]: false })); // Stop loading
+      console.log("No changes for Student:", studentId);
       return;
     }
 
-    const updates = changedStudents.map((studentId) => ({
+    const update = {
+      SubjectId: subjectCode,
+      StudentId: studentId,
+      term: selectedTerm,
+      grade: currentGrades[studentId],
+    };
+
+    try {
+      const response = await axios.put(
+        "http://localhost:5000/api/v1/grade/updateGradeV2",
+        { updates: [update] }
+      );
+
+      if (response.status === 200) {
+        setEditingRows((prev) => ({ ...prev, [studentId]: false }));
+        setOriginalGrades((prev) => ({
+          ...prev,
+          [studentId]: currentGrades[studentId],
+        }));
+      } else {
+        console.error("Failed to update grade for Student:", studentId);
+      }
+    } catch (error) {
+      console.error("Error updating grade:", error);
+    } finally {
+      setTimeout(() => {
+        setLoadingRows((prev) => ({ ...prev, [studentId]: false }));
+      }, 3000);
+    }
+  };
+
+  const handleSaveAll = async () => {
+    // Get all students that are in edit mode
+    const studentsToSave = Object.keys(editingRows).filter(
+      (studentId) => editingRows[studentId]
+    );
+
+    if (studentsToSave.length === 0) return;
+
+    // Set all students in loading state
+    const loadingState = studentsToSave.reduce(
+      (acc, id) => ({ ...acc, [id]: true }),
+      {}
+    );
+    setLoadingRows((prev) => ({ ...prev, ...loadingState }));
+
+    // Prepare updates for API request
+    const updates = studentsToSave.map((studentId) => ({
       SubjectId: subjectCode,
       StudentId: studentId,
       term: selectedTerm,
@@ -202,7 +246,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     }));
 
     try {
-      // Send the updates to the backend
       const response = await axios.put(
         "http://localhost:5000/api/v1/grade/updateGradeV2",
         {
@@ -211,26 +254,28 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       );
 
       if (response.status === 200) {
-        setShowModal(false);
-        setIsEditing(false);
-        setOriginalGrades(currentGrades);
+        // Remove students from edit mode and update original grades
+        const updatedOriginalGrades = { ...originalGrades };
+        studentsToSave.forEach((studentId) => {
+          updatedOriginalGrades[studentId] = currentGrades[studentId];
+        });
+
+        setEditingRows({}); // Reset edit state
+        setOriginalGrades(updatedOriginalGrades);
       } else {
-        console.error("Failed to update grades");
+        console.error("Failed to save grades for multiple students.");
       }
     } catch (error) {
-      console.error("Error updating grades:", error);
+      console.error("Error saving grades:", error);
     } finally {
-      setIsSaved(true);
-
       setTimeout(() => {
-        setLoading(false);
-        setLoadingXport(false);
-      }, 1000);
+        setLoadingRows((prev) => {
+          const newState = { ...prev };
+          studentsToSave.forEach((id) => (newState[id] = false));
+          return newState;
+        });
+      }, 3000);
     }
-  };
-
-  const handleCancelSave = () => {
-    setShowModal(false);
   };
 
   const renderInput = useCallback(
@@ -308,7 +353,39 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
         <div className={styles.div2}>
           <p>
-            COURSE & SECTION : {dept} - {section}
+            COURSE & SECTION :{" "}
+            <strong>
+              {dept} - {section}
+            </strong>
+          </p>
+
+          <p>
+            TERM :
+            <strong>
+              <select
+                id="term"
+                value={selectedTerm}
+                onChange={handleTermChange}
+                className={styles.selectHidden}
+              >
+                {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
+                  if (activeTerms.includes(term.toLowerCase())) {
+                    return (
+                      <option key={term} value={term}>
+                        {term}
+                      </option>
+                    );
+                  }
+                  return null;
+                })}
+              </select>
+              <img
+                src={dropdownIcon}
+                alt="select a term"
+                height={10}
+                width={10}
+              />
+            </strong>
           </p>
         </div>
 
@@ -366,29 +443,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                       <h5>STUDENT NAME</h5>
                     </th>
                     <th>
-                      <select
-                        id="term"
-                        value={selectedTerm}
-                        onChange={handleTermChange}
-                        className={styles.selectHidden}
-                      >
-                        {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
-                          if (activeTerms.includes(term.toLowerCase())) {
-                            return (
-                              <option key={term} value={term}>
-                                {term}
-                              </option>
-                            );
-                          }
-                          return null;
-                        })}
-                      </select>
-                      <img
-                        src={dropdownIcon}
-                        alt="select a term"
-                        height={10}
-                        width={10}
-                      />
+                      <h5>{selectedTerm}</h5>
                     </th>
                     <th>
                       <h5>GRADE EQ</h5>
@@ -424,7 +479,14 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                             row.MiddleInitial ?? ""
                           }.`}
                         </td>
-                        <td>
+                        <td
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
                           {isTermName(selectedTerm) &&
                             renderInput(
                               gradeForSelectedTerm,
@@ -432,8 +494,44 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                               100.0,
                               0.01,
                               index,
-                              isEditing
+                              editingRows[row.StudentId] || false
                             )}
+                          {loadingRows[row.StudentId] ? (
+                            <video
+                              autoPlay
+                              loop
+                              muted
+                              className={styles.loadingAnimation}
+                              width={80}
+                            >
+                              <source
+                                src={loadingAnimation}
+                                type="video/webm"
+                              />
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <img
+                              src={
+                                editingRows[row.StudentId]
+                                  ? saveIcon
+                                  : pencilIcon
+                              }
+                              alt="edit"
+                              width={20}
+                              height={20}
+                              style={{ paddingLeft: "15px", cursor: "pointer" }}
+                              onClick={() => {
+                                if (!loadingRows[row.StudentId]) {
+                                  if (editingRows[row.StudentId]) {
+                                    handleConfirmSave(row.StudentId);
+                                  } else {
+                                    toggleEdit(row.StudentId);
+                                  }
+                                }
+                              }}
+                            />
+                          )}
                         </td>
                         <td>{formattedGrade}</td>
                         <td className={isFailed ? styles.fail : ""}>
@@ -448,9 +546,16 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           </div>
         </section>
         <footer>
-          <div onClick={toggleMode}>
-            <span>{isEditing ? "Save" : "Edit"}</span>
-          </div>
+          {/* Slide-up and Slide-down animation for Save All button */}
+          <button
+            className={`${styles.saveAllButton} ${
+              editingCount > 1 ? styles.slideUp : styles.slideDown
+            }`}
+            onClick={handleSaveAll}
+            disabled={editingCount <= 1}
+          >
+            <p>Save All</p>
+          </button>
           {loadingXport && (
             <div className={styles.loading}>
               <video
@@ -468,6 +573,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           {errorMessageXport && (
             <p className={styles.error}>{errorMessageXport}</p>
           )}
+
           {!loadingXport && !errorMessageXport && (
             <ExportExcel
               combinedData={combinedDataForXport}
@@ -489,11 +595,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         </footer>
       </main>
       <GradingReference isVisible={isPopupVisible} onClose={closePopup} />
-      <AreYousure
-        isOpen={showModal}
-        onConfirm={handleConfirmSave}
-        onCancel={handleCancelSave}
-      />
     </>
   );
 };
