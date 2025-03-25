@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "../styles/AccountApproval.module.scss";
 import searchIcon from "../../../../assets/images/search_Icon.png";
 import arrow from "../../../../assets/icons/arrow.png";
 import closeIcon from "../../../../assets/icons/x-button.png";
 import { getAllUsers, handlePending } from "../../../../services/UserService";
 import axios from "axios";
+import { UserContext } from "../../../../context/UserContext";
 
 interface Account {
   _id: string;
+  employeeId?: string;
   studentId?: string;
   refId?: string;
   name: string;
@@ -24,6 +26,14 @@ const AccountApproval = () => {
   const [currentPanel, setCurrentPanel] = useState("pending");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
+  const [roleFilter, setRoleFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error("ExportExcel must be used within a UserProvider");
+  }
+
+  const { user } = context;
 
   useEffect(() => {
     handlePending(setPendingAccounts, setErrorMessage);
@@ -53,21 +63,39 @@ const AccountApproval = () => {
       );
 
       if (response.data.success) {
+        // ✅ Remove from pending list
         setPendingAccounts((prev) =>
           prev.filter((account) => account._id !== id)
         );
 
+        // ✅ Find the approved account
         const accountToApprove = pendingAccounts.find(
           (account) => account._id === id
         );
         if (accountToApprove) {
+          // Ensure refId exists before logging
+          const userId =
+            accountToApprove.refId ||
+            accountToApprove.studentId ||
+            accountToApprove.employeeId;
+
+          // ✅ Add to approved list
           setApprovedAccounts((prev) => [
             ...prev,
             { ...accountToApprove, approvedAt: formatDate() },
           ]);
-        }
 
-        alert("Account approved successfully!");
+          // ✅ Log the approval action
+          await axios.post("http://localhost:5000/api/v1/user/logs", {
+            action: "Account Approved",
+            userId: user?.refId, // ✅ Ensure refId is passed correctly
+            name: user?.name,
+            details: `Approved account for ${accountToApprove.name} (${accountToApprove.email})`,
+            date: formatDate(), // ✅ Ensure the date is also logged
+          });
+
+          alert("Account approved successfully!");
+        }
       } else {
         alert("Failed to approve account: " + response.data.message);
       }
@@ -85,10 +113,26 @@ const AccountApproval = () => {
       );
 
       if (response.data.success) {
+        // ✅ Remove from pending accounts
         setPendingAccounts((prev) =>
           prev.filter((account) => account._id !== id)
         );
-        alert("Account rejected successfully!");
+
+        // ✅ Find rejected account details
+        const accountToReject = pendingAccounts.find(
+          (account) => account._id === id
+        );
+        if (accountToReject) {
+          await axios.post("http://localhost:5000/api/v1/user/logs", {
+            action: "Account Rejected",
+            userId: user?.refId, // ✅ Log refId
+            name: user?.name,
+            details: `Rejected account for ${accountToReject.name} (${accountToReject.email})`,
+            date: formatDate(), // ✅ Log the rejection date
+          });
+
+          alert("Account rejected successfully!");
+        }
       } else {
         alert("Failed to reject account: " + response.data.message);
       }
@@ -108,6 +152,26 @@ const AccountApproval = () => {
     setIsModalOpen(true);
   };
 
+  // Filter function for accounts based on search and role
+  const filteredPendingAccounts = pendingAccounts.filter((account) => {
+    const matchesRole = roleFilter
+      ? account.role.toLowerCase() === roleFilter.toLowerCase()
+      : true;
+    const matchesSearch =
+      account.name.includes(searchTerm) || account.email.includes(searchTerm);
+
+    return matchesRole && matchesSearch;
+  });
+
+  const filteredApprovedAccounts = approvedAccounts.filter((account) => {
+    const matchesRole = roleFilter
+      ? account.role.toLowerCase() === roleFilter.toLowerCase()
+      : true;
+    const matchesSearch =
+      account.name.includes(searchTerm) || account.email.includes(searchTerm);
+
+    return matchesRole && matchesSearch;
+  });
   // Role mapping object
   const roleMapping: any = {
     prof: "Instructor",
@@ -124,16 +188,24 @@ const AccountApproval = () => {
       <div className={styles.container1}>
         <div className={styles.searchBar}>
           <img src={searchIcon} alt="search" width={20} height={20} />
-          <input type="text" placeholder="Search accounts..." />
+          <input
+            type="text"
+            placeholder="Search accounts..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)} // Update state on input change
+          />
         </div>
         <div className={styles.buttonGroup}>
           <img src={arrow} alt="filter" width={25} height={25} />
-          <select>
+          <select
+            onChange={(e) => setRoleFilter(e.target.value)}
+            value={roleFilter}
+          >
             <option value="">Filter by Role</option>
-            <option value="Option 1">Admin</option>
-            <option value="Option 2">Instructor</option>
-            <option value="Option 3">Student</option>
-            <option value="Option 3">Registrar</option>
+            <option value="admin">Admin</option>
+            <option value="prof">Instructor</option>
+            <option value="student">Student</option>
+            <option value="registrar">Registrar</option>
           </select>
           <button
             className={styles.pendingButton}
@@ -147,16 +219,15 @@ const AccountApproval = () => {
           >
             Approved
           </button>
-          <button className={styles.printButton}>Print</button>
+          {/* <button className={styles.printButton}>Print</button> */}
         </div>
       </div>
       <div className={styles.accountList}>
         {currentPanel === "pending" ? (
-          pendingAccounts.length === 0 ? (
+          filteredPendingAccounts.length === 0 ? (
             <p>No pending accounts.</p>
           ) : (
-            pendingAccounts.map((account) => {
-              const displayRole = roleMapping[account.role] || account.role; // Transform the role
+            filteredPendingAccounts.map((account) => {
               return (
                 <div
                   key={account._id}
@@ -165,32 +236,30 @@ const AccountApproval = () => {
                 >
                   <div className={styles.accountInfo}>
                     <p>
-                      <strong>Role: </strong>
-                      <p style={{ fontWeight: "normal" }}> {displayRole}</p>
+                      <p style={{ fontWeight: "normal" }}>Role: </p>
+                      <strong>{account.role}</strong>
                     </p>
                     {account.role === "student" && (
                       <>
                         <p>
-                          <strong>Student ID: </strong>
-                          <p style={{ fontWeight: "normal" }}>
-                            {account.studentId}
-                          </p>
+                          <p style={{ fontWeight: "normal" }}>Student ID:</p>
+                          <strong>{account.studentId}</strong>
                         </p>
                       </>
                     )}
                     <p>
-                      <strong>Registered Name: </strong>
-                      <p style={{ fontWeight: "normal" }}>{account.name}</p>
+                      <p style={{ fontWeight: "normal" }}>Registered Name: </p>
+                      <strong>{account.name}</strong>
                     </p>
                     <p>
-                      <strong>Registered E-mail Address: </strong>
-                      <p style={{ fontWeight: "normal" }}>{account.email}</p>
-                    </p>
-                    <p>
-                      <strong>Created At: </strong>
                       <p style={{ fontWeight: "normal" }}>
-                        {account.createdAt}
+                        Registered E-mail Address:{" "}
                       </p>
+                      <strong>{account.email}</strong>
+                    </p>
+                    <p>
+                      <p style={{ fontWeight: "normal" }}>Created At:</p>
+                      <strong>{account.createdAt}</strong>
                     </p>
                   </div>
                   <div className={styles.actions}>
@@ -217,40 +286,38 @@ const AccountApproval = () => {
               );
             })
           )
-        ) : approvedAccounts.length === 0 ? (
+        ) : filteredApprovedAccounts.length === 0 ? (
           <p>No approved accounts.</p>
         ) : (
-          approvedAccounts.map((account) => (
+          filteredApprovedAccounts.map((account) => (
             <div key={account._id} className={styles.accountItem}>
               <div className={styles.accountInfo}>
                 <p>
-                  <strong>Role: </strong>
-                  <p style={{ fontWeight: "normal" }}>
-                    {roleMapping[account.role] || account.role}{" "}
-                  </p>
+                  <p style={{ fontWeight: "normal" }}>Role:</p>
+                  <strong>{roleMapping[account.role] || account.role}</strong>
                 </p>
                 {account.role === "student" && (
                   <>
                     <p>
-                      <strong>Student ID: </strong>
-                      <p style={{ fontWeight: "normal" }}>
-                        {account.studentId}
-                      </p>
+                      <p style={{ fontWeight: "normal" }}>Student ID:</p>
+                      <strong>{account.studentId}</strong>
                     </p>
                   </>
                 )}
                 <p>
-                  <strong>Registered Name: </strong>
-                  <p style={{ fontWeight: "normal" }}>{account.name}</p>
+                  <p style={{ fontWeight: "normal" }}>Registered Name:</p>
+                  <strong>{account.name} </strong>
                 </p>
 
                 <p>
-                  <strong>Registered E-mail Address: </strong>
-                  <p style={{ fontWeight: "normal" }}>{account.email}</p>
+                  <p style={{ fontWeight: "normal" }}>
+                    Registered E-mail Address:{" "}
+                  </p>
+                  <strong>{account.email}</strong>
                 </p>
                 <p>
-                  <strong>Approved At: </strong>
-                  <p style={{ fontWeight: "normal" }}>{account.approvedAt}</p>
+                  <p style={{ fontWeight: "normal" }}>Approved At:</p>
+                  <strong> {account.approvedAt}</strong>
                 </p>
               </div>
             </div>

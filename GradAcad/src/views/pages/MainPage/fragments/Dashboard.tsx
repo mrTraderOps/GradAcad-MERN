@@ -14,6 +14,7 @@ import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
+import axios from "axios";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -30,6 +31,12 @@ interface LabelProps {
   index: number;
 }
 
+interface AccountSummary {
+  accountType: string;
+  status: string;
+  total: number;
+}
+
 const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [currentTime, setCurrentTime] = useState("");
   const [currentDate, setCurrentDate] = useState("");
@@ -39,9 +46,12 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [selectedAcadYr, setSelectedAcadYr] = useState("0");
   const [selectedSem, setSelectedSem] = useState("0");
   const [loading, setLoading] = useState<boolean>(true);
-  const [errorMessage, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [showModal, setShowModal] = useState(false);
+  const [pendingCount, setPendingCount] = useState();
+  const [approvedCount, setApprovedCount] = useState();
+  const [summary, setSummary] = useState<AccountSummary[]>([]);
 
   const context = useContext(UserContext);
 
@@ -51,7 +61,8 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     throw new Error("User role can't read");
   }
 
-  const { subjects } = useSubjectsV2(user.refId);
+  const subjects =
+    user?.role === "prof" ? useSubjectsV2(user.refId).subjects : [];
 
   const uniqueAcadYrs = [...new Set(subjects.map((subject) => subject.acadYr))];
   const uniqueSems = [...new Set(subjects.map((subject) => subject.sem))];
@@ -115,9 +126,10 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
       !selectedAcadYr ||
       !selectedSem ||
       !selectedSection ||
-      !selectedSubject
+      !selectedSubject ||
+      user.role !== "prof"
     ) {
-      setError("Missing required parameters");
+      setErrorMessage("Missing required parameters");
       setLoading(false);
       return;
     }
@@ -135,7 +147,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
       subjCode,
       setGrades,
       (error: string) => {
-        setError(error);
+        setErrorMessage(error);
         setLoading(false);
       },
       () => {
@@ -223,6 +235,53 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     }
   }, [userRole]);
 
+  //Pending Approved Users
+  useEffect(() => {
+    // Fetch the total pending and approved accounts
+    const fetchAccountCounts = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/v1/user/pendingApprovedUsers"
+        );
+
+        if (response.data.success) {
+          // Set the state with fetched data
+          setPendingCount(response.data.totalPending);
+          setApprovedCount(response.data.totalApproved);
+        } else {
+          setErrorMessage("Failed to fetch account counts");
+        }
+      } catch (error) {
+        console.error("Error fetching account counts:", error);
+        setErrorMessage("An error occurred while fetching account counts.");
+      }
+    };
+
+    fetchAccountCounts();
+  }, []);
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/v1/user/accountSummary"
+        );
+        if (response.data.success) {
+          setSummary(response.data.summary);
+        } else {
+          setErrorMessage(response.data.message || "Failed to fetch data.");
+        }
+      } catch (error) {
+        console.error("Error fetching account summary:", error);
+        setErrorMessage("An error occurred while fetching data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummary();
+  }, []);
+
   const groupedSubjects = subjects.reduce<Record<string, GroupedSubject>>(
     (acc, subject) => {
       const { subjectCode, section } = subject;
@@ -276,6 +335,13 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const handleCancelSubmit = () => {
     setShowModal(false);
   };
+
+  const data = [
+    { name: "Pending Users", value: pendingCount },
+    { name: "Approved Users", value: approvedCount },
+  ];
+
+  const COLORS2 = ["#FF8042", "#00C49F"]; // 🔥 Orange for Pending, Green for Approved
 
   return (
     <>
@@ -408,8 +474,29 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                 <div>
                   <p>TOTAL PENDING AND APPROVED ACCOUNTS</p>
                   <div>
-                    <p>Pending Accounts: 10</p>
-                    <p>Approved Accounts: 50</p>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={data}
+                          cx="50%" // Center X
+                          cy="50%" // Center Y
+                          innerRadius={60} // Donut style
+                          outerRadius={100} // Size of Pie
+                          fill="#8884d8"
+                          dataKey="value"
+                          label
+                        >
+                          {data.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={COLORS2[index % COLORS.length]}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               ) : (
@@ -438,8 +525,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                           <tr key={index}>
                             <td>{subject.subjectCode}</td>
                             <td>{subject.sectionCount}</td>
-                            <td className={styles.gwa}>-</td>{" "}
-                            {/* Placeholder for total students */}
+                            <td className={styles.gwa}>-</td>
                           </tr>
                         ))}
                       </tbody>
@@ -464,51 +550,28 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
               <div>
                 <p>ACCOUNT SUMMARY</p>
                 <div className={styles.tableAnalytics}>
-                  <div className={styles.tableContainer}>
+                  <div
+                    className={styles.tableContainer}
+                    style={{ maxHeight: "clamp(100px, 45vh, 300px)" }}
+                  >
                     <table>
                       <thead>
                         <tr>
                           <th>ACCOUNT TYPE</th>
                           <th>STATUS</th>
-                          <th className={styles.gwa}>TOTAL ACCOUNTS</th>{" "}
+                          <th className={styles.gwa}>TOTAL ACCOUNTS</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <td>Student</td>
-                          <td>Active</td>
-                          <td className={styles.gwa}>150</td>
-                        </tr>
-                        <tr>
-                          <td>Student</td>
-                          <td>Pending</td>
-                          <td className={styles.gwa}>20</td>
-                        </tr>
-                        <tr>
-                          <td>Professor</td>
-                          <td>Active</td>
-                          <td className={styles.gwa}>30</td>
-                        </tr>
-                        <tr>
-                          <td>Admin</td>
-                          <td>Active</td>
-                          <td className={styles.gwa}>5</td>
-                        </tr>
+                        {summary.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.accountType}</td>
+                            <td>{item.status}</td>
+                            <td className={styles.gwa}>{item.total}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-                <div className={styles.shortCut}>
-                  <div>
-                    <button onClick={() => {}}>
-                      <p>Generate Report</p>
-                      <img
-                        src="src\assets\icons\generate_report.png"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                    </button>
                   </div>
                 </div>
               </div>

@@ -30,7 +30,7 @@ const Settings = () => {
           </button>
         </div>
         <div className={style.profileSection}>
-          <h2>My Profile</h2>
+          <h2 style={{ textAlign: "start" }}>My Profile</h2>
           <div className={style.profileCard}>
             <div className={style.profileInfo}>
               <img
@@ -40,13 +40,15 @@ const Settings = () => {
                 width={100}
               />
               <div>
-                <h2>{user?.name}</h2>
+                <h2 style={{ textAlign: "start" }}>{user?.name}</h2>
                 <p style={{ color: "rgb(37, 35, 35)", fontWeight: 500 }}>
                   {user
                     ? user.role === "registrar"
                       ? "Registrar"
                       : user.role === "prof"
                       ? "Instructor"
+                      : user.role === "admin"
+                      ? "Admin"
                       : "Pending"
                     : "User role can't read"}
                 </p>

@@ -82,7 +82,7 @@
     .accountItem {
       display: flex;
       align-items: center;
-      padding: 15px;
+      padding: 20px;
       width: 96%;
       margin-bottom: 10px;
       background-color: white;
@@ -106,14 +106,14 @@
         padding-left: 30px;
         display: flex;
         flex-direction: row;
-        justify-content: space-evenly;
+        justify-content: space-around;
         align-items: center;
         width: 100%;
-        gap: 100px;
+        gap: 50px;
 
         p {
           margin: 0;
-          font-size: calc(8px + 0.6vw);
+          font-size: calc(6px + 0.6vw);
           color: $black;
 
           &:nth-child(2) {
@@ -130,6 +130,8 @@
       .actions {
         display: flex;
         gap: 10px;
+        padding-left: 100px;
+        padding-right: 10px;
   
         button {
           padding: 5px 10px;

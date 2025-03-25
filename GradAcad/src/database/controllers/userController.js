@@ -181,6 +181,24 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+export const getManageUsers = async (req, res) => {
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+
+    const users = await usersCollection.find({}, { projection: { password: 0, role: 0 } }).toArray();
+
+    if (users.length > 0) {
+      res.status(200).json({ success: true, users });
+    } else {
+      res.status(404).json({ success: false, message: "No users found" });
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 export const approveAccount = async (req, res) => {
   const { id } = req.body;
 
@@ -255,17 +273,216 @@ export const rejectAccount = async (req, res) => {
   }
 };
 
-export const getUserById = async (req, res) => {
-
-}
-
 export const updateUser = async (req, res) => {
+  const { originalRefId, newRefId, name, email } = req.body;
 
-}
+  if (!originalRefId || !newRefId || !name || !email) {
+    return res.status(400).json({ success: false, message: "Missing required fields." });
+  }
+
+  try {
+    const db = getDB();
+    
+    // ✅ Use updateOne instead of findOneAndUpdate
+    const updatedUser = await db.collection("users").findOneAndUpdate(
+      { refId: String(originalRefId) }, // 🔥 Ensure string type
+      { $set: { refId: String(newRefId), name, email } },
+      { returnDocument: "after" } // ✅ Ensures the updated document is returned
+    );
+
+    if (updateUser.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    if (updateUser.modifiedCount === 0) {
+      return res.status(200).json({ success: true, message: "No changes made to the user." });
+    }
+
+    res.json({ success: true, message: "User updated successfully!", user: updatedUser });
+
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ success: false, message: "Server error.", error: error.message });
+  }
+};
 
 export const deleteUser = async (req, res) => {
+  try {
+    const { refId } = req.body; // Get refId from request body
 
-}
+    if (!refId) {
+      return res.status(400).json({ success: false, message: "Missing user ID." });
+    }
 
+    const db = getDB();
+    const usersCollection = db.collection("users");
+    const approveCollection = db.collection("approved")
 
+    // Delete the user
+    const result = await usersCollection.deleteOne({ refId });
+    const result2 =await approveCollection.deleteOne({ employeeId: refId });
 
+    if (result.deletedCount > 0 && result2.deletedCount > 0) {
+      res.status(200).json({ success: true, message: "User deleted successfully." });
+    } else {
+      res.status(404).json({ success: false, message: "User not found." });
+    }
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error." });
+  }
+};
+
+export const auditUsers = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, action, userId, startDate, endDate } = req.body;
+
+    const db = getDB();
+    const logsCollection = db.collection("logs");
+
+    const query = {};
+    if (action?.trim()) query.action = action.trim();
+    if (userId?.trim()) query.userId = { $regex: userId.trim(), $options: 'i' };
+
+    // 🔥 Fix Date Filtering: Convert stored date string to ISO format
+    if (startDate || endDate) {
+      query.$expr = {
+        $and: []
+      };
+
+      if (startDate) {
+        query.$expr.$and.push({
+          $gte: [{ $dateFromString: { dateString: "$date", format: "%d %b %Y" } }, new Date(startDate)]
+        });
+      }
+
+      if (endDate) {
+        query.$expr.$and.push({
+          $lte: [{ $dateFromString: { dateString: "$date", format: "%d %b %Y" } }, new Date(endDate)]
+        });
+      }
+    }
+
+    // Fetch logs with pagination
+    const logs = await logsCollection
+      .find(query)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .toArray();
+
+    // Get total count
+    const totalCount = await logsCollection.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / limit);
+
+    if (logs.length > 0) {
+      res.status(200).json({ success: true, logs, totalPages });
+    } else {
+      res.status(404).json({ success: false, message: "No logs found" });
+    }
+  } catch (error) {
+    console.error("Error fetching audit logs:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const pendingApprovedUsers = async (req, res) => {
+  try {
+    const db = getDB();
+    const pendingCollection = db.collection("pending");
+    const approvedCollection = db.collection("approved");
+
+    // Count documents in both collections
+    const pendingCount = await pendingCollection.countDocuments();
+    const approvedCount = await approvedCollection.countDocuments();
+
+    res.status(200).json({
+      success: true,
+      totalPending: pendingCount,
+      totalApproved: approvedCount
+    });
+  } catch (error) {
+    console.error("Error fetching user counts:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const accountSummary = async (req, res) => {
+  try {
+    const db = getDB();
+
+    // Collections
+    const usersCollection = db.collection("users");
+    const pendingCollection = db.collection("pending");
+
+    // Fetch counts for active users
+    const activeStudents = await usersCollection.countDocuments({ role: "student" });
+    const activeProfessors = await usersCollection.countDocuments({ role: "prof" });
+    const activeAdmins = await usersCollection.countDocuments({ role: "admin" });
+    const activeRegistrar = await usersCollection.countDocuments({ role: "registrar" });
+
+    // Fetch counts for pending students & professors
+    const pendingStudents = await pendingCollection.countDocuments({ role: "student" });
+    const pendingProfessors = await pendingCollection.countDocuments({ role: "prof" });
+    const pendingRegistrar = await pendingCollection.countDocuments({ role: "registrar" });
+    const pendingAdmins = await pendingCollection.countDocuments({ role: "admin" });
+
+    res.status(200).json({
+      success: true,
+      summary: [
+        { accountType: "Student", status: "Active", total: activeStudents },
+        { accountType: "Student", status: "Pending", total: pendingStudents },
+        { accountType: "Instructor", status: "Active", total: activeProfessors },
+        { accountType: "Instructor", status: "Pending", total: pendingProfessors },
+        { accountType: "Admin", status: "Active", total: activeAdmins },
+        { accountType: "Admin", status: "Pending", total: pendingAdmins },
+        { accountType: "Registrar", status: "Active", total: activeRegistrar },
+        { accountType: "Registrar", status: "Pending", total: pendingRegistrar },
+      ],
+    });
+
+  } catch (error) {
+    console.error("Error fetching account summary:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const logs = async (req, res) => {
+  try {
+    const { action, userId, name, details } = req.body;
+
+    if (!action || !userId || !name || !details) {
+      return res.status(400).json({ success: false, message: "Missing required fields." });
+    }
+
+    const db = getDB();
+    const logsCollection = db.collection("logs");
+
+    // 🔍 Find the latest log ID
+    const lastLog = await logsCollection.find().sort({ logId: -1 }).limit(1).toArray();
+    const newLogId = lastLog.length > 0 ? lastLog[0].logId + 1 : 1; // Auto-increment logId
+
+    // 🕒 Generate formatted date (e.g., "01 Oct 2023")
+    const formattedDate = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
+    // ✅ Insert log into collection
+    const newLog = {
+      logId: newLogId,
+      action,
+      userId,
+      name,
+      details,
+      date: formattedDate,
+    };
+
+    await logsCollection.insertOne(newLog);
+
+    res.status(201).json({ success: true, message: "Log entry added successfully!", log: newLog });
+  } catch (error) {
+    console.error("Error inserting log:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
