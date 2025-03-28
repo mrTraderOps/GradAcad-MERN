@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs } from '../controllers/userController.js';
+import { loginUser, registerUser, updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs, changePassword, getArchivedUsers, restoreUser, archiveUser, updateUserStatus } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -18,11 +18,22 @@ router.get('/getManageUsers', getManageUsers);
 // Get all Pending
 router.get('/getPendingUsers', getPendingUsers);
 
+router.get('/getArchivedUsers', getArchivedUsers);
+
 // Post Audit Users
 router.post('/getAuditUsers', auditUsers);
 
+router.post('/restoreUser', restoreUser);
+
+router.post('/archiveUser', archiveUser);
+
 // Update a user
 router.put('/updateByRefId', updateUser);
+
+router.put('/updateUserStatus', updateUserStatus);
+
+// Change Password
+router.post('/changePassword', changePassword);
 
 // Delete a user
 router.delete('/deleteByRefId', deleteUser);

@@ -55,7 +55,7 @@ export const getSubjectsByRefId = async (req, res) => {
         const enrollmentRecords = await enrollmentCollection.find(query).toArray();
 
         if (!enrollmentRecords.length) {
-            return res.status(404).json({ success: false, message: "No enrollment records found" });
+            return res.status(404).json({ success: false, message: "No subjects found for the specified academic year and semester" });
         }
 
         // Extract unique subject IDs

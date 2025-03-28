@@ -9,7 +9,7 @@ th, td {
 }
 
 .userManagement {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 20px auto;
   padding: 20px;
   background: white;
@@ -54,7 +54,7 @@ th, td {
   white-space: nowrap;
 }
 
-.editButton, .deleteButton {
+.editButton, .archiveButton {
   margin-right: 5px;
   padding: 6px 12px;
   border: none;
@@ -67,9 +67,10 @@ th, td {
   color: white;
 }
 
-.deleteButton {
-  background-color: #f44336;
+.archiveButton {
+  background-color: #079d0a;
   color: white;
+  border-radius: 10px;
 }
 
 /* Modal Styles */

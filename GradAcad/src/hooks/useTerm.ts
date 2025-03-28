@@ -16,6 +16,10 @@ export const useTerm = () => {
   const [activeSems, setActiveSems] = useState<string[]>([]);
   const [initialSem, setInitialSem] = useState<string>("");
 
+  const [donePrelim, setDonePrelim] = useState<boolean>(false);
+  const [doneMidterm, setDoneMidterm] = useState<boolean>(false);
+  const [doneFinal, setDoneFinal] = useState<boolean>(false);
+
   useEffect(() => {
     axios.get('http://localhost:5000/api/v1/grade/getTermsV2')
       .then((response) => {
@@ -25,6 +29,10 @@ export const useTerm = () => {
           // Set academic year
           setActiveAcadYrs([data.acadYr]); // Wrap the string in an array
           setInitialAcadYr(data.acadYr); // Set the academic year as initial
+
+          setDonePrelim(data.prelimDone)
+          setDoneMidterm(data.midtermDone)
+          setDoneFinal(data.finalDone)
 
           // Extract active semesters
           const activeSemsList = Object.keys(data.sem).filter(
@@ -72,5 +80,8 @@ export const useTerm = () => {
     initialAcadYr,
     activeSems,
     initialSem,
+    donePrelim,
+    doneMidterm,
+    doneFinal
   };
 };

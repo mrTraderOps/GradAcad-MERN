@@ -3,9 +3,15 @@ import { useContext, useState } from "react";
 import see from "../../../../assets/images/see.png";
 import unsee from "../../../../assets/images/unsee.png";
 import { UserContext } from "../../../../context/UserContext";
+import axios from "axios";
 const Settings = () => {
   const [isProfile, setProfile] = useState(true);
   const [isUnsee, setUnsee] = useState(true);
+  const [password, setPassword] = useState("Forgot password?"); // Placeholder
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const context = useContext(UserContext);
 
@@ -14,6 +20,55 @@ const Settings = () => {
   }
 
   const { user } = context;
+
+  // ✅ Password Validation Function
+  const validatePassword = (password: string) => {
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
+    return regex.test(password);
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      alert("New password and confirm password do not match.");
+      return;
+    }
+
+    if (!validatePassword(newPassword)) {
+      alert(
+        "Password must be 8-16 characters long, include uppercase, lowercase, a number, and a special character."
+      );
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/user/changePassword",
+        {
+          refId: user?.refId,
+          currentPassword,
+          newPassword,
+        }
+      );
+
+      if (response.data.success) {
+        alert("Password changed successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        alert(response.data.message || "Failed to change password.");
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      alert("An error occurred while changing the password.");
+    }
+  };
 
   return (
     <div className={style.settings}>
@@ -70,7 +125,7 @@ const Settings = () => {
                           fontWeight: 500,
                         }}
                       >
-                        092838582721
+                        +639xx-xxx-xxxx
                       </p>
                     </p>
                   </section>
@@ -85,27 +140,63 @@ const Settings = () => {
                   <section>
                     <p style={{ color: "rgb(37, 35, 35)", fontWeight: 700 }}>
                       Password:
-                      <p
+                      <button
                         style={{
                           color: "rgba(37, 35, 35, 0.8)",
-                          fontWeight: 500,
+                          border: "solid 1px rgba(37, 35, 35, 0.8)",
+                          borderRadius: "11px",
+                          marginLeft: "17px",
                         }}
+                        onClick={() => setIsPasswordModalOpen(true)}
                       >
-                        **************
-                        <img
-                          src={isUnsee ? see : unsee}
-                          alt="eye"
-                          width={20}
-                          style={{ cursor: "pointer", padding: "0px 10px" }}
-                          onClick={() => setUnsee((prev) => !prev)}
-                        />
-                        <button style={{ color: "rgba(37, 35, 35, 0.8)" }}>
-                          Change Password
-                        </button>
-                      </p>
+                        Change Password
+                      </button>
                     </p>
                   </section>
                 </span>
+              </div>
+            </div>
+          )}
+          {isPasswordModalOpen && (
+            <div className={style.modal}>
+              <div className={style.modalContent}>
+                <h3>Change Password</h3>
+                <label>Current Password:</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+                <label>New Password:</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <label>Confirm New Password:</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    marginTop: "20px",
+                    gap: "10px",
+                  }}
+                >
+                  <button
+                    onClick={handleChangePassword}
+                    style={{ backgroundColor: "#0F2A71" }}
+                  >
+                    Submit
+                  </button>
+                  <button onClick={() => setIsPasswordModalOpen(false)}>
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           )}

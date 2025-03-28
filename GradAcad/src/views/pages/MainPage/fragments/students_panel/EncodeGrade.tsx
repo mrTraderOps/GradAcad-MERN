@@ -83,7 +83,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     terms,
   });
 
-  const { activeTerms } = useTerm();
+  const { activeTerms, donePrelim, doneMidterm, doneFinal } = useTerm();
 
   const handleTermChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTerm(e.target.value);
@@ -94,6 +94,10 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
   const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
   const [loadingRows, setLoadingRows] = useState<Record<string, boolean>>({});
+  const [isUpdatingRemarks, setIsUpdatingRemarks] = useState<
+    Record<string, boolean>
+  >({});
+
   const editingCount = Object.values(editingRows).filter(Boolean).length;
 
   const toggleEdit = (studentId: string) => {
@@ -120,7 +124,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       header: true,
       skipEmptyLines: true,
       complete: (result) => {
-        const uploadedData = result.data;
+        const uploadedData = result.data as Array<{ STUDENT_ID: string }>;
 
         const expectedHeaders = ["STUDENT_ID", "STUDENT NAME", selectedTerm];
 
@@ -134,11 +138,23 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           return;
         }
 
-        // Map uploaded data to existing student list
         const updatedTableData = combinedData.map((row) => {
           const matchingRow: any = uploadedData.find(
             (uploadedRow: any) => uploadedRow["STUDENT_ID"] === row.StudentId
           );
+
+          // Define conditions for read-only students
+          const isMidtermLocked =
+            selectedTerm === "MIDTERM" && row.prelimRemarks;
+          const isFinalLocked =
+            selectedTerm === "FINAL" &&
+            (row.prelimRemarks || row.midtermRemarks || row.finalRemarks);
+          const isReadOnly = isTermDone || isMidtermLocked || isFinalLocked;
+
+          // If the student is read-only, return the row without updating
+          if (isReadOnly) {
+            return row;
+          }
 
           const validateGrade = (grade: number) =>
             !isNaN(grade) && grade >= 0 && grade <= 100;
@@ -160,7 +176,14 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
         setCombinedData(updatedTableData);
 
-        // ✅ Immediately update `currentGrades` so it's ready for `handleConfirmSave`
+        // ✅ Track students as "edited"
+        const newEditingRows = uploadedData.reduce((acc, row) => {
+          acc[row["STUDENT_ID"]] = true;
+          return acc;
+        }, {} as Record<string, boolean>);
+        setEditingRows(newEditingRows);
+
+        // ✅ Immediately update `currentGrades` for Save All
         const updatedGrades = updatedTableData.reduce((acc, row) => {
           acc[row.StudentId] =
             row.terms[selectedTerm as keyof typeof row.terms] ?? 0;
@@ -205,11 +228,27 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       );
 
       if (response.status === 200) {
+        // ✅ Store previous grade for logging
+        const oldGrade = originalGrades[studentId] ?? "N/A";
+        const newGrade = currentGrades[studentId];
+
+        // ✅ Update UI state
         setEditingRows((prev) => ({ ...prev, [studentId]: false }));
         setOriginalGrades((prev) => ({
           ...prev,
-          [studentId]: currentGrades[studentId],
+          [studentId]: newGrade,
         }));
+
+        // ✅ Insert log for grade update
+        await axios.post("http://localhost:5000/api/v1/user/logs", {
+          action: "Grade Updated",
+          userId: user?.refId, // Instructor's ID
+          name: `Prof ${user?.name}`, // Instructor's Name
+          date: new Date().toLocaleString(),
+          details: `Updated grade for Student ${studentId} in ${subjectCode} (${selectedTerm}): ${oldGrade} --> ${newGrade}.`,
+        });
+
+        console.log(`Grade updated successfully for Student ${studentId}`);
       } else {
         console.error("Failed to update grade for Student:", studentId);
       }
@@ -218,27 +257,38 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     } finally {
       setTimeout(() => {
         setLoadingRows((prev) => ({ ...prev, [studentId]: false }));
-      }, 3000);
+      }, 1000);
     }
   };
 
   const handleSaveAll = async () => {
-    // Get all students that are in edit mode
+    // Get all students currently being edited
     const studentsToSave = Object.keys(editingRows).filter(
       (studentId) => editingRows[studentId]
     );
 
     if (studentsToSave.length === 0) return;
 
-    // Set all students in loading state
-    const loadingState = studentsToSave.reduce(
+    // Check for students with actual changes
+    const studentsWithChanges = studentsToSave.filter(
+      (studentId) => currentGrades[studentId] !== originalGrades[studentId]
+    );
+
+    if (studentsWithChanges.length === 0) {
+      alert("No changes detected for any students.");
+      setEditingRows({});
+      return;
+    }
+
+    // ✅ Set loading state for all modified students
+    const loadingState = studentsWithChanges.reduce(
       (acc, id) => ({ ...acc, [id]: true }),
       {}
     );
     setLoadingRows((prev) => ({ ...prev, ...loadingState }));
 
-    // Prepare updates for API request
-    const updates = studentsToSave.map((studentId) => ({
+    // ✅ Prepare updates for API request
+    const updates = studentsWithChanges.map((studentId) => ({
       SubjectId: subjectCode,
       StudentId: studentId,
       term: selectedTerm,
@@ -248,33 +298,103 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     try {
       const response = await axios.put(
         "http://localhost:5000/api/v1/grade/updateGradeV2",
-        {
-          updates,
-        }
+        { updates }
       );
 
       if (response.status === 200) {
-        // Remove students from edit mode and update original grades
+        // ✅ Update UI & Remove students from edit mode
         const updatedOriginalGrades = { ...originalGrades };
-        studentsToSave.forEach((studentId) => {
+        studentsWithChanges.forEach((studentId) => {
           updatedOriginalGrades[studentId] = currentGrades[studentId];
         });
 
-        setEditingRows({}); // Reset edit state
+        setEditingRows({});
         setOriginalGrades(updatedOriginalGrades);
+
+        // ✅ Insert log for bulk update
+        await axios.post("http://localhost:5000/api/v1/user/logs", {
+          action: "Bulk Grade Update",
+          userId: user?.refId,
+          name: `Prof ${user?.name}`,
+          date: new Date().toLocaleString(),
+          details: `Updated grades for ${studentsWithChanges.length} students in ${subjectCode} (${selectedTerm}).`,
+        });
+
+        console.log(
+          `Updated grades for ${studentsWithChanges.length} students.`
+        );
       } else {
         console.error("Failed to save grades for multiple students.");
       }
     } catch (error) {
       console.error("Error saving grades:", error);
     } finally {
+      // ✅ Stop loading state after 3s
       setTimeout(() => {
         setLoadingRows((prev) => {
           const newState = { ...prev };
-          studentsToSave.forEach((id) => (newState[id] = false));
+          studentsWithChanges.forEach((id) => (newState[id] = false));
           return newState;
         });
       }, 3000);
+    }
+  };
+
+  const handleRemarksChange = async (
+    event: any,
+    selectedTerm: string,
+    studentId: string,
+    subjectId: string,
+    setIsUpdating: React.Dispatch<
+      React.SetStateAction<Record<string, boolean>>
+    >,
+    setCombinedData: React.Dispatch<React.SetStateAction<any[]>> // ✅ Accept setCombinedData
+  ) => {
+    const newRemarks = event.target.value;
+
+    // ✅ Set only the specific student's loading state
+    setIsUpdating((prev) => ({ ...prev, [studentId]: true }));
+
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/v1/grade/updateRemarks",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            selectedTerm,
+            studentId,
+            subjectId,
+            remarks: newRemarks,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        console.log("Remarks updated successfully");
+
+        // ✅ Update the combinedData state
+        setCombinedData((prevData) =>
+          prevData.map((row) =>
+            row.StudentId === studentId
+              ? {
+                  ...row,
+                  [`${selectedTerm.toLowerCase()}Remarks`]: newRemarks, // ✅ Update correct term's remarks
+                }
+              : row
+          )
+        );
+      } else {
+        console.error("Failed to update remarks:", data.message);
+      }
+    } catch (error) {
+      console.error("Error updating remarks:", error);
+    } finally {
+      setTimeout(() => {
+        setIsUpdating((prev) => ({ ...prev, [studentId]: false }));
+      }, 2000);
     }
   };
 
@@ -285,20 +405,23 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       max: number,
       step: number,
       index: number,
-      isEditing: boolean
+      isEditing: boolean,
+      readOnly: boolean // ✅ New parameter to control readOnly state
     ) => (
       <input
         type="number"
         step={step}
         max={max}
         value={fieldValue !== undefined ? fieldValue : ""}
-        readOnly={!isEditing}
+        readOnly={readOnly || !isEditing} // ✅ Read-only if row has remarks OR not in editing mode
         onKeyDown={(e) => {
           if (["e", "E", "+", "-"].includes(e.key)) {
             e.preventDefault();
           }
         }}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          if (readOnly) return; // ✅ Prevent changes if input is read-only
+
           let value =
             e.target.value === "" ? undefined : parseFloat(e.target.value);
 
@@ -313,6 +436,12 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     ),
     [handleInputChange]
   );
+
+  // Check if the selected term is done
+  const isTermDone =
+    (selectedTerm === "PRELIM" && donePrelim) ||
+    (selectedTerm === "MIDTERM" && doneMidterm) ||
+    (selectedTerm === "FINAL" && doneFinal);
 
   useEffect(() => {
     if (combinedData.length > 0 && isEditing) {
@@ -338,7 +467,9 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       <div className={styles.preloader}>
         <p>Subject &gt; Section </p>
         <p>
-          {sem} Semester A.Y. {acadYr}
+          <strong>
+            {sem} Semester A.Y. {acadYr}
+          </strong>
         </p>
       </div>
       <header className={styles.headerStudentsPanel}>
@@ -389,29 +520,37 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           </p>
         </div>
 
-        <div className={styles.div3}>
-          <button
-            className={styles.button1}
-            onClick={() => downloadCSV(students, term)}
-          >
-            <img src="src\assets\icons\download_icon.png" alt="" width={20} />
-            <p>Download Grade Template</p>
-          </button>
-          <button
-            className={styles.button2}
-            onClick={() => document.getElementById("fileInput")?.click()}
-          >
-            <input
-              type="file"
-              accept=".csv"
-              id="fileInput"
-              style={{ display: "none" }}
-              onChange={handleFileUpload}
-            />
-            <img src="src\assets\icons\upload_icon.png" alt="" width={20} />
-            <p>Upload Grade</p>
-          </button>
-        </div>
+        <>
+          {!isTermDone && ( // ✅ Hide buttons if the term is done
+            <div className={styles.div3}>
+              <button
+                className={styles.button1}
+                onClick={() => downloadCSV(students, selectedTerm, data)}
+              >
+                <img
+                  src="src/assets/icons/download_icon.png"
+                  alt=""
+                  width={20}
+                />
+                <p>Download Grade Template</p>
+              </button>
+              <button
+                className={styles.button2}
+                onClick={() => document.getElementById("fileInput")?.click()}
+              >
+                <input
+                  type="file"
+                  accept=".csv"
+                  id="fileInput"
+                  style={{ display: "none" }}
+                  onChange={handleFileUpload}
+                />
+                <img src="src/assets/icons/upload_icon.png" alt="" width={20} />
+                <p>Upload Grade</p>
+              </button>
+            </div>
+          )}
+        </>
       </header>
       <main className={styles.main}>
         <section>
@@ -461,8 +600,52 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
                     const gradeEq = calculateEQ(gradeForSelectedTerm ?? 0);
                     const isFailed = gradeEq > 3.0;
-                    const remarks = gradeEq === 5.0 ? "FAILED" : "PASSED";
+                    const computedRemarks =
+                      gradeEq === 5.0 ? "FAILED" : "PASSED";
                     const formattedGrade = gradeEq.toFixed(2);
+
+                    const prelimRemarks =
+                      row.prelimRemarks && row.prelimRemarks.trim() !== "";
+
+                    const midtermRemarks =
+                      row.midtermRemarks && row.midtermRemarks.trim() !== "";
+
+                    const finalRemarks =
+                      row.finalRemarks && row.finalRemarks.trim() !== "";
+
+                    const remarks =
+                      selectedTerm === "PRELIM" && prelimRemarks
+                        ? row.prelimRemarks
+                        : selectedTerm === "MIDTERM" && prelimRemarks
+                        ? row.prelimRemarks
+                        : selectedTerm === "MIDTERM" && midtermRemarks
+                        ? row.midtermRemarks
+                        : selectedTerm === "FINAL" && prelimRemarks
+                        ? row.prelimRemarks
+                        : selectedTerm === "FINAL" && midtermRemarks
+                        ? row.midtermRemarks
+                        : selectedTerm === "FINAL" && finalRemarks
+                        ? row.finalRemarks
+                        : computedRemarks;
+
+                    const isMidtermLocked =
+                      selectedTerm === "MIDTERM" && prelimRemarks;
+                    const isFinalLocked =
+                      selectedTerm === "FINAL" &&
+                      (midtermRemarks || prelimRemarks);
+
+                    // ✅ Allow PRELIM editing until it's marked as done
+                    const isReadOnly =
+                      isTermDone || // Lock PRELIM only when done
+                      isMidtermLocked ||
+                      isFinalLocked;
+
+                    const shouldShowDropdown =
+                      gradeForSelectedTerm == null || gradeForSelectedTerm < 65;
+                    const shouldShowFailedRemarks =
+                      gradeForSelectedTerm ||
+                      (0 >= 66 && gradeForSelectedTerm) ||
+                      0 <= 74;
 
                     return (
                       <tr
@@ -474,11 +657,9 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                         }
                       >
                         <td>{row.StudentId}</td>
-                        <td className={styles.studentName}>
-                          {`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
-                            row.MiddleInitial ?? ""
-                          }.`}
-                        </td>
+                        <td>{`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
+                          row.MiddleInitial ?? ""
+                        }.`}</td>
                         <td
                           style={{
                             display: "flex",
@@ -494,8 +675,10 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                               100.0,
                               0.01,
                               index,
-                              editingRows[row.StudentId] || false
+                              editingRows[row.StudentId] || false,
+                              isReadOnly || false // ✅ Pass readOnly state
                             )}
+
                           {loadingRows[row.StudentId] ? (
                             <video
                               autoPlay
@@ -511,31 +694,92 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                               Your browser does not support the video tag.
                             </video>
                           ) : (
-                            <img
-                              src={
-                                editingRows[row.StudentId]
-                                  ? saveIcon
-                                  : pencilIcon
-                              }
-                              alt="edit"
-                              width={20}
-                              height={20}
-                              style={{ paddingLeft: "15px", cursor: "pointer" }}
-                              onClick={() => {
-                                if (!loadingRows[row.StudentId]) {
-                                  if (editingRows[row.StudentId]) {
-                                    handleConfirmSave(row.StudentId);
-                                  } else {
-                                    toggleEdit(row.StudentId);
-                                  }
+                            !isReadOnly && (
+                              <img
+                                src={
+                                  editingRows[row.StudentId]
+                                    ? saveIcon
+                                    : pencilIcon
                                 }
-                              }}
-                            />
+                                alt="edit"
+                                width={20}
+                                height={20}
+                                style={{
+                                  paddingLeft: "15px",
+                                  cursor: "pointer",
+                                }}
+                                onClick={() => {
+                                  if (!loadingRows[row.StudentId]) {
+                                    if (editingRows[row.StudentId]) {
+                                      handleConfirmSave(row.StudentId);
+                                      setIsSaved(true);
+                                    } else {
+                                      toggleEdit(row.StudentId);
+                                    }
+                                  }
+                                }}
+                              />
+                            )
                           )}
                         </td>
                         <td>{formattedGrade}</td>
-                        <td className={isFailed ? styles.fail : ""}>
-                          {remarks}
+                        <td
+                          className={isFailed ? styles.fail : ""}
+                          style={{
+                            display: "flex",
+                            flexDirection: "row",
+                            justifyContent: "center",
+                            alignItems: "center",
+                          }}
+                        >
+                          {shouldShowDropdown ? (
+                            <>
+                              <select
+                                style={{ width: "35%", color: "#ff4949" }}
+                                disabled={
+                                  isUpdatingRemarks[row.StudentId] ||
+                                  isReadOnly ||
+                                  false
+                                }
+                                onChange={(e) =>
+                                  handleRemarksChange(
+                                    e,
+                                    selectedTerm,
+                                    row.StudentId,
+                                    subjectCode,
+                                    setIsUpdatingRemarks,
+                                    setCombinedData
+                                  )
+                                }
+                                value={remarks}
+                              >
+                                <option value="">Select</option>
+                                <option value="AW">AW</option>
+                                <option value="UW">UW</option>
+                                <option value="NCA">NCA</option>
+                                <option value="INC">INC</option>
+                              </select>
+                              {isUpdatingRemarks[row.StudentId] && (
+                                <video
+                                  autoPlay
+                                  loop
+                                  muted
+                                  className={styles.loadingAnimation}
+                                  width={80}
+                                >
+                                  <source
+                                    src={loadingAnimation}
+                                    type="video/webm"
+                                  />
+                                  Your browser does not support the video tag.
+                                </video>
+                              )}
+                            </>
+                          ) : shouldShowFailedRemarks ? ( // ✅ Show "FAILED" if grade is between 66-74
+                            computedRemarks
+                          ) : (
+                            remarks // ✅ Default to fetched or computed remarks
+                          )}
                         </td>
                       </tr>
                     );
@@ -589,7 +833,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
               setLoadingExporting={setLoadingXport}
             />
           )}
-          <button onClick={openPopup}>
+          <button onClick={openPopup} style={{ transition: "all 0.3s ease" }}>
             <p>Grading Reference</p>
           </button>
         </footer>

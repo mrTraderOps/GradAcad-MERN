@@ -6,6 +6,7 @@ import cslogo from "../../../../assets/images/ccs_icon.png";
 import nclogo from "../../../../assets/images/nc_logo.png";
 import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import axios from "axios";
+import autoTable from "jspdf-autotable";
 
 interface AuditLog {
   logId: number;
@@ -30,7 +31,7 @@ const AuditTrail = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const logsPerPage = 10;
+  const logsPerPage = 20;
 
   useEffect(() => {
     const fetchAuditLogs = async () => {
@@ -96,67 +97,69 @@ const AuditTrail = () => {
     setCurrentPage(1);
   };
 
-  // Function to print the table as a PDF
-  const handlePrintPDF = () => {
-    const input = document.getElementById("logTable"); // Select the table
-
-    if (!input) return;
-
-    html2canvas(input, { scale: 2 }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const leftImg = new Image();
-      leftImg.src = nclogo; // Left logo (Norzagaray College)
-
-      const rightImg = new Image();
-      rightImg.src = cslogo; // Right logo (College of Computing Studies)
-
-      leftImg.onload = () => {
-        rightImg.onload = () => {
-          // Insert Left Logo
-          pdf.addImage(leftImg, "PNG", 20, 10, 28, 28); // Adjust size and position
-
-          // Insert Right Logo
-          pdf.addImage(rightImg, "PNG", 160, 10, 30, 30); // Adjust size and position
-
-          // Insert Title
-          pdf.setFontSize(14);
-          pdf.setFont("calibri", "bold");
-          pdf.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
-
-          pdf.setFontSize(12);
-          pdf.setFont("calibri", "normal");
-          pdf.text(
-            "Municipal Compound, Poblacion, Norzagaray, Bulacan",
-            105,
-            27,
-            {
-              align: "center",
-            }
-          );
-
-          pdf.setFontSize(12);
-          pdf.setFont("calibri", "bold");
-          pdf.text("MIS Department", 105, 34, { align: "center" });
-
-          // Insert Report Title
-          pdf.setFontSize(16);
-          pdf.setFont("calibri", "bold");
-          pdf.text("Audit Trail Report", 105, 50, { align: "center" });
-
-          // Add the table image
-          pdf.addImage(imgData, "PNG", 10, 60, 190, 0);
-
-          const today = new Date();
-          const formattedDate = `${today.getDate()}-${
-            today.getMonth() + 1
-          }-${today.getFullYear()}`;
-
-          pdf.save(`AuditTrailReport_${formattedDate}.pdf`);
-        };
-      };
+  const loadImage = async (url: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.src = url;
     });
+  };
+
+  const handlePrintPDF = async () => {
+    const doc = new jsPDF();
+
+    // Load logos (replace with your actual logo imports/URLs)
+    const leftLogo = await loadImage(nclogo);
+    const rightLogo = await loadImage(cslogo);
+
+    // Add logos and header text
+    doc.addImage(leftLogo, "PNG", 20, 10, 28, 28); // Left logo
+    doc.addImage(rightLogo, "PNG", 160, 10, 30, 30); // Right logo
+
+    // Title and institution info
+    doc.setFontSize(14);
+    doc.setFont("calibri", "bold");
+    doc.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("calibri", "normal");
+    doc.text("Municipal Compound, Poblacion, Norzagaray, Bulacan", 105, 27, {
+      align: "center",
+    });
+
+    doc.setFontSize(12);
+    doc.text("MIS Department", 105, 34, { align: "center" });
+
+    // Report title
+    doc.setFontSize(16);
+    doc.text("Audit Trail Report", 105, 50, { align: "center" });
+
+    // Extract table data
+    const headers = Array.from(document.querySelectorAll("#logTable th")).map(
+      (th) => th.textContent
+    );
+    const rows = Array.from(
+      document.querySelectorAll("#logTable tbody tr")
+    ).map((tr) =>
+      Array.from(tr.querySelectorAll("td")).map((td) => td.textContent)
+    );
+
+    // Add table (starts below the header)
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 60, // Position below the header
+      margin: { top: 60 },
+      styles: { fontSize: 8 }, // Smaller font for table
+      headStyles: { fillColor: [22, 160, 133] }, // Green header
+    });
+
+    // Footer with date
+    const date = new Date().toLocaleDateString();
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${date}`, 14, doc.internal.pageSize.height - 10);
+
+    doc.save(`AuditTrailReport-${date}.pdf`);
   };
 
   return (
@@ -173,6 +176,8 @@ const AuditTrail = () => {
             style={{ width: "180px", height: "48px" }}
           >
             <option value="">All</option>
+            <option value="Grade Updated">Grade Updated</option>
+            <option value="Bulk Grade Update">Bulk Grade Update</option>
             <option value="Account Approved">Account Approved</option>
             <option value="Account Rejected">Account Rejected</option>
             <option value="User Edited">User Edited</option>
@@ -217,57 +222,91 @@ const AuditTrail = () => {
         </button>
       </div>
 
-      {/* Audit Log Table */}
-      <div id="logTable" className={styles.logTable}>
-        <table className={styles.auditTable}>
-          <thead>
-            <tr>
-              <th>Log ID</th>
-              <th>Action</th>
-              <th>Actor User ID</th>
-              <th>Actor Name</th>
-              <th>Date</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+      <div id="pdfContent">
+        <div
+          id="pdfHeader"
+          style={{ textAlign: "center", marginBottom: "20px", display: "none" }}
+        >
+          <img
+            src={nclogo}
+            alt="NC Logo"
+            style={{
+              width: "100px",
+              height: "100px",
+              float: "left",
+              paddingLeft: "100px",
+            }}
+          />
+          <img
+            src={cslogo}
+            alt="CCS Logo"
+            style={{
+              width: "100px",
+              height: "100px",
+              float: "right",
+              paddingRight: "100px",
+            }}
+          />
+
+          <h2>NORZAGARAY COLLEGE</h2>
+          <p>Municipal Compound, Poblacion, Norzagaray, Bulacan</p>
+          <h3>MIS Department</h3>
+          <h4>Audit Trail Report</h4>
+        </div>
+        {/* Audit Log Table */}
+        <div id="logTable" className={styles.logTable}>
+          <table className={styles.auditTable}>
+            <thead>
               <tr>
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  className={styles.loadingAnimation}
-                  width={60}
-                  style={{ marginLeft: "40px" }}
-                >
-                  <source src={loadingHorizontal} type="video/webm" />
-                  Your browser does not support the video tag.
-                </video>
+                <th>Log ID</th>
+                <th>Action</th>
+                <th>Actor User ID</th>
+                <th>Actor Name</th>
+                <th>Date</th>
+                <th>Details</th>
               </tr>
-            ) : auditLogs.length === 0 ? (
-              <tr>
-                <td colSpan={6}>{loading ? "Loading..." : "No logs found."}</td>
-              </tr>
-            ) : (
-              auditLogs.map((log, index) => (
-                <tr
-                  key={log.logId}
-                  className={index % 2 === 0 ? styles.evenRow : styles.oddRow}
-                >
-                  <td>
-                    <strong>{log.logId}</strong>
-                  </td>
-                  <td>{log.action}</td>
-                  <td>{log.userId}</td>
-                  <td>{log.name}</td>
-                  <td>{log.date}</td>
-                  <td>{log.details}</td>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    className={styles.loadingAnimation}
+                    width={60}
+                    style={{ marginLeft: "40px" }}
+                  >
+                    <source src={loadingHorizontal} type="video/webm" />
+                    Your browser does not support the video tag.
+                  </video>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : auditLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    {loading ? "Loading..." : "No logs found."}
+                  </td>
+                </tr>
+              ) : (
+                auditLogs.map((log, index) => (
+                  <tr
+                    key={log.logId}
+                    className={index % 2 === 0 ? styles.evenRow : styles.oddRow}
+                  >
+                    <td>
+                      <strong>{log.logId}</strong>
+                    </td>
+                    <td>{log.action}</td>
+                    <td>{log.userId}</td>
+                    <td>{log.name}</td>
+                    <td>{log.date}</td>
+                    <td>{log.details}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}

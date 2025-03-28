@@ -2,19 +2,27 @@ import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
 import axios from "axios";
 import { UserContext } from "../../../../context/UserContext";
+import loadingAnimation from "../../../../assets/webM/loading.webm";
 
 interface User {
   refId: string;
   name: string;
   email: string;
+  status: string;
 }
 
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [archivedUsers, setArchivedUsers] = useState<User[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [originalRefId, setOriginalRefId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState<boolean>(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState<
+    Record<string, boolean>
+  >({});
+
   const context = useContext(UserContext);
   if (!context) {
     throw new Error("ExportExcel must be used within a UserProvider");
@@ -23,52 +31,74 @@ const UserManagement = () => {
   const { user } = context;
 
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/v1/user/getManageUsers") // ✅ Call backend API
-      .then((response) => {
-        if (response.data.success) {
-          setUsers(response.data.users); // ✅ Store user data
-        } else {
-          setErrorMessage(response.data.message || "No users found.");
-        }
-      })
-      .catch((error) => {
-        const message = error.response?.data?.message || "An error occurred.";
-        setErrorMessage(message);
-      });
-  }, []);
+    if (showArchived) {
+      // ✅ Fetch Archived Users
+      axios
+        .get("http://localhost:5000/api/v1/user/getArchivedUsers")
+        .then((response) => {
+          if (response.data.success) {
+            setArchivedUsers(response.data.users);
+          } else {
+            setErrorMessage(
+              response.data.message || "No archived users found."
+            );
+          }
+        })
+        .catch((error) => {
+          setErrorMessage(
+            error.response?.data?.message || "An error occurred."
+          );
+        });
+    } else {
+      // ✅ Fetch Active Users
+      axios
+        .get("http://localhost:5000/api/v1/user/getManageUsers")
+        .then((response) => {
+          if (response.data.success) {
+            setUsers(response.data.users);
+          } else {
+            setErrorMessage(response.data.message || "No users found.");
+          }
+        })
+        .catch((error) => {
+          setErrorMessage(
+            error.response?.data?.message || "An error occurred."
+          );
+        });
+    }
+  }, [showArchived]);
 
-  // Handle delete user
-  const handleDelete = async (refId: string) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) {
+  // Handle Archiving user
+  const handleArchive = async (refId: string) => {
+    if (!window.confirm("Are you sure you want to archive this user?")) {
       return;
     }
 
-    // ✅ Find user before deleting for logs
-    const userToDelete = users.find((user) => user.refId === refId);
-    if (!userToDelete) {
+    // ✅ Find user before archive for logs
+    const userToArchive = users.find((user) => user.refId === refId);
+    if (!userToArchive) {
       alert("User not found.");
       return;
     }
 
     try {
-      const response = await axios.delete(
-        "http://localhost:5000/api/v1/user/deleteByRefId",
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/user/archiveUser",
         {
-          data: { refId },
+          refId,
         }
       );
 
       if (response.data.success) {
-        alert("User deleted successfully!");
+        alert("User archive successfully!");
 
         // ✅ Log Deletion
         await axios.post("http://localhost:5000/api/v1/user/logs", {
-          action: "User Deleted",
+          action: "User Archived",
           userId: user?.refId,
           name: user?.name,
-          details: `Deleted user: ${userToDelete.name} (${userToDelete.email})`,
-          date: new Date().toLocaleString(), // ✅ Capture current timestamp
+          details: `Archived user: ${userToArchive.name} (${userToArchive.email})`,
+          date: new Date().toLocaleString(),
         });
 
         // ✅ Remove from UI
@@ -76,11 +106,92 @@ const UserManagement = () => {
           prevUsers.filter((user) => user.refId !== refId)
         );
       } else {
-        alert(response.data.message || "Failed to delete user.");
+        alert(response.data.message || "Failed to archive user.");
       }
     } catch (error) {
-      console.error("Error deleting user:", error);
-      alert("An error occurred while deleting the user.");
+      console.error("Error archive user:", error);
+      alert("An error occurred while archiving the user.");
+    }
+  };
+
+  // ✅ Handle Restoring User
+  const handleRestore = async (refId: string) => {
+    if (!window.confirm("Are you sure you want to restore this user?")) {
+      return;
+    }
+
+    // ✅ Find user before restore for logs
+    const userToRestore = archivedUsers.find((user) => user.refId === refId);
+    if (!userToRestore) {
+      alert("User not found in archive.");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/api/v1/user/restoreUser",
+        {
+          refId,
+        }
+      );
+
+      if (response.data.success) {
+        alert("User restored successfully!");
+
+        // ✅ Log Restoration
+        await axios.post("http://localhost:5000/api/v1/user/logs", {
+          action: "User Restored",
+          userId: user?.refId,
+          name: user?.name,
+          details: `Restored user: ${userToRestore.name} (${userToRestore.email})`,
+          date: new Date().toLocaleString(),
+        });
+
+        // ✅ Remove from UI (Archived List)
+        setArchivedUsers((prevUsers) =>
+          prevUsers.filter((user) => user.refId !== refId)
+        );
+      } else {
+        alert(response.data.message || "Failed to restore user.");
+      }
+    } catch (error) {
+      console.error("Error restoring user:", error);
+      alert("An error occurred while restoring the user.");
+    }
+  };
+
+  const handleStatusChange = async (
+    refId: string,
+    newStatus: string,
+    setIsUpdating: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  ) => {
+    try {
+      setIsUpdating((prev) => ({ ...prev, [refId]: true }));
+
+      const response = await axios.put(
+        "http://localhost:5000/api/v1/user/updateUserStatus",
+        {
+          refId,
+          status: newStatus,
+        }
+      );
+
+      if (response.data.success) {
+        setUsers((prevUsers) =>
+          prevUsers.map((user) =>
+            user.refId === refId ? { ...user, status: newStatus } : user
+          )
+        );
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("An error occurred while updating the status.");
+    } finally {
+      setTimeout(() => {
+        setIsUpdating((prev) => ({ ...prev, [refId]: false }));
+      }, 1000);
     }
   };
 
@@ -127,11 +238,13 @@ const UserManagement = () => {
         // ✅ Log Changes
         const changes = [];
         if (originalUser.name !== editedUser.name)
-          changes.push(`Name: ${originalUser.name} → ${editedUser.name}`);
+          changes.push(`Name: ${originalUser.name} --> ${editedUser.name}`);
         if (originalUser.email !== editedUser.email)
-          changes.push(`Email: ${originalUser.email} → ${editedUser.email}`);
+          changes.push(`Email: ${originalUser.email} --> ${editedUser.email}`);
         if (originalUser.refId !== editedUser.refId)
-          changes.push(`Ref ID: ${originalUser.refId} → ${editedUser.refId}`);
+          changes.push(
+            `Ref ID: ${originalUser.refId} change to ${editedUser.refId}`
+          );
 
         await axios.post("http://localhost:5000/api/v1/user/logs", {
           action: "User Edited",
@@ -159,15 +272,28 @@ const UserManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className={styles.userManagement}>
-      <h2>User Management</h2>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexDirection: "row",
+          paddingBottom: "15px",
+        }}
+      >
+        <h2>{showArchived ? "Archived Users" : "User Management"}</h2>
+        <button
+          style={{
+            borderRadius: "10px",
+            backgroundColor: showArchived ? "#0F2A71" : "green",
+            height: "40px",
+          }}
+          onClick={() => setShowArchived(!showArchived)} // ✅ Toggle Archive View
+        >
+          {showArchived ? "Back to Active Users" : "Archive List"}
+        </button>
+      </div>
 
       {/* Search Bar */}
       <div className={styles.searchBar}>
@@ -187,39 +313,85 @@ const UserManagement = () => {
               <th>ID</th>
               <th>Name</th>
               <th>Email</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUsers.length === 0 ? (
-              <tr>
-                <td colSpan={5} className={styles.noUsers}>
-                  No users found.
-                </td>
-              </tr>
-            ) : (
-              filteredUsers.map((user) => (
+            {(showArchived ? archivedUsers : users)
+              .filter(
+                (user) =>
+                  user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  user.email.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((user) => (
                 <tr key={user.refId}>
                   <td>{user.refId}</td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
+                  <td
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <select
+                      value={user.status}
+                      onChange={(e) =>
+                        handleStatusChange(
+                          user.refId,
+                          e.target.value,
+                          setIsUpdatingStatus
+                        )
+                      }
+                      disabled={isUpdatingStatus[user.refId] || showArchived}
+                      style={{ width: "100px" }}
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                    {isUpdatingStatus[user.refId] && (
+                      <video
+                        autoPlay
+                        loop
+                        muted
+                        className={styles.loadingAnimation}
+                        width={60}
+                      >
+                        <source src={loadingAnimation} type="video/webm" />
+                        Your browser does not support the video tag.
+                      </video>
+                    )}
+                  </td>
                   <td>
-                    <button
-                      className={styles.editButton}
-                      onClick={() => handleEdit(user)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className={styles.deleteButton}
-                      onClick={() => handleDelete(user.refId)}
-                    >
-                      Delete
-                    </button>
+                    {showArchived ? (
+                      <button
+                        className={styles.archiveButton}
+                        onClick={() => handleRestore(user.refId)}
+                      >
+                        Restore
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          className={styles.editButton}
+                          onClick={() => handleEdit(user)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className={styles.archiveButton}
+                          onClick={() => handleArchive(user.refId)}
+                        >
+                          Archive
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
       </div>

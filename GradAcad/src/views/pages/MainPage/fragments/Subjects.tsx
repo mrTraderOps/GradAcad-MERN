@@ -1,11 +1,12 @@
 import courseStyles from "../styles/Subjects.module.scss";
 import style from "../styles/department.module.scss";
 import { SubjectData } from "../../../../models/types/SubjectData";
-import { useSubjects, useSubjectsV2 } from "../../../../hooks/useSubjects";
+import { useSubjectsV2 } from "../../../../hooks/useSubjects";
 import { useContext, useEffect, useState } from "react";
 import { useTerm } from "../../../../hooks/useTerm";
 import { UserContext } from "../../../../context/UserContext";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
+import notfound from "../../../../assets/images/notfound.png";
 
 interface Props {
   onStudentClick: (data: SubjectData[], nextPanel: string) => void;
@@ -179,7 +180,16 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
 
       <main className={courseStyles.mainSubjects}>
         {subjectsLoading || isSorting ? (
-          <div className={courseStyles.loading}>
+          <div
+            className={courseStyles.loading}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
             <h2>Loading.. Please Wait</h2>
             <video
               autoPlay
@@ -193,7 +203,18 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
             </video>
           </div>
         ) : errorMessage ? (
-          <p className={courseStyles.error}>{errorMessage}</p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <img src={notfound} alt="not found" width={600} />
+            <p className={courseStyles.error}>{errorMessage}.</p>
+          </div>
         ) : subjects.length === 0 ? (
           <p>No subjects found.</p>
         ) : (

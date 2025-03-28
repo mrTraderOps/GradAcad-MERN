@@ -472,6 +472,10 @@ p {
   transition: all 0.3s ease;
 }
 
+.buttonAnimate {
+    transition: all 0.3s ease;
+}
+
 .slideUp {
   animation: slideUp 0.3s forwards;
   display: block;

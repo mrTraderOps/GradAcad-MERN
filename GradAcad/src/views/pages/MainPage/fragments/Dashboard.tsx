@@ -549,7 +549,10 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
             ) : user?.role === "admin" ? (
               <div>
                 <p>ACCOUNT SUMMARY</p>
-                <div className={styles.tableAnalytics}>
+                <div
+                  className={styles.tableAnalytics}
+                  style={{ height: "80%" }}
+                >
                   <div
                     className={styles.tableContainer}
                     style={{ maxHeight: "clamp(100px, 45vh, 300px)" }}

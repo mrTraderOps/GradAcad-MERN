@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2 } from '../controllers/gradesController.js';
+import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2, updateRemarks } from '../controllers/gradesController.js';
 
 const router = express.Router();
 
@@ -12,6 +12,8 @@ router.post('/getAllGrades', getAllGrades);
 router.post('/insertGrade', insertGrade);
 
 router.put('/updateGrade', updateGrade);
+
+router.put('/updateRemarks', updateRemarks);
 
 router.put('/updateGradeV2', updateGradeV2);
 

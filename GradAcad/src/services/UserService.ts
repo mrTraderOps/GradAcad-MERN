@@ -11,8 +11,16 @@ export const handleLogin = (
     .post("http://localhost:5000/api/v1/user/login", { email: username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
+        const user = response.data.user;
+
+        // ✅ Check if the user's status is inactive
+        if (user.status === "Inactive") {
+          setErrorMessage("Your account is inactive. Please seek assistance from MIS");
+          return;
+        }
+
         onLogin();
-        setUser(response.data.user); 
+        setUser(user);
       } else {
         setErrorMessage(response.data.message || "Invalid credentials.");
       }
@@ -22,6 +30,7 @@ export const handleLogin = (
       setErrorMessage(message);
     });
 };
+
 
 export const handleRegister = (
   email: string,

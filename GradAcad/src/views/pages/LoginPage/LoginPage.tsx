@@ -30,8 +30,20 @@ const LoginPage = ({ onLogin }: Props) => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
-  const [studentId, setStudentId] = useState("");
+  const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // ✅ Password Validation Function
+  const validatePassword = (password: string) => {
+    const regex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
+    return regex.test(password);
+  };
+
+  const validateEmail = (email: string): boolean => {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailPattern.test(email);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,17 +59,40 @@ const LoginPage = ({ onLogin }: Props) => {
         }
 
         // Validate studentId if role is student
-        if (role === "student" && !studentId.trim()) {
-          setErrorMessage("Student ID is required for students.");
+        if (!userId.trim()) {
+          setErrorMessage("Employee or Student ID is required for students.");
           setIsLoading(false);
           return;
         }
 
         const userData: any = { email, name, password, role };
+        // Define regex pattern for student ID format (YYYY-NNNN)
+        const studentIdPattern = /^\d{4}-\d{4}$/;
 
-        // Add studentId to the request only if the role is "student" and a value is entered
-        if (role === "student" && studentId.trim() !== "") {
-          userData.studentId = studentId;
+        // Add studentId to the request only if the role is "student" and a valid format is entered
+        if (role === "student") {
+          if (studentIdPattern.test(userId.trim())) {
+            userData.studentId = userId;
+          } else {
+            alert(
+              "Invalid Student ID format. Please enter in YYYY-NNNN format."
+            );
+            return;
+          }
+        } else {
+          userData.employeeId = userId;
+        }
+
+        if (!validateEmail(email.trim())) {
+          alert("Invalid email format. Please enter a valid email address.");
+          return;
+        }
+
+        if (!validatePassword(userData.password)) {
+          alert(
+            "Password must be 8-16 characters long, include uppercase, lowercase, a number, and a special character."
+          );
+          return;
         }
 
         const response = await fetch(
@@ -74,7 +109,9 @@ const LoginPage = ({ onLogin }: Props) => {
           setErrorMessage(data.message || "Registration failed.");
         } else {
           setIsRegistering(false);
-          alert("Registration successful! Please log in.");
+          alert(
+            "Registration successful! Kindly wait to your registered e-mail for the approval of your application. Warm Regards."
+          );
         }
       } catch (error) {
         setErrorMessage("Registration failed. Please try again.");
@@ -153,6 +190,16 @@ const LoginPage = ({ onLogin }: Props) => {
                   />
                 </div>
                 <div className="form-group">
+                  <label>Employee or Student ID</label>
+                  <input
+                    type="text"
+                    placeholder="ID"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group">
                   <label>Role</label>
                   <select
                     value={role}
@@ -167,18 +214,7 @@ const LoginPage = ({ onLogin }: Props) => {
                     <option value="prof">Instructor</option>
                   </select>
                 </div>
-                {role === "student" && (
-                  <div className="form-group">
-                    <label>Student ID</label>
-                    <input
-                      type="text"
-                      placeholder="YYYY-0000"
-                      value={studentId}
-                      onChange={(e) => setStudentId(e.target.value)}
-                      required
-                    />
-                  </div>
-                )}
+
                 <button
                   className="register-btn"
                   type="submit"

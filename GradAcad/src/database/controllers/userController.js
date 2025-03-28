@@ -48,7 +48,9 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        refId: user.refId
+        refId: user.refId,
+        password: user.password,
+        status: user.status
       },
     });
   } catch (err) {
@@ -58,7 +60,7 @@ export const loginUser = async (req, res) => {
 };
 
 export const registerUser = async (req, res) => {
-    const { email, name, password, role, studentId } = req.body;
+    const { email, name, password, role, employeeId, studentId } = req.body;
   
     // Validate required fields
     if (!email || !name || !password || !role) {
@@ -70,9 +72,15 @@ export const registerUser = async (req, res) => {
       const usersCollection = db.collection("pending");
   
       // Check if user already exists
-      const existingUser = await usersCollection.findOne({ email });
-      if (existingUser) {
+      const existingEmail = await usersCollection.findOne({ email });
+      if (existingEmail) {
         return res.status(400).json({ success: false, message: "Email already exists." });
+      }
+
+      // Check if user already exists
+      const existingId = await usersCollection.findOne({ refId: employeeId || studentId  });
+      if (existingId) {
+        return res.status(400).json({ success: false, message: "User ID is already exists." });
       }
   
       // Hash the password before saving
@@ -101,15 +109,16 @@ export const registerUser = async (req, res) => {
         createdAt: formatDate(),
       };
   
-      // Only include studentId if role is student AND studentId is provided
       if (role === "student" && studentId) {
         newUser.studentId = studentId;
+      } else {
+        newUser.employeeId = employeeId
       }
   
       // Insert user into database
       await usersCollection.insertOne(newUser);
   
-      res.status(201).json({ success: true, message: "User registered successfully." });
+      res.status(201).json({ success: true, message: "User registered successfully! Admin will process your application, kindly wait for approval in your email" });
     } catch (error) {
       res.status(500).json({ success: false, message: "Server error.", error: error.message });
     }
@@ -306,6 +315,56 @@ export const updateUser = async (req, res) => {
   }
 };
 
+export const changePassword = async (req, res) => {
+  try {
+    const { refId, currentPassword, newPassword } = req.body;
+
+    if (!refId || !currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+
+    const db = getDB();
+    const usersCollection = db.collection("users");
+
+    // Find user by refId
+    const user = await usersCollection.findOne({ refId });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    // Compare current password with stored hashed password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Incorrect current password." });
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password in the database
+    await usersCollection.updateOne(
+      { refId },
+      { $set: { password: hashedPassword } }
+    );
+
+    // Log the password change
+    await db.collection("logs").insertOne({
+      logId: new Date().getTime(),
+      action: "Password Changed",
+      userId: refId,
+      name: user.name,
+      date: new Date().toLocaleString(),
+      details: `${user.name} updated their password.`,
+    });
+
+    res.status(200).json({ success: true, message: "Password updated successfully!" });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 export const deleteUser = async (req, res) => {
   try {
     const { refId } = req.body; // Get refId from request body
@@ -415,10 +474,10 @@ export const accountSummary = async (req, res) => {
     const pendingCollection = db.collection("pending");
 
     // Fetch counts for active users
-    const activeStudents = await usersCollection.countDocuments({ role: "student" });
-    const activeProfessors = await usersCollection.countDocuments({ role: "prof" });
-    const activeAdmins = await usersCollection.countDocuments({ role: "admin" });
-    const activeRegistrar = await usersCollection.countDocuments({ role: "registrar" });
+    const activeStudents = await usersCollection.countDocuments({ role: "student", status: "Active" });
+    const activeProfessors = await usersCollection.countDocuments({ role: "prof", status: "Active" });
+    const activeAdmins = await usersCollection.countDocuments({ role: "admin", status: "Active" });
+    const activeRegistrar = await usersCollection.countDocuments({ role: "registrar", status: "Active"});
 
     // Fetch counts for pending students & professors
     const pendingStudents = await pendingCollection.countDocuments({ role: "student" });
@@ -426,16 +485,26 @@ export const accountSummary = async (req, res) => {
     const pendingRegistrar = await pendingCollection.countDocuments({ role: "registrar" });
     const pendingAdmins = await pendingCollection.countDocuments({ role: "admin" });
 
+    const inactiveStudents = await usersCollection.countDocuments({ role: "student", status: "Inactive" });
+    const inactiveProfessors = await usersCollection.countDocuments({ role: "prof", status: "Inactive" });
+    const inactiveAdmins = await usersCollection.countDocuments({ role: "admin", status: "Inactive" });
+    const inactiveRegistrar = await usersCollection.countDocuments({ role: "registrar", status: "Inactive"});
+
+
     res.status(200).json({
       success: true,
       summary: [
         { accountType: "Student", status: "Active", total: activeStudents },
+        { accountType: "Student", status: "Inactive", total: inactiveStudents },
         { accountType: "Student", status: "Pending", total: pendingStudents },
         { accountType: "Instructor", status: "Active", total: activeProfessors },
+        { accountType: "Instructor", status: "Inactive", total: inactiveProfessors },
         { accountType: "Instructor", status: "Pending", total: pendingProfessors },
         { accountType: "Admin", status: "Active", total: activeAdmins },
+        { accountType: "Admin", status: "Inactive", total: inactiveAdmins },
         { accountType: "Admin", status: "Pending", total: pendingAdmins },
         { accountType: "Registrar", status: "Active", total: activeRegistrar },
+        { accountType: "Registrar", status: "Inactive", total: inactiveRegistrar },
         { accountType: "Registrar", status: "Pending", total: pendingRegistrar },
       ],
     });
@@ -445,6 +514,83 @@ export const accountSummary = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+export const getArchivedUsers = async (req, res) => {
+  try {
+    const db = getDB();
+
+    const usersArchiveCollection = db.collection("users_archive");
+
+    const archivedUsers = await usersArchiveCollection.find({}).toArray(); 
+    res.status(200).json({ success: true, users: archivedUsers });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error fetching archived users", error });
+  }
+};
+
+export const archiveUser = async (req, res) => {
+  const { refId } = req.body;
+
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+    const usersArchiveCollection = db.collection("users_archive");
+
+    // 1️⃣ Find user by refId
+    const user = await usersCollection.findOne({ refId });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+    // 2️⃣ Copy user to users_archive
+    await usersArchiveCollection.insertOne(user);
+
+    // 3️⃣ Delete user from users collection
+    await usersCollection.deleteOne({ refId });
+
+    res.status(200).json({ success: true, message: "User archived successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error archiving user", error });
+  }
+};
+
+export const restoreUser = async (req, res) => {
+  const { refId } = req.body;
+
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+    const usersArchiveCollection = db.collection("users_archive");
+
+    const archivedUser = await usersArchiveCollection.findOne({ refId });
+    if (!archivedUser) {
+      return res.status(404).json({ success: false, message: "User not found in archive" });
+    }
+
+    await usersCollection.insertOne(archivedUser);
+
+    await usersArchiveCollection.deleteOne({ refId });
+
+    res.status(200).json({ success: true, message: "User restored successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error restoring user", error });
+  }
+};
+
+export const updateUserStatus = async (req, res) => {
+  const { refId, status } = req.body;
+
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+
+    await usersCollection.updateOne({ refId }, { $set: { status } });
+
+    res.status(200).json({ success: true, message: "User status updated" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error updating status", error });
+  }
+};
+
+
 
 export const logs = async (req, res) => {
   try {

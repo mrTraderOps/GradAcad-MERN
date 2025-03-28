@@ -35,7 +35,7 @@ export const getTermsV2 = async (req, res) => {
     const data = await db.collection('global')
       .find(
         { currentTerm: { $exists: true } },
-        { projection: { currentAcadYr: 1, currentSem: 1, currentTerm: 1, _id: 0 } }
+        { projection: { currentAcadYr: 1, currentSem: 1, currentTerm: 1, _id: 0, isDonePrelim: 1, isDoneMidterm: 1, isDoneFinal: 1 } }
       )
       .toArray();
 
@@ -45,6 +45,9 @@ export const getTermsV2 = async (req, res) => {
         acadYr: doc.currentAcadYr, // Directly use the string value
         sem: doc.currentSem[0], // Extract the first object from currentSem
         term: doc.currentTerm[0], // Extract the first object from currentTerm
+        prelimDone: doc.isDonePrelim,
+        midtermDone: doc.isDoneMidterm,
+        finalDone: doc.isDoneFinal,
       };
     });
 
@@ -286,7 +289,6 @@ export const generateReport = async (req, res) => {
   }
 };
 
-
 export const getStudentGrades = async (req, res) => {
   try {
     const { acadYr, sem, subjectId, selectedTerms, dept, section } = req.body;
@@ -329,6 +331,9 @@ export const getStudentGrades = async (req, res) => {
         LastName: student?.LastName || "",
         FirstName: student?.FirstName || "",
         MiddleInitial: student?.MiddleInitial || "",
+        prelimRemarks: grade?.prelimRemarks || "",
+        midtermRemarks: grade?.midtermRemarks || "",
+        finalRemarks: grade?.finalRemarks || "",
         terms: shouldFetchAllTerms
           ? grade?.terms || {} // Fetch all terms if no filter is applied
           : Object.fromEntries(
@@ -406,5 +411,36 @@ export const updateGradeV2 = async (req, res) => {
     });
   }
 };
+
+export const updateRemarks = async (req, res) => {
+  try {
+    const { selectedTerm, studentId, subjectId, remarks } = req.body;
+
+    if (!studentId || !subjectId || !selectedTerm) {
+      return res.status(400).json({ success: false, message: "Missing required fields." });
+    }
+
+    const db = getDB();
+    const term = selectedTerm.toLowerCase(); // Ensure consistency
+    const finalRemarks = remarks.trim(); // Trim whitespace
+
+    // Update the remarks field dynamically
+    const result = await db.collection("grades").updateOne(
+      { StudentId: studentId, SubjectId: subjectId },
+      { $set: { [term + "Remarks"]: finalRemarks } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ success: false, message: "Student record not found." });
+    }
+
+    return res.status(200).json({ success: true, message: "Remarks updated successfully." });
+  } catch (error) {
+    console.error("Error updating remarks:", error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
+
 
 

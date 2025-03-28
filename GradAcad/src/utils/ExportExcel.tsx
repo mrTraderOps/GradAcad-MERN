@@ -248,15 +248,41 @@ const ExportExcel = ({
           (value): value is number => value !== null
         );
 
-        const rawAverage =
-          filteredTerms.length > 0
-            ? filteredTerms.reduce((sum, value) => sum + value, 0) /
-              filteredTerms.length
-            : 0;
-        const rawGradeEq = calculateEQ(rawAverage);
-        const gradeEq = rawGradeEq.toFixed(2);
-        const average = rawAverage.toFixed(2);
+        let rawAverage = 0;
+        let rawGradeEq = 0;
+        let gradeEq = "0.00";
+        let average = "0.00";
+
+        const hasAnyRemarks =
+          (student.prelimRemarks && student.prelimRemarks.trim() !== "") ||
+          (student.midtermRemarks && student.midtermRemarks.trim() !== "") ||
+          (student.finalRemarks && student.finalRemarks.trim() !== "");
+
+        // Skip computation if student has finalRemarks
+        if (!hasAnyRemarks) {
+          rawAverage =
+            filteredTerms.length > 0
+              ? filteredTerms.reduce((sum, value) => sum + value, 0) /
+                filteredTerms.length
+              : 0;
+          rawGradeEq = calculateEQ(rawAverage);
+          gradeEq = rawGradeEq.toFixed(2);
+          average = rawAverage.toFixed(2);
+        }
+
         const isFailed = rawGradeEq > 3.0;
+
+        // Determine the student's final remarks
+        let finalRemarks =
+          student.finalRemarks && student.finalRemarks.trim() !== ""
+            ? student.finalRemarks
+            : student.midtermRemarks && student.midtermRemarks.trim() !== ""
+            ? student.midtermRemarks
+            : student.prelimRemarks && student.prelimRemarks.trim() !== ""
+            ? student.prelimRemarks
+            : isFailed
+            ? "FAILED"
+            : "PASSED";
 
         // Build full name
         const fullName = `${student.LastName || ""}, ${
@@ -272,9 +298,9 @@ const ExportExcel = ({
           student.StudentId, // Student ID
           fullName, // Student Name
           ...filteredTerms, // Dynamic term values
-          average, // Final Grade
-          gradeEq, // Grade Equivalent
-          isFailed ? "FAILED" : "PASSED", // Remarks
+          average, // Final Grade (0.00 if finalRemarks exists)
+          gradeEq, // Grade Equivalent (0.00 if finalRemarks exists)
+          finalRemarks, // Remarks
         ];
 
         // Add row to worksheet
@@ -300,7 +326,10 @@ const ExportExcel = ({
           // Remarks Column should be colored red if FAILED
           if (colNumber === remarksColumnIndex) {
             cell.font = {
-              color: isFailed ? { argb: "FF0000" } : { argb: "000000" },
+              color:
+                isFailed || hasAnyRemarks
+                  ? { argb: "FF0000" }
+                  : { argb: "000000" },
               bold: true,
               italic: true,
             };
@@ -478,7 +507,11 @@ const ExportExcel = ({
     }
   };
   return (
-    <button className={styles.button1} onClick={exportToExcel}>
+    <button
+      className={styles.button1}
+      onClick={exportToExcel}
+      style={{ transition: "all 0.3s ease" }}
+    >
       {isDefault ? <span className={styles.exportIcon}>export_notes</span> : ""}
       <p>{buttonName}</p>
     </button>

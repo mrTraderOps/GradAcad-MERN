@@ -14,14 +14,6 @@ const MainpageHeader = () => {
         <div className={styles.userProfile}>
           <button>
             <img
-              src="src\assets\icons\user_profile_icon.png"
-              width={30}
-              height={30}
-              alt="Profile"
-            />
-          </button>
-          <button>
-            <img
               src="src\assets\icons\notif_icon.png"
               width={30}
               height={30}

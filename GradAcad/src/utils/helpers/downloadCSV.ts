@@ -1,7 +1,9 @@
 import { CombinedDataProps, DataProps, Student } from "../../models/types/StudentData";
 import Papa from 'papaparse';
 
-export const downloadCSV = (studentList: Student[], grades: string[]) => {
+export const downloadCSV = (studentList: Student[], term: string, subjectData: DataProps) => {
+
+  const subjectDetails = `${subjectData.subjectCode}_${subjectData.dept}${subjectData.section}_${term}`
 
   const capitalizeWords = (str: string) => {
     return str
@@ -14,7 +16,7 @@ export const downloadCSV = (studentList: Student[], grades: string[]) => {
   const csvData = [];
 
   // Add header row to CSV
-  csvData.push(["STUDENT_ID", "STUDENT NAME", `${grades}`]);
+  csvData.push(["STUDENT_ID", "STUDENT NAME", `${term}`]);
 
   // Loop through the tableData to extract rows
   studentList.forEach((row) => {
@@ -39,7 +41,7 @@ export const downloadCSV = (studentList: Student[], grades: string[]) => {
   // Create a link and trigger download
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Student_Grades_Template.csv"; // Filename
+  a.download = `${subjectDetails}_Grades_Template.csv`; // Filename
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

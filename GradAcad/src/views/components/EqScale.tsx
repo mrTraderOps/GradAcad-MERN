@@ -14,7 +14,7 @@ export const GradingReference: React.FC<EqScaleProps> = ({
     <EqScale isVisible={isVisible} onClose={onClose}>
       <h2>GRADING SYSTEM</h2>
       <h4>
-        The Norzagaray College {"A.Y. 2023 - 2024"} utilizes the grading system
+        The Norzagaray College {"A.Y. 2024 - 2025"} utilizes the grading system
         below:
       </h4>
       <h5>RAW SCORE COMPUTATION</h5>

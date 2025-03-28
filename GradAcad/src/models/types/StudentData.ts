@@ -16,6 +16,9 @@ export interface CombinedDataProps {
     LastName?: string;
     FirstName?: string;
     MiddleInitial?: string;
+    prelimRemarks?: string;
+    midtermRemarks?: string;
+    finalRemarks?: string;
     terms: {
     PRELIM?: number;
       MIDTERM?: number;
