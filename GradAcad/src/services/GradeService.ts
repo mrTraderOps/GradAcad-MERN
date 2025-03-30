@@ -67,3 +67,27 @@ export const GenerateReportService = async (
   }
 };
 
+export const GenerateReportServiceForRegistrar = async (
+  setResponse: React.Dispatch<React.SetStateAction<any>>,
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  try {
+    setLoading(true); // ✅ Ensure loading starts before the request
+
+    const response = await axios.get("http://localhost:5000/api/v1/grade/generateReportForRegistrar");
+
+    if (response.data?.success) {
+      setResponse(response.data.data);
+    } else {
+      setError(response.data?.message || "Failed to fetch grades.");
+    }
+  } catch (error: any) {
+    setError(error.response?.data?.message || "An error occurred while fetching grades.");
+    console.error("Generate Report API Error:", error);
+  } finally {
+    setLoading(false); // ✅ Ensure loading ends after request
+  }
+};
+
+

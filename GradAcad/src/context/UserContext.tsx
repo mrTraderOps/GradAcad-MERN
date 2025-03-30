@@ -38,8 +38,17 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  // Default value for confirmData
-  const [confirmData, setConfirmData] = useState<ConfirmData[]>([]);
+  const [confirmData, setConfirmData] = useState<ConfirmData[]>([
+    // {
+    //   sem: "Second",
+    //   acadYr: "2024 - 2025",
+    //   dept: "BSCS",
+    //   sect: "4A",
+    //   subjCode: "THESIS 102",
+    //   subjName: "Thesis 2",
+    //   terms: [""],
+    // },
+  ]);
 
   // Function to add confirmation data to the array
   const addConfirmData = (data: ConfirmData) => {

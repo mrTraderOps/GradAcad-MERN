@@ -1,13 +1,17 @@
 import styles from "../fragments/students_panel/styles/StudentsPanel.module.scss";
 import style from "../styles/Department.module.scss";
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
-import { useTerm } from "../../../../hooks/useTerm";
-import { useCombinedData } from "../../../../hooks/useCombinedData";
-import ExportExcel from "../../../../utils/ExportExcel";
+import { useCombinedDatav2 } from "../../../../hooks/useCombinedData";
 import { calculateAverage } from "../../../../utils/helpers/calculateAve";
 import { calculateEQ } from "../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../utils/helpers/getRemarks";
+import cslogo from "../../../../assets/images/ccs_icon.png";
+import nclogo from "../../../../assets/images/nc_logo.png";
+import notfound from "../../../../assets/images/notfound.png";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { GenerateReport } from "../../../components/GenerateReport";
 
 const Sheet = () => {
   const context = useContext(UserContext);
@@ -18,31 +22,208 @@ const Sheet = () => {
 
   const { user, confirmData } = context;
 
-  const { subjCode, subjName, dept, sect } = confirmData[0];
+  const { acadYr, sem, subjCode, subjName, dept, sect } = confirmData[0] || {};
 
-  const { terms } = useTerm();
+  const combinedParams = useMemo(
+    () => ({
+      acadYr,
+      sem,
+      dept,
+      sect,
+      subjCode,
+      terms: [""],
+    }),
+    [acadYr, sem, dept, sect, subjCode]
+  );
 
-  const activeTerms = useMemo(() => {
-    return terms.length > 0
-      ? Object.entries(terms[0].term[0])
-          .filter(([_, value]) => value)
-          .map(([key]) => key.toUpperCase())
-      : [];
-  }, [terms]);
+  const { combinedData, errorMessage, loading } =
+    useCombinedDatav2(combinedParams);
 
-  const { combinedData, errorMessage, loading } = useCombinedData({
-    dept,
-    sect: sect,
-    subjCode: subjCode,
-    terms: activeTerms,
-  });
+  const [showModal, setShowModal] = useState(true);
+
+  const handleCancelSubmit = () => {
+    setShowModal(false);
+  };
+
+  const loadImageBase64 = async (url: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous"; // Prevent CORS issues
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = (err) => reject(err);
+      img.src = url;
+    });
+  };
+
+  const handlePrintPDF = async () => {
+    const doc = new jsPDF();
+
+    // Load logos
+    const leftLogo = await loadImageBase64(nclogo);
+    const rightLogo = await loadImageBase64(cslogo);
+
+    // Add logos and header text
+    doc.addImage(leftLogo, "PNG", 20, 10, 28, 28);
+    doc.addImage(rightLogo, "PNG", 160, 10, 30, 30);
+
+    doc.setFontSize(14);
+    doc.setFont("calibri", "bold");
+    doc.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("calibri", "normal");
+    doc.text("Municipal Compound, Poblacion, Norzagaray, Bulacan", 105, 27, {
+      align: "center",
+    });
+
+    doc.setFontSize(12);
+    doc.text("Registrar's Office", 105, 34, { align: "center" });
+
+    doc.setFontSize(16);
+    doc.text("Generate Report", 105, 50, { align: "center" });
+
+    // **Extract table data from combinedData**
+    const headers = [
+      "STUDENT ID",
+      "STUDENT NAME",
+      "PRELIM",
+      "MIDTERM",
+      "FINAL",
+      "AVERAGE",
+      "GRADE EQ",
+      "REMARKS",
+    ];
+
+    const rows = combinedData.map((row) => {
+      const existingRemark =
+        row.finalRemarks?.trim() ||
+        row.midtermRemarks?.trim() ||
+        row.prelimRemarks?.trim();
+
+      const average = existingRemark
+        ? 0.0
+        : calculateAverage(
+            row.terms.PRELIM ?? 0,
+            row.terms.MIDTERM ?? 0,
+            row.terms.FINAL ?? 0
+          );
+
+      const gradeEq = existingRemark ? 0.0 : calculateEQ(average);
+
+      const remarks = existingRemark
+        ? existingRemark // Use existing remark if present
+        : getRemarks(
+            row.terms.PRELIM ?? 0,
+            row.terms.MIDTERM ?? 0,
+            row.terms.FINAL ?? 0,
+            gradeEq
+          );
+
+      return [
+        String(row.StudentId), // Ensure string
+        `${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
+          row.MiddleInitial ?? ""
+        }.`, // Ensure text
+        Number(row.terms.PRELIM ?? 0), // Ensure number
+        Number(row.terms.MIDTERM ?? 0), // Ensure number
+        Number(row.terms.FINAL ?? 0), // Ensure number
+        Number(average.toFixed(2)), // Ensure number
+        Number(gradeEq), // Ensure number
+        {
+          content: String(remarks),
+          styles: existingRemark
+            ? { textColor: [255, 0, 0] as [number, number, number] }
+            : {},
+        }, // ✅ Ensure correct textColor tuple
+      ];
+    });
+
+    // **Add table**
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 60,
+      margin: { top: 60 },
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [41, 63, 116] },
+      theme: "grid",
+      pageBreak: "auto",
+    });
+
+    // **Add Generated Date (Bottom Left) & Prepared By (Bottom Right)**
+    const currentDate = new Date().toLocaleString();
+    const preparedBy = `Prepared by: ${user?.refId} - ${user?.name}`;
+
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    doc.setFontSize(10);
+    doc.text(`Generated Date: ${currentDate}`, 20, pageHeight - 10);
+    doc.text(
+      preparedBy,
+      pageWidth - doc.getTextWidth(preparedBy) - 20,
+      pageHeight - 10
+    );
+
+    // **Open print panel**
+    doc.autoPrint();
+    window.open(doc.output("bloburl"), "_blank");
+  };
+
+  if (!confirmData || confirmData.length === 0) {
+    return (
+      <>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            height: "100%",
+          }}
+        >
+          <img src={notfound} alt="not found" width={600} />
+          <p>No data found. Click Generate Generate Report to view data.</p>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{
+              marginTop: "20px",
+              padding: "10px 20px",
+              fontSize: "16px",
+              backgroundColor: "#293F74",
+              color: "#fff",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Generate Report
+          </button>
+        </div>
+        <GenerateReport
+          isOpen={showModal}
+          onCancel={handleCancelSubmit}
+          isRegistrar={true}
+        />
+      </>
+    );
+  }
 
   return (
     <>
       <div className={style.department}>
         <div className={styles.preloader}>
           <p>Subject &gt; Section </p>
-          <p>First Semester A.Y. 2023-2024</p>
+          <p>
+            {sem} Semester A.Y. {acadYr}
+          </p>
         </div>
         <header className={styles.headerStudentsPanel}>
           <div className={styles.div1}>
@@ -60,19 +241,23 @@ const Sheet = () => {
 
           <div className={styles.div2}>
             <p>
-              COURSE & SECTION : {dept} - {sect}
+              COURSE & SECTION :{" "}
+              <strong>
+                {dept} - {sect}
+              </strong>
             </p>
           </div>
 
           <div className={styles.div3}>
-            <ExportExcel
-              combinedData={combinedData}
-              loggedName={user?.name ?? ""}
-              dept={dept}
-              subjectCode={subjCode}
-              subjectName={subjName}
-              section={sect}
-            />
+            <button
+              onClick={() => handlePrintPDF()}
+              style={{
+                backgroundColor: "rgb(41, 63, 116)",
+                borderRadius: "10px",
+              }}
+            >
+              OPEN IN PDF
+            </button>
           </div>
         </header>
         <main className={styles.main}>
@@ -90,21 +275,15 @@ const Sheet = () => {
                       <th>
                         <h5>STUDENT NAME</h5>
                       </th>
-                      {activeTerms.includes("PRELIM") && (
-                        <th>
-                          <h5>PRELIM</h5>
-                        </th>
-                      )}
-                      {activeTerms.includes("MIDTERM") && (
-                        <th>
-                          <h5>MIDTERM</h5>
-                        </th>
-                      )}
-                      {activeTerms.includes("FINAL") && (
-                        <th>
-                          <h5>FINAL</h5>
-                        </th>
-                      )}
+                      <th>
+                        <h5>PRELIM</h5>
+                      </th>
+                      <th>
+                        <h5>MIDTERM</h5>
+                      </th>
+                      <th>
+                        <h5>FINAL</h5>
+                      </th>
                       <th>
                         <h5>AVERAGE</h5>
                       </th>
@@ -118,19 +297,34 @@ const Sheet = () => {
                   </thead>
                   <tbody>
                     {combinedData.map((row) => {
-                      const average = calculateAverage(
-                        row.terms.PRELIM ?? 0,
-                        row.terms.MIDTERM ?? 0,
-                        row.terms.FINAL ?? 0
-                      );
-                      const gradeEq = calculateEQ(average);
-                      const remarks = getRemarks(
-                        row.terms.PRELIM ?? 0,
-                        row.terms.MIDTERM ?? 0,
-                        row.terms.FINAL ?? 0,
-                        gradeEq
-                      );
-                      const isFailed = gradeEq > 3.0;
+                      // Check if there's already a remark in prelim, midterm, or final
+                      const existingRemark =
+                        row.finalRemarks?.trim() ||
+                        row.midtermRemarks?.trim() ||
+                        row.prelimRemarks?.trim();
+
+                      // Compute only if no existing remarks
+                      const average = existingRemark
+                        ? 0.0
+                        : calculateAverage(
+                            row.terms.PRELIM ?? 0,
+                            row.terms.MIDTERM ?? 0,
+                            row.terms.FINAL ?? 0
+                          );
+                      const gradeEq = existingRemark
+                        ? 0.0
+                        : calculateEQ(average);
+                      const remarks = existingRemark
+                        ? existingRemark // Use the existing remark if present
+                        : getRemarks(
+                            row.terms.PRELIM ?? 0,
+                            row.terms.MIDTERM ?? 0,
+                            row.terms.FINAL ?? 0,
+                            gradeEq
+                          );
+
+                      // Ensure remarks are red if the student has an existing remark or failed
+                      const isFailed = existingRemark || gradeEq > 3.0;
 
                       return (
                         <tr key={row.StudentId}>
@@ -140,15 +334,9 @@ const Sheet = () => {
                               row.MiddleInitial ?? ""
                             }.`}
                           </td>
-                          {activeTerms.includes("PRELIM") && (
-                            <td>{row.terms.PRELIM}</td>
-                          )}
-                          {activeTerms.includes("MIDTERM") && (
-                            <td>{row.terms.MIDTERM}</td>
-                          )}
-                          {activeTerms.includes("FINAL") && (
-                            <td>{row.terms.FINAL}</td>
-                          )}
+                          <td>{row.terms.PRELIM}</td>
+                          <td>{row.terms.MIDTERM}</td>
+                          <td>{row.terms.FINAL}</td>
                           <td>{average.toFixed(2)}</td>
                           <td>{gradeEq}</td>
                           <td className={isFailed ? styles.fail : ""}>
@@ -164,6 +352,11 @@ const Sheet = () => {
           </section>
         </main>
       </div>
+      <GenerateReport
+        isOpen={showModal}
+        onCancel={handleCancelSubmit}
+        isRegistrar={true}
+      />
     </>
   );
 };

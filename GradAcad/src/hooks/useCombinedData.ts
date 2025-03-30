@@ -159,14 +159,19 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms, sect, dept }: 
     );
   };
 
+  // ✅ Reset error before making request
+  
+
   useEffect(() => {
+
+  setError(null);
+  setLoading(true);
+
     if (!acadYr || !sem || !subjCode || !terms || terms.length === 0) {
-      setError("Missing required parameters");
+      setError("Missing required parameters 12123");
       setLoading(false);
       return;
     }
-
-    setLoading(true);
 
     axios
       .post("http://localhost:5000/api/v1/grade/getStudentGrades", {

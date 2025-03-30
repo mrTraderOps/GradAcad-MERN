@@ -289,6 +289,44 @@ export const generateReport = async (req, res) => {
   }
 };
 
+export const generateReportForRegistrar = async (req, res) => {
+  try {
+    const db = getDB();
+
+    // 🔍 Step 1: Query enrollment collection and join with subjects collection
+    const enrollmentDocs = await db.collection("enrollment").aggregate([
+      {
+        $lookup: {
+          from: "subjects", // 🔗 Join with subjects collection
+          localField: "subjectId", // 🔍 Match 'subjectId' in 'enrollment'
+          foreignField: "_id", // 🔍 Match '_id' in 'subjects'
+          as: "subjectDetails", // 🔄 Store result in 'subjectDetails'
+        },
+      },
+      {
+        $project: {
+          acadYr: 1,
+          sem: 1,
+          subjectId: 1,
+          dept: 1,
+          sect: 1,
+          subjectName: { $arrayElemAt: ["$subjectDetails.subjectName", 0] }, // 🎯 Extract subjectName
+        },
+      },
+    ]).toArray();
+
+    if (!enrollmentDocs.length) {
+      return res.status(404).json({ success: false, message: "No records found." });
+    }
+
+    res.status(200).json({ success: true, data: enrollmentDocs });
+
+  } catch (error) {
+    console.error("Error generating report:", error);
+    res.status(500).json({ success: false, message: "Server error.", error: error.message });
+  }
+};
+
 export const getStudentGrades = async (req, res) => {
   try {
     const { acadYr, sem, subjectId, selectedTerms, dept, section } = req.body;
@@ -440,6 +478,70 @@ export const updateRemarks = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
+
+
+export const updateGradingPeriod = async (req, res) => {
+  try {
+    const db = getDB();
+    const collection = db.collection("global"); 
+    const { acadYr, sem, term, prelimDone, midtermDone, finalDone } = req.body;
+
+    // Update the document
+    const result = await collection.updateOne(
+      {},
+      {
+        $set: {
+          currentAcadYr: acadYr,
+          currentSem: [sem], 
+          currentTerm: [term],
+          isDonePrelim: prelimDone,
+          isDoneMidterm: midtermDone,
+          isDoneFinal: finalDone,
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      return res.status(200).json({ success: true, message: "Grading period updated successfully" });
+    } else {
+      return res.status(400).json({ success: false, message: "No changes made to the document" });
+    }
+  } catch (error) {
+    console.error("Error updating grading period:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateGradingPeriodV2 = async (req, res) => {
+  try {
+    const db = getDB();
+    const collection = db.collection("global"); 
+    const { acadYr, sem, term } = req.body;
+
+    // Update the document
+    const result = await collection.updateOne(
+      {},
+      {
+        $set: {
+          currentAcadYr: acadYr,
+          currentSem: [sem], 
+          currentTerm: [term],
+        },
+      }
+    );
+
+    if (result.modifiedCount > 0) {
+      return res.status(200).json({ success: true, message: "Grading period updated successfully" });
+    } else {
+      return res.status(400).json({ success: false, message: "No changes made to the document" });
+    }
+  } catch (error) {
+    console.error("Error updating grading period:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 
 
 

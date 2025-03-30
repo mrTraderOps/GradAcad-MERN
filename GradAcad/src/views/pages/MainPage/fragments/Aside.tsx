@@ -70,6 +70,7 @@ const Aside = ({ role, onLogout }: Props) => {
           {role === "registrar" && (
             <>
               <CustomButton to="/grade_sheet">GRADE SHEET</CustomButton>
+              <CustomButton to="/grade_period">GRADE PERIOD</CustomButton>
             </>
           )}
 

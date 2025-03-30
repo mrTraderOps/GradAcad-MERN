@@ -205,7 +205,7 @@ const LoginPage = ({ onLogin }: Props) => {
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     required
-                    style={{ width: 400 }}
+                    style={{ width: "100%" }}
                   >
                     <option value="">Select Role</option>
                     <option value="admin">Admin</option>

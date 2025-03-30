@@ -39,7 +39,7 @@ export const useTerm = () => {
             (key) => data.sem[key] === true
           );
           setActiveSems(activeSemsList);
-          setInitialSem(activeSemsList[0]); // Set the first active semester as initial
+          setInitialSem(activeSemsList[0]);
 
           // Extract active terms
           const activeTermsList = Object.keys(data.term).filter(

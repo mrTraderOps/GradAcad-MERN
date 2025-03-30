@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import styles from "../styles/AuditTrail.module.scss"; // Import CSS module
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import cslogo from "../../../../assets/images/ccs_icon.png";
 import nclogo from "../../../../assets/images/nc_logo.png";
 import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import axios from "axios";
 import autoTable from "jspdf-autotable";
+import { UserContext } from "../../../../context/UserContext";
 
 interface AuditLog {
   logId: number;
@@ -32,6 +32,14 @@ const AuditTrail = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
   const logsPerPage = 20;
+
+  const context = useContext(UserContext);
+
+  if (!context) {
+    throw new Error("ExportExcel must be used within a UserProvider");
+  }
+
+  const { user } = context;
 
   useEffect(() => {
     const fetchAuditLogs = async () => {
@@ -108,15 +116,14 @@ const AuditTrail = () => {
   const handlePrintPDF = async () => {
     const doc = new jsPDF();
 
-    // Load logos (replace with your actual logo imports/URLs)
+    // Load logos
     const leftLogo = await loadImage(nclogo);
     const rightLogo = await loadImage(cslogo);
 
     // Add logos and header text
-    doc.addImage(leftLogo, "PNG", 20, 10, 28, 28); // Left logo
-    doc.addImage(rightLogo, "PNG", 160, 10, 30, 30); // Right logo
+    doc.addImage(leftLogo, "PNG", 20, 10, 28, 28);
+    doc.addImage(rightLogo, "PNG", 160, 10, 30, 30);
 
-    // Title and institution info
     doc.setFontSize(14);
     doc.setFont("calibri", "bold");
     doc.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
@@ -130,7 +137,6 @@ const AuditTrail = () => {
     doc.setFontSize(12);
     doc.text("MIS Department", 105, 34, { align: "center" });
 
-    // Report title
     doc.setFontSize(16);
     doc.text("Audit Trail Report", 105, 50, { align: "center" });
 
@@ -144,22 +150,34 @@ const AuditTrail = () => {
       Array.from(tr.querySelectorAll("td")).map((td) => td.textContent)
     );
 
-    // Add table (starts below the header)
+    // Add table
     autoTable(doc, {
       head: [headers],
       body: rows,
-      startY: 60, // Position below the header
+      startY: 60,
       margin: { top: 60 },
-      styles: { fontSize: 8 }, // Smaller font for table
-      headStyles: { fillColor: [22, 160, 133] }, // Green header
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [22, 160, 133] },
     });
 
-    // Footer with date
-    const date = new Date().toLocaleDateString();
-    doc.setFontSize(10);
-    doc.text(`Generated on: ${date}`, 14, doc.internal.pageSize.height - 10);
+    // **Add Generated Date (Bottom Left) & Prepared By (Bottom Right)**
+    const currentDate = new Date().toLocaleString(); // Get current date & time
+    const preparedBy = `Prepared by: ${user?.refId} - ${user?.name}`; // User details
 
-    doc.save(`AuditTrailReport-${date}.pdf`);
+    const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
+
+    doc.setFontSize(10);
+    doc.text(`Generated Date: ${currentDate}`, 20, pageHeight - 10);
+    doc.text(
+      preparedBy,
+      pageWidth - doc.getTextWidth(preparedBy) - 20,
+      pageHeight - 10
+    );
+
+    // **Open print panel**
+    doc.autoPrint();
+    window.open(doc.output("bloburl"), "_blank");
   };
 
   return (
@@ -181,7 +199,8 @@ const AuditTrail = () => {
             <option value="Account Approved">Account Approved</option>
             <option value="Account Rejected">Account Rejected</option>
             <option value="User Edited">User Edited</option>
-            <option value="User Deleted">User Deleted</option>
+            <option value="User Archived">User Archived</option>
+            <option value="User Restored">User Restored</option>
           </select>
         </div>
         <div className={styles.filterGroup}>
@@ -218,7 +237,7 @@ const AuditTrail = () => {
           }}
           onClick={handlePrintPDF}
         >
-          PRINT PDF
+          OPEN IN PDF
         </button>
       </div>
 

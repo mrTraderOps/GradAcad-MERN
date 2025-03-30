@@ -590,8 +590,6 @@ export const updateUserStatus = async (req, res) => {
   }
 };
 
-
-
 export const logs = async (req, res) => {
   try {
     const { action, userId, name, details } = req.body;

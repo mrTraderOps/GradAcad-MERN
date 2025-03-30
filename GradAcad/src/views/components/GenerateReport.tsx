@@ -1,6 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "./styles/AreYouSure.module.scss";
-import { DetailProps, useGrade } from "../../hooks/useGrade";
+import {
+  DetailProps,
+  useGrade,
+  useGradeForRegistrar,
+} from "../../hooks/useGrade";
 import { UserContext } from "../../context/UserContext";
 import loadingAnimation from "../../assets/webM/loading.webm";
 import { useNavigate } from "react-router-dom";
@@ -8,16 +12,31 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   isOpen: boolean;
   onCancel: () => void;
-  userId: string;
+  userId?: string;
+  isRegistrar?: boolean;
 }
 
-export const GenerateReport = ({ isOpen, onCancel, userId }: Props) => {
+export const GenerateReport = ({
+  isOpen,
+  onCancel,
+  userId,
+  isRegistrar,
+}: Props) => {
   const navigate = useNavigate();
 
   const context = useContext(UserContext);
   const { addConfirmData }: any = context;
 
-  const { data, errorMessage, loading } = useGrade(userId);
+  // Always call both hooks at the top level
+  const gradeData = useGrade(userId ?? ""); // Fetch when userId exists
+  const registrarData = useGradeForRegistrar(); // Fetch when no userId
+
+  // Determine which data to use
+  const data = userId ? gradeData.data : registrarData.data;
+  const errorMessage = userId
+    ? gradeData.errorMessage
+    : registrarData.errorMessage;
+  const loading = userId ? gradeData.loading : registrarData.loading;
 
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
   const [errorModal, setErrorMessage] = useState("");
@@ -139,11 +158,17 @@ export const GenerateReport = ({ isOpen, onCancel, userId }: Props) => {
 
     addConfirmData(confirmData);
 
+    if (!isRegistrar) {
+      setTimeout(() => {
+        // Navigate to GradeSheet.tsx or perform the next action
+        navigate("/reportsheet");
+      }, 2000); // Adjust the delay as needed
+    }
+
     setTimeout(() => {
       setModalContent1Loading(false);
-      // Navigate to GradeSheet.tsx or perform the next action
-      navigate("/reportsheet");
-    }, 2000); // Adjust the delay as needed
+      onCancel();
+    }, 2000);
   };
 
   if (!isOpen) return null;
