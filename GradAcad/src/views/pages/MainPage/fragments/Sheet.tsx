@@ -65,6 +65,11 @@ const Sheet = () => {
   const handlePrintPDF = async () => {
     const doc = new jsPDF();
 
+    // Positioning variables
+    const startX = 20; // Left margin
+    const startY = 60; // Below "Registrar's Office"
+    const lineHeight = 5; // Line spacing
+
     // Load logos
     const leftLogo = await loadImageBase64(nclogo);
     const rightLogo = await loadImageBase64(cslogo);
@@ -74,23 +79,39 @@ const Sheet = () => {
     doc.addImage(rightLogo, "PNG", 160, 10, 30, 30);
 
     doc.setFontSize(14);
-    doc.setFont("calibri", "bold");
+    doc.setFont("times", "bold");
     doc.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
 
     doc.setFontSize(10);
-    doc.setFont("calibri", "normal");
+    doc.setFont("times", "normal");
     doc.text("Municipal Compound, Poblacion, Norzagaray, Bulacan", 105, 27, {
       align: "center",
     });
 
     doc.setFontSize(12);
+    doc.setFont("times", "normal");
     doc.text("Registrar's Office", 105, 34, { align: "center" });
 
     doc.setFontSize(16);
+    doc.setFont("times", "bold");
     doc.text("Generate Report", 105, 50, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("times", "bold");
+    doc.text(
+      `Subject Code & Name: THESIS 102 - Thesis 2`,
+      startX,
+      startY + lineHeight
+    );
+    doc.text(`Academic Year: 2024 - 2025`, startX, startY + lineHeight * 2);
+    doc.text(`Semester: 2nd`, startX, startY + lineHeight * 3);
+    doc.text(`Course & Section: BSCS - 4A`, startX, startY + lineHeight * 4);
+
+    const tableStartY = startY + lineHeight * 5;
 
     // **Extract table data from combinedData**
     const headers = [
+      "No.",
       "STUDENT ID",
       "STUDENT NAME",
       "PRELIM",
@@ -101,7 +122,7 @@ const Sheet = () => {
       "REMARKS",
     ];
 
-    const rows = combinedData.map((row) => {
+    const rows = combinedData.map((row, index) => {
       const existingRemark =
         row.finalRemarks?.trim() ||
         row.midtermRemarks?.trim() ||
@@ -127,6 +148,7 @@ const Sheet = () => {
           );
 
       return [
+        String(`${index + 1}.`),
         String(row.StudentId), // Ensure string
         `${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
           row.MiddleInitial ?? ""
@@ -149,8 +171,8 @@ const Sheet = () => {
     autoTable(doc, {
       head: [headers],
       body: rows,
-      startY: 60,
-      margin: { top: 60 },
+      startY: tableStartY,
+      margin: { top: tableStartY },
       styles: { fontSize: 8 },
       headStyles: { fillColor: [41, 63, 116] },
       theme: "grid",
@@ -190,7 +212,7 @@ const Sheet = () => {
           }}
         >
           <img src={notfound} alt="not found" width={600} />
-          <p>No data found. Click Generate Generate Report to view data.</p>
+          <p>No data found. Click Generate Report to view data.</p>
           <button
             onClick={() => setShowModal(true)}
             style={{
@@ -234,9 +256,7 @@ const Sheet = () => {
                 width={35}
               />
             </button>
-            <h3>
-              {subjCode} - {subjName}
-            </h3>
+            <h3>{subjCode}</h3>
           </div>
 
           <div className={styles.div2}>

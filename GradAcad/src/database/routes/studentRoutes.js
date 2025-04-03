@@ -1,5 +1,5 @@
 import express from 'express';
-import { registerStudent, getStudentByDeptSect, getStudentById, deleteStudent, updateStudent } from '../controllers/studentController.js';
+import { registerStudent, getStudentByDeptSect, addStudent, deleteStudent } from '../controllers/studentController.js';
 
 const router = express.Router();
 
@@ -9,13 +9,8 @@ router.post('/register', registerStudent);
 // Get all student by department and section
 router.post('/getSection', getStudentByDeptSect);
 
-// Get a user by ID
-router.get('/:id', getStudentById);
+router.post('/addStudent', addStudent);
 
-// Update a user
-router.put('/:id', updateStudent);
-
-// Delete a user
-router.delete('/:id', deleteStudent);
+router.delete('/deleteStudent', deleteStudent);
 
 export default router;

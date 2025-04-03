@@ -13,6 +13,8 @@ import AuditTrail from "./fragments/AuditTrail";
 import ReportSheet from "./fragments/ReportSheet";
 import Sheet from "./fragments/Sheet";
 import GradingPeriod from "./fragments/GradingPeriod";
+import Enlisment from "./fragments/Enlisment";
+import OfferedSubjects from "./fragments/OfferedSubjects";
 
 interface Props {
   onLogout: () => void;
@@ -57,6 +59,8 @@ const MainPage = ({ onLogout }: Props) => {
             <Route path="/settings" element={<Settings />} />
             <Route path="/grade_sheet" element={<Sheet />} />
             <Route path="/grade_period" element={<GradingPeriod />} />
+            <Route path="/enrollees" element={<Enlisment />} />
+            <Route path="/offered_subjects" element={<OfferedSubjects />} />
           </Routes>
         </div>
       </main>

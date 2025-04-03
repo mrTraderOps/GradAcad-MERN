@@ -49,10 +49,9 @@ const Aside = ({ role, onLogout }: Props) => {
       </header>
       <nav>
         <ul className={styles.navItems}>
-          <CustomButton to="/dashboard">DASHBOARD</CustomButton>
-
           {role === "admin" && (
             <>
+              <CustomButton to="/dashboard">DASHBOARD</CustomButton>
               <CustomButton to="/account_approvals">
                 ACCOUNT APPROVAL
               </CustomButton>
@@ -63,14 +62,19 @@ const Aside = ({ role, onLogout }: Props) => {
 
           {role === "prof" && (
             <>
+              <CustomButton to="/dashboard">DASHBOARD</CustomButton>
               <CustomButton to="/subjects">SUBJECTS</CustomButton>
             </>
           )}
 
           {role === "registrar" && (
             <>
-              <CustomButton to="/grade_sheet">GRADE SHEET</CustomButton>
               <CustomButton to="/grade_period">GRADE PERIOD</CustomButton>
+              <CustomButton to="/grade_sheet">GRADE SHEET</CustomButton>
+              <CustomButton to="/offered_subjects">
+                OFFERED SUBJECTS
+              </CustomButton>
+              <CustomButton to="/enrollees">ENROLLEES</CustomButton>
             </>
           )}
 

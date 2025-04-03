@@ -134,7 +134,11 @@ th, td {
   font-size: $semiMedium;
   padding-left: 15px;
   width: 60%;
-  height: 50px;
+  height: 33px;
   border-radius: 10px;
   border: 1px solid $black;
+}
+
+.error {
+  color: #f44336
 }

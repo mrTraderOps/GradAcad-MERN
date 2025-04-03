@@ -190,6 +190,27 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
+export const getAllUsersForGradeRequest = async (req, res) => {
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+
+    // Fetch only users with role "prof" and status "active"
+    const users = await usersCollection
+      .find({ role: "prof", status: "Active" }, { projection: { refId: 1, name: 1, _id: 0 } })
+      .toArray();
+
+    if (users.length > 0) {
+      res.status(200).json({ success: true, users });
+    } else {
+      res.status(404).json({ success: false, message: "No active professors found." });
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 export const getManageUsers = async (req, res) => {
   try {
     const db = getDB();

@@ -197,7 +197,7 @@ const UserManagement = () => {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
-    setOriginalRefId(user.refId); // Store original refId before changes
+    setOriginalRefId(user.refId);
   };
 
   const handleSave = async (editedUser: User) => {

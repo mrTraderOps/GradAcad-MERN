@@ -17,7 +17,7 @@ interface ConfirmData {
   dept: string;
   sect: string;
   subjCode: string;
-  subjName: string;
+  subjName?: string;
   terms?: [string];
 }
 
@@ -38,17 +38,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
-  const [confirmData, setConfirmData] = useState<ConfirmData[]>([
-    // {
-    //   sem: "Second",
-    //   acadYr: "2024 - 2025",
-    //   dept: "BSCS",
-    //   sect: "4A",
-    //   subjCode: "THESIS 102",
-    //   subjName: "Thesis 2",
-    //   terms: [""],
-    // },
-  ]);
+  const [confirmData, setConfirmData] = useState<ConfirmData[]>([]);
 
   // Function to add confirmation data to the array
   const addConfirmData = (data: ConfirmData) => {

@@ -35,18 +35,10 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
   const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedTerm, setSelectedTerm] = useState<string>(initialTerm);
-  const [isSorting, setIsSorting] = useState(true);
-
-  // Fetch subjects and terms
-  // const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
-  const {
-    subjects,
-    errorMessage,
-    loading: subjectsLoading,
-  } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem);
+  const [isSorting, setIsSorting] = useState(false);
 
   useEffect(() => {
-    setIsSorting(true); // Start sorting
+    setIsSorting(true);
     setSelectedAcadYr(initialAcadYr);
     setSelectedSem(initialSem);
     setSelectedTerm(initialTerm);
@@ -55,6 +47,14 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
       setIsSorting(false);
     }, 2000); // Adjust time as needed
   }, [initialAcadYr, initialSem, initialTerm]);
+
+  // Fetch subjects and terms
+  // const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
+  const {
+    subjects,
+    errorMessage,
+    loading: subjectsLoading,
+  } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem);
 
   const handleAcadYrChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;

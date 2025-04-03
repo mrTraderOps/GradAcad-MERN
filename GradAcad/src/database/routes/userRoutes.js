@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs, changePassword, getArchivedUsers, restoreUser, archiveUser, updateUserStatus } from '../controllers/userController.js';
+import { loginUser, registerUser, updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs, changePassword, getArchivedUsers, restoreUser, archiveUser, updateUserStatus, getAllUsersForGradeRequest } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -11,6 +11,8 @@ router.post('/register', registerUser);
 
 // Fetch all User
 router.get('/getAllUsers', getAllUsers);
+
+router.get('/getAllUsersForGradeRequest', getAllUsersForGradeRequest);
 
 // Fetch all User to Manage
 router.get('/getManageUsers', getManageUsers);

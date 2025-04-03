@@ -46,6 +46,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
   }: DataProps = data;
   const [selectedTerm, setSelectedTerm] = useState<string>(term[0]);
   const [isSaved, setIsSaved] = useState(false);
+  const [isOpenRequest, setIsOpenRequest] = useState(false);
 
   const terms = useMemo(() => [selectedTerm], [selectedTerm]);
 
@@ -83,7 +84,14 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     terms,
   });
 
-  const { activeTerms, donePrelim, doneMidterm, doneFinal } = useTerm();
+  const {
+    activeSems,
+    activeAcadYrs,
+    activeTerms,
+    donePrelim,
+    doneMidterm,
+    doneFinal,
+  } = useTerm();
 
   const handleTermChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedTerm(e.target.value);
@@ -405,23 +413,20 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       max: number,
       step: number,
       index: number,
-      isEditing: boolean,
-      readOnly: boolean // ✅ New parameter to control readOnly state
+      isEditing: boolean
     ) => (
       <input
         type="number"
         step={step}
         max={max}
         value={fieldValue !== undefined ? fieldValue : ""}
-        readOnly={readOnly || !isEditing} // ✅ Read-only if row has remarks OR not in editing mode
+        readOnly={!isEditing}
         onKeyDown={(e) => {
           if (["e", "E", "+", "-"].includes(e.key)) {
             e.preventDefault();
           }
         }}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          if (readOnly) return; // ✅ Prevent changes if input is read-only
-
           let value =
             e.target.value === "" ? undefined : parseFloat(e.target.value);
 
@@ -443,6 +448,11 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     (selectedTerm === "MIDTERM" && doneMidterm) ||
     (selectedTerm === "FINAL" && doneFinal);
 
+  const isOngoingSubject =
+    acadYr && sem
+      ? activeAcadYrs.includes(acadYr) && activeSems.includes(sem)
+      : false;
+
   useEffect(() => {
     if (combinedData.length > 0 && isEditing) {
       const initialGrades = combinedData.reduce((acc, row) => {
@@ -461,6 +471,43 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       console.log("Updated Current Grades:", currentGrades);
     }
   }, [combinedData, selectedTerm, isEditing]);
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await axios.post(
+          "http://localhost:5000/api/v1/grade/fetchAllRequestById",
+          { refId: user?.refId } // Send refId in request body
+        );
+
+        if (response.data.success) {
+          const activeRequests = response.data.data.filter(
+            (item: any) => item.isActive === true
+          );
+
+          const matchFound = activeRequests.some((item: any) => {
+            return (
+              item.subjectId === subjectCode &&
+              item.dept === dept &&
+              item.sect === section &&
+              item.term === selectedTerm &&
+              item.acadYr === acadYr &&
+              item.sem === sem
+            );
+          });
+
+          setIsOpenRequest(matchFound);
+        } else {
+          setIsOpenRequest(false);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setIsOpenRequest(false);
+      }
+    };
+
+    fetchRequests();
+  }, [user?.refId, subjectCode, dept, section, terms, acadYr, sem]);
 
   return (
     <>
@@ -499,17 +546,23 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                 onChange={handleTermChange}
                 className={styles.selectHidden}
               >
-                {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
-                  if (activeTerms.includes(term.toLowerCase())) {
-                    return (
+                {!isOngoingSubject ? (
+                  <>
+                    <option value="PRELIM">PRELIM</option>
+                    <option value="MIDTERM">MIDTERM</option>
+                    <option value="FINAL">FINAL</option>
+                  </>
+                ) : (
+                  ["PRELIM", "MIDTERM", "FINAL"].map((term) =>
+                    activeTerms.includes(term.toLowerCase()) ? (
                       <option key={term} value={term}>
                         {term}
                       </option>
-                    );
-                  }
-                  return null;
-                })}
+                    ) : null
+                  )
+                )}
               </select>
+
               <img
                 src={dropdownIcon}
                 alt="select a term"
@@ -520,37 +573,56 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
           </p>
         </div>
 
-        <>
-          {!isTermDone && ( // ✅ Hide buttons if the term is done
-            <div className={styles.div3}>
-              <button
-                className={styles.button1}
-                onClick={() => downloadCSV(students, selectedTerm, data)}
-              >
-                <img
-                  src="src/assets/icons/download_icon.png"
-                  alt=""
-                  width={20}
-                />
-                <p>Download Grade Template</p>
-              </button>
-              <button
-                className={styles.button2}
-                onClick={() => document.getElementById("fileInput")?.click()}
-              >
-                <input
-                  type="file"
-                  accept=".csv"
-                  id="fileInput"
-                  style={{ display: "none" }}
-                  onChange={handleFileUpload}
-                />
-                <img src="src/assets/icons/upload_icon.png" alt="" width={20} />
-                <p>Upload Grade</p>
-              </button>
-            </div>
-          )}
-        </>
+        {!isTermDone && isOngoingSubject && (
+          <div className={styles.div3}>
+            <button
+              className={styles.button1}
+              onClick={() => downloadCSV(students, selectedTerm, data)}
+            >
+              <img src="src/assets/icons/download_icon.png" alt="" width={20} />
+              <p>Download Grade Template</p>
+            </button>
+            <button
+              className={styles.button2}
+              onClick={() => document.getElementById("fileInput")?.click()}
+            >
+              <input
+                type="file"
+                accept=".csv"
+                id="fileInput"
+                style={{ display: "none" }}
+                onChange={handleFileUpload}
+              />
+              <img src="src/assets/icons/upload_icon.png" alt="" width={20} />
+              <p>Upload Grade</p>
+            </button>
+          </div>
+        )}
+        {isOpenRequest && (
+          <div className={styles.div3}>
+            <button
+              className={styles.button1}
+              onClick={() => downloadCSV(students, selectedTerm, data)}
+            >
+              <img src="src/assets/icons/download_icon.png" alt="" width={20} />
+              <p>Download Grade Template</p>
+            </button>
+            <button
+              className={styles.button2}
+              onClick={() => document.getElementById("fileInput")?.click()}
+            >
+              <input
+                type="file"
+                accept=".csv"
+                id="fileInput"
+                style={{ display: "none" }}
+                onChange={handleFileUpload}
+              />
+              <img src="src/assets/icons/upload_icon.png" alt="" width={20} />
+              <p>Upload Grade</p>
+            </button>
+          </div>
+        )}
       </header>
       <main className={styles.main}>
         <section>
@@ -675,8 +747,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                               100.0,
                               0.01,
                               index,
-                              editingRows[row.StudentId] || false,
-                              isReadOnly || false // ✅ Pass readOnly state
+                              editingRows[row.StudentId] || false
                             )}
 
                           {loadingRows[row.StudentId] ? (
@@ -693,8 +764,34 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                               />
                               Your browser does not support the video tag.
                             </video>
+                          ) : isOpenRequest ? (
+                            <img
+                              src={
+                                editingRows[row.StudentId]
+                                  ? saveIcon
+                                  : pencilIcon
+                              }
+                              alt="edit"
+                              width={20}
+                              height={20}
+                              style={{
+                                paddingLeft: "15px",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                if (!loadingRows[row.StudentId]) {
+                                  if (editingRows[row.StudentId]) {
+                                    handleConfirmSave(row.StudentId);
+                                    setIsSaved(true);
+                                  } else {
+                                    toggleEdit(row.StudentId);
+                                  }
+                                }
+                              }}
+                            />
                           ) : (
-                            !isReadOnly && (
+                            !isReadOnly &&
+                            isOngoingSubject && (
                               <img
                                 src={
                                   editingRows[row.StudentId]
@@ -734,31 +831,84 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                         >
                           {shouldShowDropdown ? (
                             <>
-                              <select
-                                style={{ width: "35%", color: "#ff4949" }}
-                                disabled={
-                                  isUpdatingRemarks[row.StudentId] ||
-                                  isReadOnly ||
-                                  false
-                                }
-                                onChange={(e) =>
-                                  handleRemarksChange(
-                                    e,
-                                    selectedTerm,
-                                    row.StudentId,
-                                    subjectCode,
-                                    setIsUpdatingRemarks,
-                                    setCombinedData
-                                  )
-                                }
-                                value={remarks}
-                              >
-                                <option value="">Select</option>
-                                <option value="AW">AW</option>
-                                <option value="UW">UW</option>
-                                <option value="NCA">NCA</option>
-                                <option value="INC">INC</option>
-                              </select>
+                              {isOngoingSubject && (
+                                <select
+                                  style={{ width: "35%", color: "#ff4949" }}
+                                  disabled={
+                                    isUpdatingRemarks[row.StudentId] ||
+                                    isReadOnly ||
+                                    false
+                                  }
+                                  onChange={(e) =>
+                                    handleRemarksChange(
+                                      e,
+                                      selectedTerm,
+                                      row.StudentId,
+                                      subjectCode,
+                                      setIsUpdatingRemarks,
+                                      setCombinedData
+                                    )
+                                  }
+                                  value={remarks}
+                                >
+                                  <option value="">Select</option>
+                                  <option value="AW">AW</option>
+                                  <option value="UW">UW</option>
+                                  <option value="NCA">NCA</option>
+                                  <option value="INC">INC</option>
+                                </select>
+                              )}
+
+                              {isOpenRequest && (
+                                <select
+                                  style={{ width: "35%", color: "#ff4949" }}
+                                  disabled={
+                                    isUpdatingRemarks[row.StudentId] || false
+                                  }
+                                  onChange={(e) =>
+                                    handleRemarksChange(
+                                      e,
+                                      selectedTerm,
+                                      row.StudentId,
+                                      subjectCode,
+                                      setIsUpdatingRemarks,
+                                      setCombinedData
+                                    )
+                                  }
+                                  value={remarks}
+                                >
+                                  <option value="">Select</option>
+                                  <option value="AW">AW</option>
+                                  <option value="UW">UW</option>
+                                  <option value="NCA">NCA</option>
+                                  <option value="INC">INC</option>
+                                </select>
+                              )}
+
+                              {!isOngoingSubject && !isOpenRequest && (
+                                <select
+                                  style={{ width: "35%", color: "#ff4949" }}
+                                  disabled={true}
+                                  onChange={(e) =>
+                                    handleRemarksChange(
+                                      e,
+                                      selectedTerm,
+                                      row.StudentId,
+                                      subjectCode,
+                                      setIsUpdatingRemarks,
+                                      setCombinedData
+                                    )
+                                  }
+                                  value={remarks}
+                                >
+                                  <option value="">Select</option>
+                                  <option value="AW">AW</option>
+                                  <option value="UW">UW</option>
+                                  <option value="NCA">NCA</option>
+                                  <option value="INC">INC</option>
+                                </select>
+                              )}
+
                               {isUpdatingRemarks[row.StudentId] && (
                                 <video
                                   autoPlay
@@ -828,7 +978,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
               section={section}
               sem={sem ?? ""}
               acadYr={acadYr ?? ""}
-              buttonName="Print Report"
+              buttonName="Export to Excel"
               isDefault={false}
               setLoadingExporting={setLoadingXport}
             />

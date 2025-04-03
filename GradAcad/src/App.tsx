@@ -25,7 +25,7 @@ function App() {
               ) : user.role === "admin" ? (
                 <Navigate to="/account_approvals" replace />
               ) : (
-                <Navigate to="/grade_sheet" replace />
+                <Navigate to="/grade_period" replace />
               )
             ) : (
               <LoginPage onLogin={() => {}} />

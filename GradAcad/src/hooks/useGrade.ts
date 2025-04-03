@@ -5,7 +5,7 @@ export interface DetailProps {
   acadYr: string,
   sem: string,
   subjectId: string,
-  subjectName: string
+  subjectName?: string
   dept: string,
   sect: string
 }

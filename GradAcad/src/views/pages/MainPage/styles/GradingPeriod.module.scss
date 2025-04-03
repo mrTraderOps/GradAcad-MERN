@@ -92,7 +92,6 @@ th, td {
   font-size: 14px;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
 }
 
 .discard {
@@ -105,9 +104,18 @@ th, td {
   color: #fff;
 }
 
+.submitPending,
+.submit:disabled { 
+  cursor: not-allowed; /* Shows a blocked cursor */
+  background-color: #4661a4;
+  opacity: 0.6; /* Optional: Makes the button look disabled */
+}
+
 .container2 {
-  width: 25%;
-  padding: 16px;
+  margin: auto;
+  height: 45%;
+  width: 26%;
+  padding: 18px;
   border: 1px solid #ccc;
   border-radius: 8px;
   background: #fff;

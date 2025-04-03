@@ -114,19 +114,17 @@ const Settings = () => {
           {isProfile ? (
             <div className={style.personalInfo}>
               <div>
-                <h3>PERSONAL INFORMATION</h3>
+                <h3>SYSTEM INFORMATION</h3>
                 <span>
                   <section>
-                    <p style={{ color: "rgb(37, 35, 35)", fontWeight: 700 }}>
-                      Contact Number:
-                      <p
-                        style={{
-                          color: "rgba(37, 35, 35, 0.8)",
-                          fontWeight: 500,
-                        }}
-                      >
-                        +639xx-xxx-xxxx
-                      </p>
+                    <p
+                      style={{
+                        color: "rgb(37, 35, 35)",
+                        fontWeight: 500,
+                        paddingTop: "10px",
+                      }}
+                    >
+                      Instructor ID: <strong>{user?.refId}</strong>
                     </p>
                   </section>
                 </span>
