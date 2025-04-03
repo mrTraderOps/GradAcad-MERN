@@ -1,12 +1,13 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import "./LoginPage.scss";
 import { UserContext } from "../../../context/UserContext";
 
 import logo from "../../../assets/images/nc_logo_large.png";
 import partner1 from "../../../assets/images/ccs_icon.png";
-import partner2 from "../../../assets/images/charms_icon.png";
+import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
 import { handleLogin } from "../../../services/UserService";
+import axios from "axios";
 
 interface Props {
   onLogin: () => void;
@@ -21,6 +22,10 @@ const LoginPage = ({ onLogin }: Props) => {
 
   const { setUser } = context;
 
+  const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
+  const [role, setRole] = useState("");
+  const [userId, setUserId] = useState("");
+
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -29,11 +34,50 @@ const LoginPage = ({ onLogin }: Props) => {
   // Registration Fields
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [userId, setUserId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // ✅ Password Validation Function
+  useEffect(() => {
+    const fetchRoleCounts = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:5000/api/v1/user/getCountUsersRole"
+        );
+        if (response.data.success) {
+          setRoleCounts(response.data.roleCounts);
+        }
+      } catch (error) {
+        console.error("Error fetching role counts:", error);
+      }
+    };
+
+    fetchRoleCounts();
+  }, []);
+
+  const handleRoleChange = (selectedRole: string) => {
+    setRole(selectedRole);
+    let newId = "";
+
+    if (selectedRole === "student") {
+      // Student ID format: YYYY-NNNN (User must input manually)
+      setUserId(""); // Clear input for manual entry
+    } else {
+      // Get the current count of the selected role from API response, default to 0 if undefined
+      const count = (roleCounts[selectedRole] || 0) + 1;
+
+      if (selectedRole === "prof") {
+        newId = `INST-${count.toString().padStart(3, "0")}`;
+      } else if (selectedRole === "admin") {
+        newId = `MIS-${count.toString().padStart(3, "0")}`;
+      } else if (selectedRole === "registrar") {
+        newId = `REGIST-${count.toString().padStart(3, "0")}`;
+      } else if (selectedRole === "dean") {
+        newId = `DEAN-${count.toString().padStart(3, "0")}`;
+      }
+
+      setUserId(newId);
+    }
+  };
+
   const validatePassword = (password: string) => {
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,12}$/;
@@ -126,6 +170,7 @@ const LoginPage = ({ onLogin }: Props) => {
 
   return (
     <div className="login-page">
+      <div className="background-container"></div>
       <div className="left-section">
         <div className="container-left">
           <div className="logo-container">
@@ -189,31 +234,49 @@ const LoginPage = ({ onLogin }: Props) => {
                     required
                   />
                 </div>
-                <div className="form-group">
-                  <label>Employee or Student ID</label>
-                  <input
-                    type="text"
-                    placeholder="ID"
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                    required
-                  />
-                </div>
+
                 <div className="form-group">
                   <label>Role</label>
                   <select
                     value={role}
-                    onChange={(e) => setRole(e.target.value)}
+                    onChange={(e) => handleRoleChange(e.target.value)}
                     required
                     style={{ width: "100%" }}
                   >
                     <option value="">Select Role</option>
-                    <option value="admin">Admin</option>
+                    <option value="dean">Dean</option>
+                    <option value="admin">MIS</option>
                     <option value="registrar">Registrar</option>
-                    <option value="student">Student</option>
                     <option value="prof">Instructor</option>
+                    <option value="student">Student</option>
                   </select>
                 </div>
+
+                {role && ( // Only show input when a role is selected
+                  <div className="form-group">
+                    <label>
+                      {role === "student" ? "Student ID" : "Auto-Generated ID"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="YYYY-NNNN"
+                      value={userId}
+                      onChange={(e) => {
+                        if (role === "student") {
+                          // Ensure student ID follows YYYY-NNNN format
+                          const regex = /^\d{4}-\d{4}$/;
+                          if (
+                            regex.test(e.target.value) ||
+                            e.target.value === ""
+                          ) {
+                            setUserId(e.target.value);
+                          }
+                        }
+                      }}
+                      disabled={role !== "student"} // Disable input for non-student roles
+                    />
+                  </div>
+                )}
 
                 <button
                   className="register-btn"
@@ -263,7 +326,20 @@ const LoginPage = ({ onLogin }: Props) => {
                 </button>
                 <p>
                   Don't have an Account?{" "}
-                  <a onClick={() => setIsRegistering(true)}>Sign Up</a>
+                  <a
+                    onClick={() => {
+                      setIsRegistering(true);
+                      setEmail("");
+                      setErrorMessage("");
+                      setName("");
+                      setPassword("");
+                      setRole("");
+                      setUserId("");
+                      setUsername("");
+                    }}
+                  >
+                    Sign Up
+                  </a>
                 </p>
               </>
             )}

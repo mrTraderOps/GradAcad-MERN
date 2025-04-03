@@ -6,8 +6,6 @@ import { UserContext } from "../../../../context/UserContext";
 import axios from "axios";
 const Settings = () => {
   const [isProfile, setProfile] = useState(true);
-  const [isUnsee, setUnsee] = useState(true);
-  const [password, setPassword] = useState("Forgot password?"); // Placeholder
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -124,7 +122,16 @@ const Settings = () => {
                         paddingTop: "10px",
                       }}
                     >
-                      Instructor ID: <strong>{user?.refId}</strong>
+                      {user
+                        ? user.role === "registrar"
+                          ? "Registrar"
+                          : user.role === "prof"
+                          ? "Instructor"
+                          : user.role === "admin"
+                          ? "Admin"
+                          : "Pending"
+                        : "User role can't read"}{" "}
+                      ID : <strong>{user?.refId}</strong>
                     </p>
                   </section>
                 </span>

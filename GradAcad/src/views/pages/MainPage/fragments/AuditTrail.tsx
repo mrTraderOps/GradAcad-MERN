@@ -200,7 +200,9 @@ const AuditTrail = () => {
             <option value="Account Rejected">Account Rejected</option>
             <option value="User Edited">User Edited</option>
             <option value="User Archived">User Archived</option>
+            <option value="Subject Archived">Subject Archived</option>
             <option value="User Restored">User Restored</option>
+            <option value="Subject Restored">Subject Restored</option>
           </select>
         </div>
         <div className={styles.filterGroup}>
