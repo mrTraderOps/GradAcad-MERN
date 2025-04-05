@@ -9,13 +9,28 @@ import subjectRoutes from './database/routes/subjectRoutes.js';
 import gradeRoutes from './database/routes/gradeRoutes.js';
 import emailRoutes from './database/routes/emailRoutes.js';
 import authRoutes from './database/routes/authRoutes.js';
-import { initGradingPeriodCron } from './database/utils/cron.js';
+import { initGradingPeriodCron, stopGradingPeriodCron } from './database/utils/cron.js';
 import { authenticateJWT } from './database/utils/jwt.js';
+
+const allowedOrigins = [
+    "http://localhost:5173", // Local development
+    process.env.BACKEND_URL
+  ];
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true // Enable if using cookies/auth
+  }));
+
 app.use(bodyParser.json());
 
 const startServer = async () => {
@@ -66,6 +81,7 @@ const startServer = async () => {
         // Graceful shutdown
         const shutdown = () => {
             console.log('🛑 Shutting down gracefully...');
+            stopGradingPeriodCron();
             server.close(() => {
                 // Add any cleanup here
                 console.log('✅ Server closed');

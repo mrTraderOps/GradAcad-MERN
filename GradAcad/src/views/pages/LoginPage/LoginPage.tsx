@@ -7,7 +7,7 @@ import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
 import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 import { handleLogin } from "../../../services/UserService";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 
 interface Props {
   onLogin: () => void;
@@ -46,9 +46,7 @@ const LoginPage = ({ onLogin }: Props) => {
   useEffect(() => {
     const fetchRoleCounts = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/v1/auth/getCountUsersRole"
-        );
+        const response = await API.get("/auth/getCountUsersRole");
         if (response.data.success) {
           setRoleCounts(response.data.roleCounts);
           setIsDoneRoleCounts(true);

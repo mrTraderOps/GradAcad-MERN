@@ -1,6 +1,8 @@
 import { getDB } from '../config/db.js';
+import cron from 'node-cron';
 
-let cronInterval = null; // Track the interval for cleanup
+// Store the cron task reference for cleanup
+let cronTask = null;
 
 const checkGradingPeriods = async () => {
   try {
@@ -61,23 +63,30 @@ const checkGradingPeriods = async () => {
 };
 
 export const initGradingPeriodCron = () => {
-  // Clear existing interval to prevent duplicates
-  if (cronInterval) {
-    clearInterval(cronInterval);
+  // Clear existing cron job if any
+  if (cronTask) {
+    cronTask.stop();
+    cronTask = null;
   }
 
-  // Run every minute (60,000 ms)
-  cronInterval = setInterval(checkGradingPeriods, 60 * 1000);
-  
-  // Immediate first check
+  // Schedule daily at midnight Philippine Time (UTC+8)
+  cronTask = cron.schedule('0 0 * * *', () => {
+    console.log('⏰ [Cron Job] Running daily grading period check (12:00 AM PHT)');
+    checkGradingPeriods();
+  }, {
+    scheduled: true,
+    timezone: 'Asia/Manila' // Philippine Time
+  });
+
+  // Immediate first check (optional)
   checkGradingPeriods();
-  console.log('Grading period cron job started (checking every minute)');
+  console.log('✅ [Cron Job] Scheduled daily at 12:00 AM PHT (UTC+8)');
 };
 
-// Optional: Cleanup function for server shutdown
 export const stopGradingPeriodCron = () => {
-  if (cronInterval) {
-    clearInterval(cronInterval);
-    cronInterval = null;
+  if (cronTask) {
+    cronTask.stop();
+    cronTask = null;
+    console.log('🛑 [Cron Job] Stopped grading period checker');
   }
 };
