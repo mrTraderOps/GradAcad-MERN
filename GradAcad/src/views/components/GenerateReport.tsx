@@ -39,7 +39,6 @@ export const GenerateReport = ({
   const loading = userId ? gradeData.loading : registrarData.loading;
 
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
-  const [errorModal, setErrorMessage] = useState("");
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
   const [selectedSem, setSelectedSem] = useState<string>("");
   const [selectedDept, setSelectedDept] = useState<string>("");
@@ -151,7 +150,6 @@ export const GenerateReport = ({
     );
 
     if (!isDataValid) {
-      setErrorMessage("No data found. Invalid data.");
       setModalContent1Loading(false);
       return;
     }

@@ -360,20 +360,14 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     setIsUpdating((prev) => ({ ...prev, [studentId]: true }));
 
     try {
-      const response = await fetch("/grade/updateRemarks", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          selectedTerm,
-          studentId,
-          subjectId,
-          remarks: newRemarks,
-        }),
+      const response = await API.put("/grade/updateRemarks", {
+        selectedTerm,
+        studentId,
+        subjectId,
+        remarks: newRemarks,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.data.success) {
         console.log("Remarks updated successfully");
 
         // ✅ Update the combinedData state
@@ -393,9 +387,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     } catch (error) {
       console.error("Error updating remarks:", error);
     } finally {
-      setTimeout(() => {
-        setIsUpdating((prev) => ({ ...prev, [studentId]: false }));
-      }, 2000);
+      setIsUpdating((prev) => ({ ...prev, [studentId]: false }));
     }
   };
 

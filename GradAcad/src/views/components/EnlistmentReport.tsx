@@ -3,8 +3,6 @@ import styles from "./styles/AreYouSure.module.scss";
 import { DetailProps, useGradeForRegistrar } from "../../hooks/useGrade";
 import { UserContext } from "../../context/UserContext";
 import loadingAnimation from "../../assets/webM/loading.webm";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 interface Props {
   isOpen: boolean;
@@ -21,7 +19,6 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
   const [filteredData, setFilteredData] = useState<DetailProps[]>([]);
 
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
-  const [errorModal, setErrorMessage] = useState("");
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
   const [selectedSem, setSelectedSem] = useState<string>("");
   const [selectedDept, setSelectedDept] = useState<string>("");
@@ -119,7 +116,6 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
     );
 
     if (!isDataValid) {
-      setErrorMessage("No data found. Invalid data.");
       setModalContent1Loading(false);
       return;
     }

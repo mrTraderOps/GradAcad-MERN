@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { CombinedDataProps, Student } from "../models/types/StudentData"; 
 import { GradeData } from "../models/types/GradeData"; 
 import { StudentData, StudentGrade } from "../services/StudentService";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 
 interface Props {
   dept: string;
@@ -75,7 +75,6 @@ export const useCombinedData = ({ dept, sect, subjCode, terms, sem, acadYr }: Pr
         setError(error);
         setLoading(false);
       },
-      () => {}
     );
 
     StudentData(
@@ -173,8 +172,8 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms, sect, dept }: 
       return;
     }
 
-    axios
-      .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+    API
+      .post("/grade/getStudentGrades", {
         acadYr,
         sem,
         dept,
@@ -252,8 +251,8 @@ export const useCombinedDatav2ForExport = ({ acadYr, sem, subjCode, terms, dept,
 
     setLoadingXport(true);
 
-    axios
-      .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+    API
+      .post("/grade/getStudentGrades", {
         acadYr,
         sem,
         dept,

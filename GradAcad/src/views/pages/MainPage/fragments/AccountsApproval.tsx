@@ -228,7 +228,9 @@ const AccountApproval = () => {
         </div>
       </div>
       <div className={styles.accountList}>
-        {currentPanel === "pending" ? (
+        {error ? (
+          <h2>Internal Server Error</h2>
+        ) : currentPanel === "pending" ? (
           filteredPendingAccounts.length === 0 ? (
             <p>No pending accounts.</p>
           ) : (

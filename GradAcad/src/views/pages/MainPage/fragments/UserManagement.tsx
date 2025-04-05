@@ -304,80 +304,88 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {(showArchived ? archivedUsers : users)
-              .filter(
-                (user) =>
-                  user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                  user.email.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((user) => (
-                <tr key={user.refId}>
-                  <td>{user.refId}</td>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    <select
-                      value={user.status}
-                      onChange={(e) =>
-                        handleStatusChange(
-                          user.refId,
-                          e.target.value,
-                          setIsUpdatingStatus
-                        )
-                      }
-                      disabled={isUpdatingStatus[user.refId] || showArchived}
-                      style={{ width: "100px" }}
+            {errorMessage && (
+              <>
+                <h2>{errorMessage}</h2>
+              </>
+            )}
+            {!errorMessage &&
+              (showArchived ? archivedUsers : users)
+                .filter(
+                  (user) =>
+                    user.name
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((user) => (
+                  <tr key={user.refId}>
+                    <td>{user.refId}</td>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
-                    </select>
-                    {isUpdatingStatus[user.refId] && (
-                      <video
-                        autoPlay
-                        loop
-                        muted
-                        className={styles.loadingAnimation}
-                        width={60}
+                      <select
+                        value={user.status}
+                        onChange={(e) =>
+                          handleStatusChange(
+                            user.refId,
+                            e.target.value,
+                            setIsUpdatingStatus
+                          )
+                        }
+                        disabled={isUpdatingStatus[user.refId] || showArchived}
+                        style={{ width: "100px", padding: "11px" }}
                       >
-                        <source src={loadingAnimation} type="video/webm" />
-                        Your browser does not support the video tag.
-                      </video>
-                    )}
-                  </td>
-                  <td>
-                    {showArchived ? (
-                      <button
-                        className={styles.archiveButton}
-                        onClick={() => handleRestore(user.refId)}
-                      >
-                        Restore
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          className={styles.editButton}
-                          onClick={() => handleEdit(user)}
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                      {isUpdatingStatus[user.refId] && (
+                        <video
+                          autoPlay
+                          loop
+                          muted
+                          className={styles.loadingAnimation}
+                          width={60}
                         >
-                          Edit
-                        </button>
+                          <source src={loadingAnimation} type="video/webm" />
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                    </td>
+                    <td>
+                      {showArchived ? (
                         <button
                           className={styles.archiveButton}
-                          onClick={() => handleArchive(user.refId)}
+                          onClick={() => handleRestore(user.refId)}
                         >
-                          Archive
+                          Restore
                         </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      ) : (
+                        <>
+                          <button
+                            className={styles.editButton}
+                            onClick={() => handleEdit(user)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={styles.archiveButton}
+                            onClick={() => handleArchive(user.refId)}
+                          >
+                            Archive
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>

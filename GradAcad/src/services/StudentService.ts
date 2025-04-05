@@ -31,7 +31,6 @@ export const StudentGrade = (
   terms: string[],
   setGrades: React.Dispatch<React.SetStateAction<any>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
-  setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   API
         .post("/grade/getAllGrades", {
@@ -54,9 +53,6 @@ export const StudentGrade = (
           setError("An error occurred while fetching grades.");
           console.error(error);
         })
-        .finally(() => {
-          setLoading(false);
-        });
 };
 
 export const StudentGradeAll = ( 
@@ -67,7 +63,6 @@ export const StudentGradeAll = (
   subjectId: string,
   setGrades: React.Dispatch<React.SetStateAction<any>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
-  setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   API
         .post("/grade/getStudentGrades", {
@@ -89,7 +84,4 @@ export const StudentGradeAll = (
           setError("An error occurred while fetching grades.");
           console.error(error);
         })
-        .finally(() => {
-          setLoading(false);
-        });
 }

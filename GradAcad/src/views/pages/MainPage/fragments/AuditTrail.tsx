@@ -21,6 +21,7 @@ const AuditTrail = () => {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   // Filter states
   const [filterAction, setFilterAction] = useState<string>("");
@@ -61,10 +62,12 @@ const AuditTrail = () => {
           setTotalPages(response.data.totalPages);
         } else {
           setErrorMessage(response.data.message || "No logs found.");
+          setError(true);
         }
       } catch (error) {
         console.error("Error fetching audit logs:", error);
         setErrorMessage("An error occurred while fetching logs.");
+        setError(true);
       } finally {
         setTimeout(() => {
           setLoading(false); // Hide loading after delay
@@ -285,7 +288,11 @@ const AuditTrail = () => {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {error ? (
+                <>
+                  <h2>{errorMessage}</h2>
+                </>
+              ) : loading ? (
                 <tr>
                   <video
                     autoPlay

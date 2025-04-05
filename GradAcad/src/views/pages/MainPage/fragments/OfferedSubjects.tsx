@@ -338,56 +338,62 @@ const OfferedSubjects = () => {
             </tr>
           </thead>
           <tbody>
-            {(showArchived ? archivedSubjects : subjects)
-              .filter(
-                (subject) =>
-                  (subject.subjectId?.toLowerCase() || "").includes(
-                    searchQuery.toLowerCase()
-                  ) ||
-                  (subject.dept || "")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                  (subject.sect || "")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()) ||
-                  (subject.instructor || "")
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase())
-              )
-              .map((subject) => (
-                <tr key={subject._id}>
-                  <td>{subject.subjectId}</td>
-                  <td>{subject.instructor}</td>
-                  <td>{subject.acadYr}</td>
-                  <td>{subject.sem}</td>
-                  <td>{`${subject.dept} ${subject.sect}`}</td>
-                  <td>
-                    {showArchived ? (
-                      <button
-                        className={styles.archiveButton}
-                        onClick={() => handleRestore(subject._id)}
-                      >
-                        Restore
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          className={styles.editButton}
-                          onClick={() => handleEdit(subject)}
-                        >
-                          Edit
-                        </button>
+            {errorMessage && (
+              <>
+                <h2>{errorMessage}</h2>
+              </>
+            )}
+            {!errorMessage &&
+              (showArchived ? archivedSubjects : subjects)
+                .filter(
+                  (subject) =>
+                    (subject.subjectId?.toLowerCase() || "").includes(
+                      searchQuery.toLowerCase()
+                    ) ||
+                    (subject.dept || "")
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    (subject.sect || "")
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    (subject.instructor || "")
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase())
+                )
+                .map((subject) => (
+                  <tr key={subject._id}>
+                    <td>{subject.subjectId}</td>
+                    <td>{subject.instructor}</td>
+                    <td>{subject.acadYr}</td>
+                    <td>{subject.sem}</td>
+                    <td>{`${subject.dept} ${subject.sect}`}</td>
+                    <td>
+                      {showArchived ? (
                         <button
                           className={styles.archiveButton}
-                          onClick={() => handleArchive(subject._id)}
+                          onClick={() => handleRestore(subject._id)}
                         >
-                          Archive
+                          Restore
                         </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      ) : (
+                        <>
+                          <button
+                            className={styles.editButton}
+                            onClick={() => handleEdit(subject)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={styles.archiveButton}
+                            onClick={() => handleArchive(subject._id)}
+                          >
+                            Archive
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
           </tbody>
         </table>
       </div>

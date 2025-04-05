@@ -45,7 +45,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [selectedSection, setSelectedSection] = useState("0");
   const [selectedAcadYr, setSelectedAcadYr] = useState("0");
   const [selectedSem, setSelectedSem] = useState("0");
-  const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [grades, setGrades] = useState<GradeData[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -131,12 +130,8 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
       !selectedSubject ||
       user.role !== "prof"
     ) {
-      setErrorMessage("Missing required parameters");
-      setLoading(false);
       return;
     }
-
-    setLoading(true);
 
     const [dept, sect] = selectedSection.split(" - ");
     const subjCode = selectedSubject === "0" ? "" : selectedSubject;
@@ -150,10 +145,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
       setGrades,
       (error: string) => {
         setErrorMessage(error);
-        setLoading(false);
-      },
-      () => {
-        setLoading(false);
       }
     );
   }, [selectedAcadYr, selectedSem, selectedSection, selectedSubject]);
@@ -271,9 +262,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
         }
       } catch (error) {
         console.error("Error fetching account summary:", error);
-        setErrorMessage("An error occurred while fetching data.");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -310,7 +298,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     innerRadius,
     outerRadius,
     percent,
-    index,
   }: LabelProps) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
@@ -452,7 +439,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                             label={renderCustomizedLabel} // Use custom label
                             labelLine={false}
                           >
-                            {pieData.map((entry, index) => (
+                            {pieData.map((_entry, index) => (
                               <Cell
                                 key={`cell-${index}`}
                                 fill={COLORS[index % COLORS.length]}
@@ -484,7 +471,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                           dataKey="value"
                           label
                         >
-                          {data.map((entry, index) => (
+                          {data.map((_entry, index) => (
                             <Cell
                               key={`cell-${index}`}
                               fill={COLORS2[index % COLORS.length]}
@@ -564,13 +551,19 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {summary.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.accountType}</td>
-                            <td>{item.status}</td>
-                            <td className={styles.gwa}>{item.total}</td>
-                          </tr>
-                        ))}
+                        {errorMessage && (
+                          <>
+                            <h2>{errorMessage}</h2>
+                          </>
+                        )}
+                        {!errorMessage &&
+                          summary.map((item, index) => (
+                            <tr key={index}>
+                              <td>{item.accountType}</td>
+                              <td>{item.status}</td>
+                              <td className={styles.gwa}>{item.total}</td>
+                            </tr>
+                          ))}
                       </tbody>
                     </table>
                   </div>

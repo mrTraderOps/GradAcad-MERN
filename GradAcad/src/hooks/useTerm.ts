@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { API } from '@/context/axiosInstance';
 import { TermData } from '../models/types/GradeData';
 
 export const useTerm = () => {
-  const [terms, setTerms] = useState<TermData[]>([]);
+  const [terms] = useState<TermData[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [hasActiveTerms, setHasActiveTerms] = useState(false);
@@ -21,7 +21,7 @@ export const useTerm = () => {
   const [doneFinal, setDoneFinal] = useState<boolean>(false);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/v1/grade/getTermsV2')
+    API.get('/grade/getTermsV2')
       .then((response) => {
         if (response.data.success && Array.isArray(response.data.data)) {
           const data = response.data.data[0]; // Assuming only one document is returned
