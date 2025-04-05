@@ -1,4 +1,4 @@
-import { API } from "../context/axiosInstance";
+import API  from "../context/axiosInstance";
 
 export const fetchSubjectsbyUsername = (
     loggeduserName: string,

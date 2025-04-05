@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
-import { API } from "../../../../context/axiosInstance";
+import API from "../../../../context/axiosInstance";
 import { UserContext } from "../../../../context/UserContext";
 
 interface Subject {

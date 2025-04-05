@@ -14,7 +14,7 @@ import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
-import { API } from "../../../../context/axiosInstance";
+import API from "../../../../context/axiosInstance";
 
 interface GroupedSubject {
   subjectCode: string;

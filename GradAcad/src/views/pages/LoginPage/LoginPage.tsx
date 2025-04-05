@@ -7,7 +7,7 @@ import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
 import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 import { handleLogin } from "../../../services/UserService";
-import { API } from "@/context/axiosInstance";
+import API from "../../../context/axiosInstance";
 
 interface Props {
   onLogin: () => void;

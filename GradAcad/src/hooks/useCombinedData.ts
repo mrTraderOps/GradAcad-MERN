@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { CombinedDataProps, Student } from "../models/types/StudentData"; 
 import { GradeData } from "../models/types/GradeData"; 
 import { StudentData, StudentGrade } from "../services/StudentService";
-import { API } from "../context/axiosInstance";
+import  API  from "../context/axiosInstance";
 
 interface Props {
   dept: string;

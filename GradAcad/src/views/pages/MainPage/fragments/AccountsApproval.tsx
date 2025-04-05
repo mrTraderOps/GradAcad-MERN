@@ -5,7 +5,7 @@ import arrow from "../../../../assets/icons/arrow.png";
 import closeIcon from "../../../../assets/icons/x-button.png";
 import { getAllUsers, handlePending } from "../../../../services/UserService";
 import { UserContext } from "../../../../context/UserContext";
-import { API } from "../../../../context/axiosInstance";
+import API from "../../../../context/axiosInstance";
 
 interface Account {
   _id: string;

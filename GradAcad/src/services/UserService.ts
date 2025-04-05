@@ -1,4 +1,4 @@
-import { API } from "../context/axiosInstance";
+import API from "../context/axiosInstance";
 import axios from "axios";
 
 export const handleLogin = (

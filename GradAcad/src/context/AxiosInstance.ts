@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const API = axios.create({
+const API = axios.create({
   baseURL: `https://gradacad-mern.onrender.com/api/v1`,
 });
 
@@ -12,3 +12,5 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+export default API

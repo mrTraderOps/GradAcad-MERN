@@ -5,7 +5,7 @@ import { UserContext } from "../../../../context/UserContext";
 import notfound from "../../../../assets/images/notfound.jpg";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
 import { EnlismentReport } from "../../../components/EnlistmentReport";
-import { API } from "../../../../context/axiosInstance";
+import API from "../../../../context/axiosInstance";
 
 interface Student {
   _id: string;
