@@ -10,7 +10,7 @@ import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import { SubjectData } from "../../../../../models/types/SubjectData";
 import { GradingReference } from "../../../../components/EqScale";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 import { DataProps } from "../../../../../models/types/StudentData";
 import loadingAnimation from "../../../../../assets/webM/loading.webm";
 import loadingHorizontal from "../../../../../assets/webM/loadingHorizontal.webm";
@@ -230,10 +230,9 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     };
 
     try {
-      const response = await axios.put(
-        "http://localhost:5000/api/v1/grade/updateGradeV2",
-        { updates: [update] }
-      );
+      const response = await API.put("/grade/updateGradeV2", {
+        updates: [update],
+      });
 
       if (response.status === 200) {
         // ✅ Store previous grade for logging
@@ -248,7 +247,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         }));
 
         // ✅ Insert log for grade update
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "Grade Updated",
           userId: user?.refId, // Instructor's ID
           name: `Prof ${user?.name}`, // Instructor's Name
@@ -304,10 +303,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     }));
 
     try {
-      const response = await axios.put(
-        "http://localhost:5000/api/v1/grade/updateGradeV2",
-        { updates }
-      );
+      const response = await API.put("/grade/updateGradeV2", { updates });
 
       if (response.status === 200) {
         // ✅ Update UI & Remove students from edit mode
@@ -320,7 +316,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         setOriginalGrades(updatedOriginalGrades);
 
         // ✅ Insert log for bulk update
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "Bulk Grade Update",
           userId: user?.refId,
           name: `Prof ${user?.name}`,
@@ -364,19 +360,16 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     setIsUpdating((prev) => ({ ...prev, [studentId]: true }));
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/v1/grade/updateRemarks",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            selectedTerm,
-            studentId,
-            subjectId,
-            remarks: newRemarks,
-          }),
-        }
-      );
+      const response = await fetch("/grade/updateRemarks", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selectedTerm,
+          studentId,
+          subjectId,
+          remarks: newRemarks,
+        }),
+      });
 
       const data = await response.json();
 
@@ -475,8 +468,8 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await axios.post(
-          "http://localhost:5000/api/v1/grade/fetchAllRequestById",
+        const response = await API.post(
+          "/grade/fetchAllRequestById",
           { refId: user?.refId } // Send refId in request body
         );
 

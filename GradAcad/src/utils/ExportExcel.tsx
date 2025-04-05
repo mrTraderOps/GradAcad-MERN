@@ -24,7 +24,7 @@ const ExportExcel = ({
   loggedName: string;
   dept: string;
   subjectCode: string;
-  subjectName: string;
+  subjectName?: string;
   section: string;
   sem: string;
   acadYr: string;

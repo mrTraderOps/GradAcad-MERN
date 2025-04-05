@@ -14,7 +14,7 @@ import { StudentGradeAll } from "../../../../services/StudentService";
 import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -242,9 +242,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     // Fetch the total pending and approved accounts
     const fetchAccountCounts = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/v1/user/pendingApprovedUsers"
-        );
+        const response = await API.get("/user/pendingApprovedUsers");
 
         if (response.data.success) {
           // Set the state with fetched data
@@ -265,9 +263,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/v1/user/accountSummary"
-        );
+        const response = await API.get("/user/accountSummary");
         if (response.data.success) {
           setSummary(response.data.summary);
         } else {

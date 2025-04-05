@@ -1,4 +1,5 @@
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
+
 
 export const StudentData = (
     department: string,
@@ -6,8 +7,8 @@ export const StudentData = (
     setStudent: React.Dispatch<React.SetStateAction<any>>,
     setErrorMessage: React.Dispatch<React.SetStateAction<any>>,
 ) => {
-    axios
-        .post("http://localhost:5000/api/v1/student/getSection", { department, section })
+    API
+        .post("/student/getSection", { department, section })
         .then((response) => {
             if (response.data) {
               setStudent(response.data.students);
@@ -32,8 +33,8 @@ export const StudentGrade = (
   setError: React.Dispatch<React.SetStateAction<any>>,
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  axios
-        .post("http://localhost:5000/api/v1/grade/getAllGrades", {
+  API
+        .post("/grade/getAllGrades", {
           dept: dept,
           acadYr: acadYr,
           sem: sem,
@@ -68,8 +69,8 @@ export const StudentGradeAll = (
   setError: React.Dispatch<React.SetStateAction<any>>,
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  axios
-        .post("http://localhost:5000/api/v1/grade/getStudentGrades", {
+  API
+        .post("/grade/getStudentGrades", {
           acadYr,
           sem,
           dept,

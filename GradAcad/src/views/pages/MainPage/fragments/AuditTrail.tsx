@@ -4,7 +4,6 @@ import jsPDF from "jspdf";
 import cslogo from "../../../../assets/images/ccs_icon.png";
 import nclogo from "../../../../assets/images/nc_logo.png";
 import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
-import axios from "axios";
 import autoTable from "jspdf-autotable";
 import { UserContext } from "../../../../context/UserContext";
 import { API } from "@/context/axiosInstance";

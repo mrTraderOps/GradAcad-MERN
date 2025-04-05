@@ -2,15 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 
-import { connectDB, getDB } from './config/db.js';
-import userRoutes from './routes/userRoutes.js';
-import studentRoutes from './routes/studentRoutes.js';
-import subjectRoutes from './routes/subjectRoutes.js';
-import gradeRoutes from './routes/gradeRoutes.js';
-import emailRoutes from './routes/emailRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-import { initGradingPeriodCron } from './utils/cron.js';
-import { authenticateJWT } from './utils/jwt.js';
+import { connectDB, getDB } from './database/config/db.js';
+import userRoutes from './database/routes/userRoutes.js';
+import studentRoutes from './database/routes/studentRoutes.js';
+import subjectRoutes from './database/routes/subjectRoutes.js';
+import gradeRoutes from './database/routes/gradeRoutes.js';
+import emailRoutes from './database/routes/emailRoutes.js';
+import authRoutes from './database/routes/authRoutes.js';
+import { initGradingPeriodCron } from './database/utils/cron.js';
+import { authenticateJWT } from './database/utils/jwt.js';
 
 const app = express();
 

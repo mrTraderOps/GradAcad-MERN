@@ -5,7 +5,7 @@ import { UserContext } from "../../../../context/UserContext";
 import notfound from "../../../../assets/images/notfound.jpg";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
 import { EnlismentReport } from "@/views/components/EnlistmentReport";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 
 interface Student {
   _id: string;
@@ -58,10 +58,13 @@ const Enlisment = () => {
   const handleFetchEnlist = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/grade/enlistmentReport",
-        { acadYr, sem, subjCode, dept, sect }
-      );
+      const response = await API.post("/grade/enlistmentReport", {
+        acadYr,
+        sem,
+        subjCode,
+        dept,
+        sect,
+      });
 
       if (response.data.success) {
         setEnrollmentData(response.data.data);
@@ -175,10 +178,7 @@ const Enlisment = () => {
       const addStudent = async () => {
         try {
           setLoading2(true);
-          const response = await axios.post(
-            "http://localhost:5000/api/v1/student/addStudent",
-            validData
-          );
+          const response = await API.post("/student/addStudent", validData);
 
           if (response.data.success) {
             alert("Student added successfully!");
@@ -228,12 +228,9 @@ const Enlisment = () => {
       return;
     }
     try {
-      const response = await axios.delete(
-        "http://localhost:5000/api/v1/student/deleteStudent",
-        {
-          data: { subjectId, acadYr, sem, dept, sect, studentId },
-        }
-      );
+      const response = await API.delete("/student/deleteStudent", {
+        data: { subjectId, acadYr, sem, dept, sect, studentId },
+      });
 
       if (response.status === 200) {
         alert("Student deleted successfully!");

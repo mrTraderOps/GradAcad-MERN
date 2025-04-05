@@ -1,9 +1,7 @@
 import style from "../styles/Settings.module.scss";
 import { useContext, useState } from "react";
-import see from "../../../../assets/images/see.png";
-import unsee from "../../../../assets/images/unsee.png";
 import { UserContext } from "../../../../context/UserContext";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 const Settings = () => {
   const [isProfile, setProfile] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -45,14 +43,11 @@ const Settings = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/user/changePassword",
-        {
-          refId: user?.refId,
-          currentPassword,
-          newPassword,
-        }
-      );
+      const response = await API.post("/user/changePassword", {
+        refId: user?.refId,
+        currentPassword,
+        newPassword,
+      });
 
       if (response.data.success) {
         alert("Password changed successfully!");

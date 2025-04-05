@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 import { UserContext } from "@/context/UserContext";
 
 interface Subject {
@@ -41,8 +41,7 @@ const OfferedSubjects = () => {
   useEffect(() => {
     if (showArchived) {
       // ✅ Fetch Archived Users
-      axios
-        .get("http://localhost:5000/api/v1/subject/getAllSubjectsArchived")
+      API.get("/subject/getAllSubjectsArchived")
         .then((response) => {
           if (response.data.success) {
             setArchivedSubjects(response.data.data);
@@ -60,9 +59,7 @@ const OfferedSubjects = () => {
     } else {
       const fetchInstructors = async () => {
         try {
-          const response = await axios.get(
-            "http://localhost:5000/api/v1/subject/getAllInstructor"
-          );
+          const response = await API.get("/subject/getAllInstructor");
           if (response.data.success) {
             setInstructors(response.data.users); // Store instructor list
           }
@@ -78,9 +75,7 @@ const OfferedSubjects = () => {
 
   const fetchSubjects = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/v1/subject/getAllSubjectsEnrollment"
-      );
+      const response = await API.get("/subject/getAllSubjectsEnrollment");
 
       if (response.data.success) {
         setSubjects(response.data.data);
@@ -105,18 +100,15 @@ const OfferedSubjects = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/subject/archiveSubject",
-        {
-          _id,
-        }
-      );
+      const response = await API.post("/subject/archiveSubject", {
+        _id,
+      });
 
       if (response.data.success) {
         alert("Subject archive successfully!");
 
         // ✅ Log Deletion
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "Subject Archived",
           userId: user?.refId,
           name: user?.name,
@@ -152,18 +144,15 @@ const OfferedSubjects = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/subject/restoreSubject",
-        {
-          _id,
-        }
-      );
+      const response = await API.post("/subject/restoreSubject", {
+        _id,
+      });
 
       if (response.data.success) {
         alert("Subject restored successfully!");
 
         // ✅ Log Deletion
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "Subject Restored",
           userId: user?.refId,
           name: user?.name,
@@ -191,8 +180,8 @@ const OfferedSubjects = () => {
   const handleSave = async (editedSubject: Subject) => {
     try {
       console.log(editedSubject._id);
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/subject/updateSubjectOffered",
+      const response = await API.post(
+        "/subject/updateSubjectOffered",
         editedSubject,
         { headers: { "Content-Type": "application/json" } }
       );

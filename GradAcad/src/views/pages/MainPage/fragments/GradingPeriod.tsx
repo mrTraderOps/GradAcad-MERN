@@ -1,7 +1,7 @@
 import styles from "../styles/GradingPeriod.module.scss";
 import style from "../fragments/students_panel/styles/StudentsPanel.module.scss";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 import { RevisionRequest } from "@/views/components/RevisionRequest";
 
 interface GradeRequest {
@@ -52,9 +52,7 @@ const GradingPeriod = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/v1/grade/getTermsV2"
-        );
+        const response = await API.get("/grade/getTermsV2");
         if (response.data.success && response.data.data.length > 0) {
           const {
             acadYr: currentAcadYr,
@@ -132,9 +130,7 @@ const GradingPeriod = () => {
 
   const fetchPending = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/v1/grade/pendingGradingPeriod"
-      );
+      const response = await API.get("/grade/pendingGradingPeriod");
       if (response.data.success) {
         setPendingGradingPeriod(response.data.isPending ?? false);
       }
@@ -145,9 +141,7 @@ const GradingPeriod = () => {
 
   const fetchGrading = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/v1/grade/getGradingPeriod"
-      );
+      const response = await API.get("/grade/getGradingPeriod");
 
       if (response.data.success && response.data.data) {
         const {
@@ -183,9 +177,7 @@ const GradingPeriod = () => {
 
   const fetchGradeRequest = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/v1/grade/fetchAllRequest"
-      );
+      const response = await API.get("/grade/fetchAllRequest");
 
       if (response.data.success && response.data.data) {
         setGradeRequests(response.data.data); // Store fetched data in state
@@ -197,12 +189,9 @@ const GradingPeriod = () => {
 
   const closeRequest = async (requestId: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/grade/closeRequest",
-        {
-          requestId,
-        }
-      );
+      const response = await API.post("/grade/closeRequest", {
+        requestId,
+      });
 
       if (response.data.success) {
         alert("Request successfully closed.");
@@ -295,10 +284,7 @@ const GradingPeriod = () => {
             endTime,
           };
 
-          response = await axios.put(
-            "http://localhost:5000/api/v1/grade/updateGradingPeriod",
-            updatedData
-          );
+          response = await API.put("/grade/updateGradingPeriod", updatedData);
         } else if (acadYr === currentAcadYr && semester === currentSem) {
           const updatedTerm = {
             prelim: term === "prelim" || term === "midterm" || term === "final",
@@ -318,10 +304,7 @@ const GradingPeriod = () => {
             endTime,
           };
 
-          response = await axios.put(
-            "http://localhost:5000/api/v1/grade/updateGradingPeriodV2",
-            updatedData
-          );
+          response = await API.put("/grade/updateGradingPeriodV2", updatedData);
         } else if (acadYr === currentAcadYr && semester !== currentSem) {
           const updatedSem = {
             First: false,
@@ -350,10 +333,7 @@ const GradingPeriod = () => {
             endTime,
           };
 
-          response = await axios.put(
-            "http://localhost:5000/api/v1/grade/updateGradingPeriodV3",
-            updatedData
-          );
+          response = await API.put("/grade/updateGradingPeriodV3", updatedData);
         }
 
         if (response && response.data.success) {

@@ -1,4 +1,5 @@
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
+
 
 export const InsertGrade = (
     dept: string,
@@ -11,8 +12,8 @@ export const InsertGrade = (
     setError: React.Dispatch<React.SetStateAction<any>>,
     setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-    axios
-            .post("http://localhost:5000/api/v1/grade/insertGrade", {
+    API
+            .post("/grade/insertGrade", {
               dept: dept,
               sect: sect,
               subjCode: subjCode,
@@ -46,8 +47,8 @@ export const GenerateReportService = async (
     setLoading(true); // Indicate loading starts
 
     // Send only the loggedUsername in the request body
-    const response = await axios.post(
-      "http://localhost:5000/api/v1/grade/generateReport",
+    const response = await API.post(
+      "/grade/generateReport",
       { refId } // Only include the username
     );
 
@@ -75,7 +76,7 @@ export const GenerateReportServiceForRegistrar = async (
   try {
     setLoading(true); // ✅ Ensure loading starts before the request
 
-    const response = await axios.get("http://localhost:5000/api/v1/grade/generateReportForRegistrar");
+    const response = await API.get("/grade/generateReportForRegistrar");
 
     if (response.data?.success) {
       setResponse(response.data.data);
