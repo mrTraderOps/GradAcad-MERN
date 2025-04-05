@@ -1,11 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import "./LoginPage.scss";
 import { UserContext } from "../../../context/UserContext";
-
 import logo from "../../../assets/images/nc_logo_large.png";
 import partner1 from "../../../assets/images/ccs_icon.png";
 import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
+import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 import { handleLogin } from "../../../services/UserService";
 import axios from "axios";
 
@@ -20,30 +20,38 @@ const LoginPage = ({ onLogin }: Props) => {
     throw new Error("LoginPage must be used within a UserProvider");
   }
 
-  const { setUser } = context;
+  const { setUser, setToken } = context;
 
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
+  const [isDoneRoleCounts, setIsDoneRoleCounts] = useState<boolean>(false);
   const [role, setRole] = useState("");
   const [userId, setUserId] = useState("");
+  const [year, setYear] = useState("");
+  const [number, setNumber] = useState("");
 
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [error, setError] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const currentYear = new Date().getFullYear();
 
   // Registration Fields
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchRoleCounts = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:5000/api/v1/user/getCountUsersRole"
+          "http://localhost:5000/api/v1/auth/getCountUsersRole"
         );
         if (response.data.success) {
           setRoleCounts(response.data.roleCounts);
+          setIsDoneRoleCounts(true);
         }
       } catch (error) {
         console.error("Error fetching role counts:", error);
@@ -53,6 +61,14 @@ const LoginPage = ({ onLogin }: Props) => {
     fetchRoleCounts();
   }, []);
 
+  useEffect(() => {
+    if (year.length === 4 && number.length === 4) {
+      setUserId(`${year}-${number}`);
+    } else {
+      setUserId("");
+    }
+  }, [year, number]);
+
   const handleRoleChange = (selectedRole: string) => {
     setRole(selectedRole);
     let newId = "";
@@ -61,7 +77,6 @@ const LoginPage = ({ onLogin }: Props) => {
       // Student ID format: YYYY-NNNN (User must input manually)
       setUserId(""); // Clear input for manual entry
     } else {
-      // Get the current count of the selected role from API response, default to 0 if undefined
       const count = (roleCounts[selectedRole] || 0) + 1;
 
       if (selectedRole === "prof") {
@@ -140,7 +155,7 @@ const LoginPage = ({ onLogin }: Props) => {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/v1/user/register",
+          "http://localhost:5000/api/v1/auth/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -149,7 +164,7 @@ const LoginPage = ({ onLogin }: Props) => {
         );
 
         const data = await response.json();
-        if (!data.success) {
+        if (!data.succes) {
           setErrorMessage(data.message || "Registration failed.");
         } else {
           setIsRegistering(false);
@@ -163,9 +178,27 @@ const LoginPage = ({ onLogin }: Props) => {
         setIsLoading(false);
       }
     } else {
-      handleLogin(username, password, onLogin, setUser, setErrorMessage);
-      setIsLoading(false);
+      handleLogin(
+        username,
+        password,
+        onLogin,
+        setUser,
+        setToken,
+        setErrorMessage,
+        setIsLoading
+      );
     }
+  };
+
+  const handleSubmitForgotPassword = (e: any) => {
+    e.preventDefault();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Invalid email format");
+      return;
+    }
+    setError("");
+    console.log("Reset password for:", email);
+    setEmail(""); // Clear input after submission
   };
 
   return (
@@ -239,7 +272,9 @@ const LoginPage = ({ onLogin }: Props) => {
                   <label>Role</label>
                   <select
                     value={role}
-                    onChange={(e) => handleRoleChange(e.target.value)}
+                    onChange={(e) => {
+                      handleRoleChange(e.target.value);
+                    }}
                     required
                     style={{ width: "100%" }}
                   >
@@ -253,35 +288,78 @@ const LoginPage = ({ onLogin }: Props) => {
                 </div>
 
                 {role && ( // Only show input when a role is selected
-                  <div className="form-group">
+                  <div
+                    className={
+                      role !== "student" ? "form-group" : "studentForm"
+                    }
+                  >
                     <label>
-                      {role === "student" ? "Student ID" : "Auto-Generated ID"}
+                      {role === "student"
+                        ? "Student ID: "
+                        : "Auto-Generated ID"}
                     </label>
-                    <input
-                      type="text"
-                      placeholder="YYYY-NNNN"
-                      value={userId}
-                      onChange={(e) => {
-                        if (role === "student") {
-                          // Ensure student ID follows YYYY-NNNN format
-                          const regex = /^\d{4}-\d{4}$/;
-                          if (
-                            regex.test(e.target.value) ||
-                            e.target.value === ""
-                          ) {
+
+                    {role === "student" && (
+                      <>
+                        <input
+                          type="number"
+                          placeholder="YYYY"
+                          value={year}
+                          min="2007"
+                          max={currentYear}
+                          onChange={(e) => {
+                            const value = e.target.value;
+
+                            if (/^\d*$/.test(value) && value.length <= 4) {
+                              setYear(value);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            // Validate year is not below 2012
+                            if (value && parseInt(value) < 2012) {
+                              alert("Year must be 2007 or later");
+                              setYear("");
+                            } else if (parseInt(value) > currentYear) {
+                              alert(`Year must be below to ${currentYear}`);
+                              setYear("");
+                            }
+                          }}
+                        />
+                        <span>-</span>
+                        <input
+                          type="text"
+                          placeholder="NNNN"
+                          value={number}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only allow numbers and limit to 4 digits
+                            if (/^\d*$/.test(value) && value.length <= 4) {
+                              setNumber(value);
+                            }
+                          }}
+                        />
+                      </>
+                    )}
+                    {role !== "student" && (
+                      <>
+                        <input
+                          type="text"
+                          placeholder=""
+                          value={userId}
+                          onChange={(e) => {
                             setUserId(e.target.value);
-                          }
-                        }
-                      }}
-                      disabled={role !== "student"} // Disable input for non-student roles
-                    />
+                          }}
+                          disabled={true}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
-
                 <button
                   className="register-btn"
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !isDoneRoleCounts}
                 >
                   {isLoading ? "Signing Up..." : "Sign Up"}
                 </button>
@@ -300,6 +378,7 @@ const LoginPage = ({ onLogin }: Props) => {
                     value={username}
                     onChange={(e) => {
                       setUsername(e.target.value);
+                      setEmail(e.target.value);
                     }}
                     required
                   />
@@ -313,40 +392,93 @@ const LoginPage = ({ onLogin }: Props) => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  <a href="#" className="forgot-password">
-                    Forgot Password?
-                  </a>
+                  {!isLoading && (
+                    <a
+                      href="#"
+                      className="forgot-password"
+                      onClick={() => setIsModalOpen(true)}
+                    >
+                      Forgot Password?
+                    </a>
+                  )}
                 </div>
-                <button
-                  className="login-btn"
-                  type="submit"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "Logging In..." : "Login"}
-                </button>
-                <p>
-                  Don't have an Account?{" "}
-                  <a
-                    onClick={() => {
-                      setIsRegistering(true);
-                      setEmail("");
-                      setErrorMessage("");
-                      setName("");
-                      setPassword("");
-                      setRole("");
-                      setUserId("");
-                      setUsername("");
+                {isLoading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      width: "100%",
                     }}
                   >
-                    Sign Up
-                  </a>
-                </p>
+                    <video autoPlay loop muted width={60}>
+                      <source src={loadingHorizontal} type="video/webm" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                ) : (
+                  <>
+                    <button className="login-btn" type="submit">
+                      Login
+                    </button>
+                    <p>
+                      Don't have an Account?{" "}
+                      <a
+                        onClick={() => {
+                          setIsRegistering(true);
+                          setEmail("");
+                          setErrorMessage("");
+                          setName("");
+                          setPassword("");
+                          setRole("");
+                          setUserId("");
+                          setUsername("");
+                        }}
+                      >
+                        Sign Up
+                      </a>
+                    </p>
+                  </>
+                )}
               </>
             )}
           </form>
           {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
         </div>
       </div>
+      {isModalOpen && (
+        <div className="modalOverlay">
+          <div className="modalContent">
+            <h3>Forgot Password</h3>
+            <p>Enter your email to receive password reset instructions.</p>
+            <form onSubmit={handleSubmitForgotPassword}>
+              <div className="formGroup">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  style={{ maxWidth: "90%", borderRadius: "10px" }}
+                  required
+                />
+                {error && <p className="error">{error}</p>}
+              </div>
+
+              <div className="modalActions">
+                <button type="submit">Submit</button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEmail("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

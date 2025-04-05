@@ -1,18 +1,13 @@
 import express from 'express';
-import { loginUser, registerUser, updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs, changePassword, getArchivedUsers, restoreUser, archiveUser, updateUserStatus, getAllUsersForGradeRequest, getCountUsersRole } from '../controllers/userController.js';
+import { authenticateJWT } from '../utils/jwt.js';
+import { updateUser, deleteUser, approveAccount, getPendingUsers, getAllUsers, rejectAccount, getManageUsers, auditUsers, pendingApprovedUsers, accountSummary, logs, changePassword, getArchivedUsers, restoreUser, archiveUser, updateUserStatus, getAllUsersForGradeRequest} from '../controllers/userController.js';
 
 const router = express.Router();
 
-// Login route
-router.post('/login', loginUser);
-
-// Register route
-router.post('/register', registerUser);
+router.use(authenticateJWT)
 
 // Fetch all User
 router.get('/getAllUsers', getAllUsers);
-
-router.get('/getCountUsersRole', getCountUsersRole);
 
 router.get('/getAllUsersForGradeRequest', getAllUsersForGradeRequest);
 

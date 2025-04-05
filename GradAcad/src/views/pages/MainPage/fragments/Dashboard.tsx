@@ -53,6 +53,8 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [approvedCount, setApprovedCount] = useState();
   const [summary, setSummary] = useState<AccountSummary[]>([]);
 
+  const iconWH = 50;
+
   const context = useContext(UserContext);
 
   const { user }: any = context;
@@ -602,25 +604,22 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                 <img
                   src="src\assets\images\ccs_logo.png"
                   alt=""
-                  width={35}
-                  height={35}
+                  width={iconWH}
+                  height={iconWH}
                 />
                 <img
-                  src="src\assets\images\charms_logo.png"
+                  src="src\assets\images\hm.png"
                   alt=""
-                  width={35}
-                  height={35}
+                  width={45}
+                  height={45}
                 />
                 <img
                   src="src\assets\images\safe_logo.png"
                   alt=""
-                  width={35}
-                  height={35}
+                  width={iconWH}
+                  height={iconWH}
                 />
               </div>
-              <button className={styles.concerns}>
-                <p>CONCERNS AND QUESTIONS?</p>
-              </button>
             </div>
           </footer>
         </section>

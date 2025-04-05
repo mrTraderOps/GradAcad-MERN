@@ -1,16 +1,18 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
-import { connectDB, getDB } from './db.js';
-import userRoutes from './database/routes/userRoutes.js';
-import studentRoutes from './database/routes/studentRoutes.js';
-import subjectRoutes from './database/routes/subjectRoutes.js';
-import gradeRoutes from './database/routes/gradeRoutes.js';
-import { initGradingPeriodCron } from './database/utils/cron.js';
+
+import { connectDB, getDB } from './config/db.js';
+import userRoutes from './routes/userRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
+import subjectRoutes from './routes/subjectRoutes.js';
+import gradeRoutes from './routes/gradeRoutes.js';
+import emailRoutes from './routes/emailRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import { initGradingPeriodCron } from './utils/cron.js';
+import { authenticateJWT } from './utils/jwt.js';
 
 const app = express();
-dotenv.config();
 
 // Middleware
 app.use(cors());
@@ -20,17 +22,23 @@ const startServer = async () => {
     try {
         // Connect to DB
         await connectDB();
-        const db = getDB(); // Get the DB instance if needed elsewhere
+        const db = getDB();
         console.log('✅ Database connected');
 
         // Initialize cron jobs
         initGradingPeriodCron();
 
-        // Routes
-        app.use('/api/v1/user', userRoutes);
-        app.use('/api/v1/student', studentRoutes);
-        app.use('/api/v1/subject', subjectRoutes);
-        app.use('/api/v1/grade', gradeRoutes);
+        // Public Routes
+        app.use('/api/v1/auth', authRoutes);
+        app.use('/api/v1/email', emailRoutes);
+
+
+        // Protected Routes (Require JWT Authentication)
+        app.use('/api/v1/user', authenticateJWT, userRoutes);
+        app.use('/api/v1/student', authenticateJWT, studentRoutes);
+        app.use('/api/v1/subject', authenticateJWT, subjectRoutes);
+        app.use('/api/v1/grade', authenticateJWT, gradeRoutes);
+        
 
         // Health check (modified for native driver)
         app.get('/api/v1/health', async (req, res) => {

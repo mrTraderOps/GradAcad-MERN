@@ -1,4 +1,4 @@
-import { getDB } from '../../db.js';
+import { getDB } from '../config/db.js';
 
 let cronInterval = null; // Track the interval for cleanup
 

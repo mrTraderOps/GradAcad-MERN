@@ -8,7 +8,7 @@ import { calculateEQ } from "../../../../utils/helpers/calculateEQ";
 import { getRemarks } from "../../../../utils/helpers/getRemarks";
 import cslogo from "../../../../assets/images/ccs_icon.png";
 import nclogo from "../../../../assets/images/nc_logo.png";
-import notfound from "../../../../assets/images/notfound.png";
+import notfound from "../../../../assets/images/notfound.jpg";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { GenerateReport } from "../../../components/GenerateReport";
@@ -249,14 +249,10 @@ const Sheet = () => {
         </div>
         <header className={styles.headerStudentsPanel}>
           <div className={styles.div1}>
-            <button onClick={() => {}}>
-              <img
-                src="src\assets\icons\backButton.png"
-                alt="Back"
-                width={35}
-              />
-            </button>
-            <h3>{subjCode}</h3>
+            <p>SUBJECT CODE: </p>
+            <strong>{subjCode}</strong>
+            <p>SUBJECT NAME: </p>
+            <strong>{subjName}</strong>
           </div>
 
           <div className={styles.div2}>

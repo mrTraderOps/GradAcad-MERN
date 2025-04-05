@@ -212,7 +212,14 @@ body, html {
     background-color: $darkblue;
     width: 100%;
     margin-top: 20px;
+
+    &:disabled {
+      cursor: not-allowed;
+      background-color: #00173f75;
+    }
   }
+
+  
 
   label {
     color: $black;
@@ -222,3 +229,74 @@ body, html {
   input {
     height: 4vh;
   }
+
+  .modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modalContent {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+}
+
+.formGroup {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 1px;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 40px;
+
+  button {
+    background-color: $blue;
+    color: white;
+    border-radius: 10px;
+  }
+}
+
+.studentForm {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 19px;
+  margin: 16px 0px;
+
+  label {
+    font-weight: 600;
+    text-wrap-mode: nowrap;
+  }
+
+  input {
+    width: 94%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+}

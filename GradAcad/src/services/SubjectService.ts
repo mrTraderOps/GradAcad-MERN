@@ -1,15 +1,12 @@
-import axios from "axios";
+import { API } from "@/context/axiosInstance";
 
 export const fetchSubjectsbyUsername = (
     loggeduserName: string,
     setSubjects: React.Dispatch<React.SetStateAction<any>>,
     setError: React.Dispatch<React.SetStateAction<string>>
 ) => {
-
-    
-
-    axios
-        .post("http://localhost:5000/api/v1/subject/getSubjectsByUsername", {
+    API
+        .post("/subject/getSubjectsByUsername", {
             username: loggeduserName,
         })
         .then((response) => {
@@ -32,8 +29,8 @@ export const fetchSubjectsByRefId = (
     setSubjects: React.Dispatch<React.SetStateAction<any>>,
     setError: React.Dispatch<React.SetStateAction<string>>
 ) => {
-    axios
-        .post("http://localhost:5000/api/v1/subject/getSubjectsByRefId", {
+    API
+        .post("/subject/getSubjectsByRefId", {
             refId: refId,
             acadYr: acadYr,
             sem: sem,
@@ -56,8 +53,8 @@ export const fetchAcadYrSem = (
     setSem: React.Dispatch<React.SetStateAction<any>>,
     setError: React.Dispatch<React.SetStateAction<string>>
 ) => {
-    axios
-        .get("http://localhost:5000/api/v1/subject/getAcadYrSem")
+    API
+        .get("/subject/getAcadYrSem")
         .then((response) => {
             if (response.data.success) {
                 setYr(response.data.data.acadYr);

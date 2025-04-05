@@ -1,5 +1,6 @@
 import React from "react";
 import EqScale from "../pages/MainPage/fragments/students_panel/EqScale";
+import { useTerm } from "@/hooks/useTerm";
 
 interface EqScaleProps {
   isVisible: boolean;
@@ -10,12 +11,14 @@ export const GradingReference: React.FC<EqScaleProps> = ({
   isVisible,
   onClose,
 }) => {
+  const { activeAcadYrs } = useTerm();
+
   return (
     <EqScale isVisible={isVisible} onClose={onClose}>
       <h2>GRADING SYSTEM</h2>
       <h4>
-        The Norzagaray College {"A.Y. 2024 - 2025"} utilizes the grading system
-        below:
+        The Norzagaray College {`A.Y. ${activeAcadYrs} `} utilizes the grading
+        system below:
       </h4>
       <h5>RAW SCORE COMPUTATION</h5>
       <p>

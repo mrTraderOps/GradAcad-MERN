@@ -1,5 +1,4 @@
-import { getDB } from '../../db.js';
-
+import { getDB } from '../config/db.js';
 
 
 export const registerStudent = async (req, res) => {

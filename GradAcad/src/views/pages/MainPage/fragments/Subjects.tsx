@@ -6,7 +6,7 @@ import { useContext, useEffect, useState } from "react";
 import { useTerm } from "../../../../hooks/useTerm";
 import { UserContext } from "../../../../context/UserContext";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
-import notfound from "../../../../assets/images/notfound.png";
+import notfound from "../../../../assets/images/notfound.jpg";
 
 interface Props {
   onStudentClick: (data: SubjectData[], nextPanel: string) => void;

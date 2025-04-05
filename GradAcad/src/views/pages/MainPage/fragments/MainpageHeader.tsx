@@ -11,16 +11,6 @@ const MainpageHeader = () => {
             width={50}
           />
         </div>
-        <div className={styles.userProfile}>
-          <button>
-            <img
-              src="src\assets\icons\notif_icon.png"
-              width={30}
-              height={30}
-              alt="Notifications"
-            />
-          </button>
-        </div>
       </div>
     </header>
   );

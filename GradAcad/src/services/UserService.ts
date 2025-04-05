@@ -1,3 +1,4 @@
+import { API } from "@/context/axiosInstance";
 import axios from "axios";
 
 export const handleLogin = (
@@ -5,10 +6,12 @@ export const handleLogin = (
   password: string,
   onLogin: () => void,
   setUser: React.Dispatch<React.SetStateAction<any>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setToken: React.Dispatch<React.SetStateAction<any>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   axios
-    .post("http://localhost:5000/api/v1/user/login", { email: username, password })
+    .post("http://localhost:5000/api/v1/auth/login", { email: username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
         const user = response.data.user;
@@ -20,7 +23,8 @@ export const handleLogin = (
         }
 
         onLogin();
-        setUser(user);
+        setUser(user); 
+        setToken(response.data.token);       
       } else {
         setErrorMessage(response.data.message || "Invalid credentials.");
       }
@@ -28,9 +32,9 @@ export const handleLogin = (
     .catch((error) => {
       const message = error.response?.data?.message || "An error occurred.";
       setErrorMessage(message);
-    });
+    })
+    .finally(() => setLoading(false));
 };
-
 
 export const handleRegister = (
   email: string,
@@ -42,7 +46,7 @@ export const handleRegister = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   axios
-    .post("http://localhost:5000/api/v1/user/register", { email, password, role, name, studentId })
+    .post("http://localhost:5000/api/v1/auth/register", { email, password, role, name, studentId })
     .then((response) => {
       if (response.data.success && response.data.user) {
         setRegister(response.data.user); 
@@ -60,8 +64,8 @@ export const handlePending = (
   setPending: React.Dispatch<React.SetStateAction<any>>,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  axios
-    .get("http://localhost:5000/api/v1/user/getPendingUsers")
+  API
+    .get("user/getPendingUsers")
     .then((response) => {
       if (response.data.success) {
         setPending(response.data.pending); 
@@ -79,8 +83,8 @@ export const getAllUsers = (
   setUsers: React.Dispatch<React.SetStateAction<any>>,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
-  axios
-    .get("http://localhost:5000/api/v1/user/getAllUsers")
+  API
+    .get("/user/getAllUsers")
     .then((response) => {
       if (response.data.success) {
         setUsers(response.data.users); 

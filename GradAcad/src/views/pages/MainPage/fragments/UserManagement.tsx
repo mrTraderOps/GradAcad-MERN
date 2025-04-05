@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
-import axios from "axios";
 import { UserContext } from "../../../../context/UserContext";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
+import { API } from "@/context/axiosInstance";
 
 interface User {
   refId: string;
@@ -33,8 +33,7 @@ const UserManagement = () => {
   useEffect(() => {
     if (showArchived) {
       // ✅ Fetch Archived Users
-      axios
-        .get("http://localhost:5000/api/v1/user/getArchivedUsers")
+      API.get("/user/getArchivedUsers")
         .then((response) => {
           if (response.data.success) {
             setArchivedUsers(response.data.users);
@@ -51,8 +50,7 @@ const UserManagement = () => {
         });
     } else {
       // ✅ Fetch Active Users
-      axios
-        .get("http://localhost:5000/api/v1/user/getManageUsers")
+      API.get("/user/getManageUsers")
         .then((response) => {
           if (response.data.success) {
             setUsers(response.data.users);
@@ -82,18 +80,15 @@ const UserManagement = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/user/archiveUser",
-        {
-          refId,
-        }
-      );
+      const response = await API.post("/user/archiveUser", {
+        refId,
+      });
 
       if (response.data.success) {
         alert("User archive successfully!");
 
         // ✅ Log Deletion
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "User Archived",
           userId: user?.refId,
           name: user?.name,
@@ -128,18 +123,15 @@ const UserManagement = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/user/restoreUser",
-        {
-          refId,
-        }
-      );
+      const response = await API.post("/user/restoreUser", {
+        refId,
+      });
 
       if (response.data.success) {
         alert("User restored successfully!");
 
         // ✅ Log Restoration
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "User Restored",
           userId: user?.refId,
           name: user?.name,
@@ -168,13 +160,10 @@ const UserManagement = () => {
     try {
       setIsUpdating((prev) => ({ ...prev, [refId]: true }));
 
-      const response = await axios.put(
-        "http://localhost:5000/api/v1/user/updateUserStatus",
-        {
-          refId,
-          status: newStatus,
-        }
-      );
+      const response = await API.put("/user/updateUserStatus", {
+        refId,
+        status: newStatus,
+      });
 
       if (response.data.success) {
         setUsers((prevUsers) =>
@@ -222,15 +211,12 @@ const UserManagement = () => {
     }
 
     try {
-      const response = await axios.put(
-        "http://localhost:5000/api/v1/user/updateByRefId",
-        {
-          originalRefId, // Send original refId
-          newRefId: editedUser.refId, // Send updated refId
-          name: editedUser.name,
-          email: editedUser.email,
-        }
-      );
+      const response = await API.put("/user/updateByRefId", {
+        originalRefId, // Send original refId
+        newRefId: editedUser.refId, // Send updated refId
+        name: editedUser.name,
+        email: editedUser.email,
+      });
 
       if (response.data.success) {
         alert("User updated successfully!");
@@ -246,7 +232,7 @@ const UserManagement = () => {
             `Ref ID: ${originalUser.refId} change to ${editedUser.refId}`
           );
 
-        await axios.post("http://localhost:5000/api/v1/user/logs", {
+        await API.post("/user/logs", {
           action: "User Edited",
           userId: user?.refId, // ✅ New Ref ID after update
           name: user?.name,

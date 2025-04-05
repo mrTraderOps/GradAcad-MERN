@@ -1,16 +1,15 @@
 import express from 'express';
+import { authenticateJWT } from '../utils/jwt.js';
 import { registerStudent, getStudentByDeptSect, addStudent, deleteStudent } from '../controllers/studentController.js';
 
 const router = express.Router();
 
-// Register route
-router.post('/register', registerStudent);
+router.post('/register', authenticateJWT, registerStudent);
 
-// Get all student by department and section
-router.post('/getSection', getStudentByDeptSect);
+router.post('/getSection', authenticateJWT, getStudentByDeptSect);
 
-router.post('/addStudent', addStudent);
+router.post('/addStudent', authenticateJWT, addStudent);
 
-router.delete('/deleteStudent', deleteStudent);
+router.delete('/deleteStudent', authenticateJWT, deleteStudent);
 
 export default router;

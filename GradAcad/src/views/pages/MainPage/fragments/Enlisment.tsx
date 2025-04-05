@@ -2,7 +2,7 @@ import styles from "../fragments/students_panel/styles/StudentsPanel.module.scss
 import style from "../styles/Department.module.scss";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
-import notfound from "../../../../assets/images/notfound.png";
+import notfound from "../../../../assets/images/notfound.jpg";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
 import { EnlismentReport } from "@/views/components/EnlistmentReport";
 import axios from "axios";

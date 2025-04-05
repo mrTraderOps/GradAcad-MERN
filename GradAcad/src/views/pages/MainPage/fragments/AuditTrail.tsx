@@ -7,6 +7,7 @@ import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import axios from "axios";
 import autoTable from "jspdf-autotable";
 import { UserContext } from "../../../../context/UserContext";
+import { API } from "@/context/axiosInstance";
 
 interface AuditLog {
   logId: number;
@@ -47,17 +48,14 @@ const AuditTrail = () => {
       setAuditLogs([]);
       setErrorMessage("");
       try {
-        const response = await axios.post(
-          "http://localhost:5000/api/v1/user/getAuditUsers",
-          {
-            page: currentPage,
-            limit: logsPerPage,
-            action: filterAction,
-            userId: filterUser,
-            startDate: filterStartDate,
-            endDate: filterEndDate,
-          }
-        );
+        const response = await API.post("/user/getAuditUsers", {
+          page: currentPage,
+          limit: logsPerPage,
+          action: filterAction,
+          userId: filterUser,
+          startDate: filterStartDate,
+          endDate: filterEndDate,
+        });
 
         if (response.data.success) {
           setAuditLogs(response.data.logs);

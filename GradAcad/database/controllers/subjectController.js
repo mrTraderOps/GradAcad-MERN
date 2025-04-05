@@ -1,4 +1,4 @@
-import { getDB } from "../../db.js";
+import { getDB } from "../config/db.js";
 import { ObjectId } from "mongodb"
 
 export const getSubjectsByUsername = async (req, res) => {

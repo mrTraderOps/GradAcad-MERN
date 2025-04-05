@@ -4,8 +4,8 @@ import searchIcon from "../../../../assets/images/search_Icon.png";
 import arrow from "../../../../assets/icons/arrow.png";
 import closeIcon from "../../../../assets/icons/x-button.png";
 import { getAllUsers, handlePending } from "../../../../services/UserService";
-import axios from "axios";
 import { UserContext } from "../../../../context/UserContext";
+import { API } from "@/context/axiosInstance";
 
 interface Account {
   _id: string;
@@ -57,10 +57,7 @@ const AccountApproval = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/user/approveAccount",
-        { id }
-      );
+      const response = await API.post("/user/approveAccount", { id });
 
       if (response.data.success) {
         // ✅ Remove from pending list
@@ -73,12 +70,6 @@ const AccountApproval = () => {
           (account) => account._id === id
         );
         if (accountToApprove) {
-          // Ensure refId exists before logging
-          const userId =
-            accountToApprove.refId ||
-            accountToApprove.studentId ||
-            accountToApprove.employeeId;
-
           // ✅ Add to approved list
           setApprovedAccounts((prev) => [
             ...prev,
@@ -86,7 +77,7 @@ const AccountApproval = () => {
           ]);
 
           // ✅ Log the approval action
-          await axios.post("http://localhost:5000/api/v1/user/logs", {
+          await API.post("/user/logs", {
             action: "Account Approved",
             userId: user?.refId, // ✅ Ensure refId is passed correctly
             name: user?.name,
@@ -94,7 +85,18 @@ const AccountApproval = () => {
             date: formatDate(), // ✅ Ensure the date is also logged
           });
 
-          alert("Account approved successfully!");
+          const responseEmail = await API.post("/email/sendApprovalEmail", {
+            to: accountToApprove.email,
+            username: accountToApprove.name,
+          });
+
+          if (responseEmail.data.success) {
+            alert(
+              "Account approved successfully! We will send her/him an email to inform."
+            );
+          } else {
+            alert("Account approved successfully!");
+          }
         }
       } else {
         alert("Failed to approve account: " + response.data.message);
@@ -107,10 +109,7 @@ const AccountApproval = () => {
 
   const handleReject = async (id: string) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/v1/user/rejectAccount",
-        { id }
-      );
+      const response = await API.post("/user/rejectAccount", { id });
 
       if (response.data.success) {
         // ✅ Remove from pending accounts
@@ -123,7 +122,7 @@ const AccountApproval = () => {
           (account) => account._id === id
         );
         if (accountToReject) {
-          await axios.post("http://localhost:5000/api/v1/user/logs", {
+          await API.post("/user/logs", {
             action: "Account Rejected",
             userId: user?.refId, // ✅ Log refId
             name: user?.name,
@@ -131,7 +130,18 @@ const AccountApproval = () => {
             date: formatDate(), // ✅ Log the rejection date
           });
 
-          alert("Account rejected successfully!");
+          const responseEmail = await API.post("/email/sendRejectionEmail", {
+            to: accountToReject.email,
+            username: accountToReject.name,
+          });
+
+          if (responseEmail.data.success) {
+            alert(
+              "Account rejected successfully! We will send her/him an email to inform."
+            );
+          } else {
+            alert("Account rejected successfully!");
+          }
         }
       } else {
         alert("Failed to reject account: " + response.data.message);
@@ -145,11 +155,6 @@ const AccountApproval = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedAccount(null);
-  };
-
-  const handleAccountClick = (account: any) => {
-    setSelectedAccount(account);
-    setIsModalOpen(true);
   };
 
   // Filter function for accounts based on search and role
