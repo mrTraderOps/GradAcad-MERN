@@ -1,5 +1,5 @@
 import courseStyles from "../styles/Subjects.module.scss";
-import style from "../styles/department.module.scss";
+import style from "../styles/Department.module.scss";
 import { SubjectData } from "../../../../models/types/SubjectData";
 import { useSubjectsV2 } from "../../../../hooks/useSubjects";
 import { useContext, useEffect, useState } from "react";
