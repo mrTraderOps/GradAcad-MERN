@@ -21,7 +21,9 @@ interface Account {
 
 const AccountApproval = () => {
   const [pendingAccounts, setPendingAccounts] = useState<Account[]>([]);
-  const [error, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [error1, setError1] = useState<boolean>(false);
+  const [error2, setError2] = useState<boolean>(false);
   const [approvedAccounts, setApprovedAccounts] = useState<Account[]>([]);
   const [currentPanel, setCurrentPanel] = useState("pending");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,8 +38,8 @@ const AccountApproval = () => {
   const { user } = context;
 
   useEffect(() => {
-    handlePending(setPendingAccounts, setErrorMessage);
-    getAllUsers(setApprovedAccounts, setErrorMessage);
+    handlePending(setPendingAccounts, setErrorMessage, setError1);
+    getAllUsers(setApprovedAccounts, setErrorMessage, setError2);
   }, [currentPanel]);
 
   const formatDate = (): string => {
@@ -228,10 +230,10 @@ const AccountApproval = () => {
         </div>
       </div>
       <div className={styles.accountList}>
-        {error ? (
-          <h2>Internal Server Error</h2>
-        ) : currentPanel === "pending" ? (
-          filteredPendingAccounts.length === 0 ? (
+        {currentPanel === "pending" ? (
+          error1 ? (
+            <p>{errorMessage}</p>
+          ) : filteredPendingAccounts.length === 0 ? (
             <p>No pending accounts.</p>
           ) : (
             filteredPendingAccounts.map((account) => {
@@ -293,6 +295,8 @@ const AccountApproval = () => {
               );
             })
           )
+        ) : error2 ? (
+          <p>{errorMessage || "Failed to fetch approve account."}</p>
         ) : filteredApprovedAccounts.length === 0 ? (
           <p>No approved accounts.</p>
         ) : (

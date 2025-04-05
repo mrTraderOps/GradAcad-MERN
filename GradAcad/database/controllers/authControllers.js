@@ -14,7 +14,7 @@ export const loginUser = async (req, res) => {
     if (email) {
       return { email }; // Query by email
     } else if (studentId) {
-      return { studentId }; // Query by studentId
+      return { studentId: studentId }; // Query by studentId
     } else {
       return null;
     }

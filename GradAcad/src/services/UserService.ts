@@ -11,7 +11,7 @@ export const handleLogin = (
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   axios
-    .post("http://localhost:5000/api/v1/auth/login", { email: username, password })
+    .post("https://gradacad-mern.onrender.com/api/v1/auth/login", { email: username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
         const user = response.data.user;
@@ -46,7 +46,7 @@ export const handleRegister = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>
 ) => {
   axios
-    .post("http://localhost:5000/api/v1/auth/register", { email, password, role, name, studentId })
+    .post("https://gradacad-mern.onrender.com/api/v1/auth/register", { email, password, role, name, studentId })
     .then((response) => {
       if (response.data.success && response.data.user) {
         setRegister(response.data.user); 
@@ -62,7 +62,8 @@ export const handleRegister = (
 
 export const handlePending = (
   setPending: React.Dispatch<React.SetStateAction<any>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  setError: React.Dispatch<React.SetStateAction<any>>
 ) => {
   API
     .get("user/getPendingUsers")
@@ -70,18 +71,21 @@ export const handlePending = (
       if (response.data.success) {
         setPending(response.data.pending); 
       } else {
-        setErrorMessage(response.data.message || "Invalid credentials.");
+        setErrorMessage(response.data.message || "Failed to fetch pending. Please try again later");
+        setError(true)
       }
     })
     .catch((error) => {
-      const message = error.response?.data?.message || "An error occurred.";
+      const message = error.response?.data?.message || "An error occurred. Contact your developer";
       setErrorMessage(message);
+      setError(true)
     });
 }
 
 export const getAllUsers = ( 
   setUsers: React.Dispatch<React.SetStateAction<any>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  setError: React.Dispatch<React.SetStateAction<any>>
 ) => {
   API
     .get("/user/getAllUsers")
@@ -89,12 +93,14 @@ export const getAllUsers = (
       if (response.data.success) {
         setUsers(response.data.users); 
       } else {
-        setErrorMessage(response.data.message || "Invalid credentials.");
+        setError(true)
+        setErrorMessage(response.data.message || "Failed to fetch all users. Please try again later");
       }
     })
     .catch((error) => {
-      const message = error.response?.data?.message || "An error occurred.";
+      const message = error.response?.data?.message || "An error occurred. Contact dev";
       setErrorMessage(message);
+      setError(true)
     });
   }
 
