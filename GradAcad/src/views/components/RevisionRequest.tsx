@@ -3,7 +3,7 @@ import styles from "./styles/AreYouSure.module.scss";
 import loadingAnimation from "../../assets/webM/loading.webm";
 import loadingHorizontal from "../../assets/webM/loadingHorizontal.webm";
 import axios from "axios";
-import { DetailProps } from "@/hooks/useGrade";
+import { DetailProps } from "../../hooks/useGrade";
 
 interface Props {
   isOpen: boolean;

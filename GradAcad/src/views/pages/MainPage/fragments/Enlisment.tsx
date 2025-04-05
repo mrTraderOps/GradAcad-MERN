@@ -4,8 +4,8 @@ import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
 import notfound from "../../../../assets/images/notfound.jpg";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
-import { EnlismentReport } from "@/views/components/EnlistmentReport";
-import { API } from "@/context/axiosInstance";
+import { EnlismentReport } from "../../../components/EnlistmentReport";
+import { API } from "../../../../context/axiosInstance";
 
 interface Student {
   _id: string;

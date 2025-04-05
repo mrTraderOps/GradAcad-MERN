@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
 import { UserContext } from "../../../../context/UserContext";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
-import { API } from "@/context/axiosInstance";
+import { API } from "../../../../context/axiosInstance";
 
 interface User {
   refId: string;

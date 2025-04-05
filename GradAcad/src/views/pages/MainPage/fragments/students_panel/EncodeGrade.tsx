@@ -10,7 +10,7 @@ import { calculateEQ } from "../../../../../utils/helpers/calculateEQ";
 import { usePopupVisibility } from "../../../../../hooks/usePopupVisibility";
 import { SubjectData } from "../../../../../models/types/SubjectData";
 import { GradingReference } from "../../../../components/EqScale";
-import { API } from "@/context/axiosInstance";
+import { API } from "../../../../../context/axiosInstance";
 import { DataProps } from "../../../../../models/types/StudentData";
 import loadingAnimation from "../../../../../assets/webM/loading.webm";
 import loadingHorizontal from "../../../../../assets/webM/loadingHorizontal.webm";

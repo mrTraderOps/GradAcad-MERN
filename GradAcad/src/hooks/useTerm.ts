@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { API } from '@/context/axiosInstance';
+import { API } from '../context/axiosInstance';
 import { TermData } from '../models/types/GradeData';
 
 export const useTerm = () => {

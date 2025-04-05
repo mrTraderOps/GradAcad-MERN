@@ -1,6 +1,6 @@
 import React from "react";
 import EqScale from "../pages/MainPage/fragments/students_panel/EqScale";
-import { useTerm } from "@/hooks/useTerm";
+import { useTerm } from "../../hooks/useTerm";
 
 interface EqScaleProps {
   isVisible: boolean;

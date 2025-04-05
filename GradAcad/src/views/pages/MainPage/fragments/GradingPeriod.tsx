@@ -1,8 +1,8 @@
 import styles from "../styles/GradingPeriod.module.scss";
 import style from "../fragments/students_panel/styles/StudentsPanel.module.scss";
 import { useEffect, useState } from "react";
-import { API } from "@/context/axiosInstance";
-import { RevisionRequest } from "@/views/components/RevisionRequest";
+import { API } from "../../../../context/axiosInstance";
+import { RevisionRequest } from "../../../components/RevisionRequest";
 
 interface GradeRequest {
   requestId: string;

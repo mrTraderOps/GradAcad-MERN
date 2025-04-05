@@ -1,7 +1,7 @@
 import style from "../styles/Settings.module.scss";
 import { useContext, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
-import { API } from "@/context/axiosInstance";
+import { API } from "../../../../context/axiosInstance";
 const Settings = () => {
   const [isProfile, setProfile] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");

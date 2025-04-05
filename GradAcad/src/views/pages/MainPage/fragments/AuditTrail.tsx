@@ -6,7 +6,7 @@ import nclogo from "../../../../assets/images/nc_logo.png";
 import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import autoTable from "jspdf-autotable";
 import { UserContext } from "../../../../context/UserContext";
-import { API } from "@/context/axiosInstance";
+import { API } from "../../../../context/axiosInstance";
 
 interface AuditLog {
   logId: number;
