@@ -13,3 +13,7 @@ export const calculateEQ = (term: number) => {
     const match = ranges.find((range) => term >= range.min);
     return match ? match.grade : 5.00; // Default to 5.0 if no match
   };
+
+  export const getRemark = (grade: number) => {
+    return grade <= 3.00 ? "PASSED" : "FAILED";
+  };

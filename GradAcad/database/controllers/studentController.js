@@ -126,10 +126,9 @@ export const getStudentInfoById = async (req, res) => {
       const db = getDB();
   
       const student = await db.collection('students').findOne(
-        { studentId },
+        { _id: studentId },
         {
           projection: {
-            _id: 0,
             StudentId: 1,
             LastName: 1,
             FirstName: 1,
@@ -153,15 +152,81 @@ export const getStudentInfoById = async (req, res) => {
   
 
 export const getAllStudentGrade = async (req, res) => {
-    const { studentId, acadYr, sem } = req.body 
+    const { studentId } = req.body;
+
+    if (!studentId) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Student ID is required" 
+        });
+    }
 
     try {
         const db = getDB();
 
+        const results = await db.collection('grades').aggregate([
+            // 1. Match grades for the specific student
+            { $match: { StudentId: studentId } },
+            
+            // 2. Join with subjects collection
+            { $lookup: {
+                from: "subjects",
+                localField: "SubjectId",
+                foreignField: "subjectCode",
+                as: "subjectData"
+            }},
+            
+            // 3. Unwind the joined subject data
+            { $unwind: {
+                path: "$subjectData",
+                preserveNullAndEmptyArrays: true // Keep grades even if subject not found
+            }},
+            
+            // 4. Project the final structure
+            { $project: {
+                SubjectId: 1,
+                SubjectName: { 
+                    $ifNull: ["$subjectData.subjectName", "$SubjectId"] 
+                },
+                Credits: { 
+                    $ifNull: ["$subjectData.units", 0] 
+                },
+                acadYr: 1,
+                sem: 1,
+                terms: 1,
+                prelimRemarks: { 
+                    $cond: [{ $ifNull: ["$prelimRemarks", false] }, "$prelimRemarks", "$$REMOVE"] 
+                },
+                midtermRemarks: { 
+                    $cond: [{ $ifNull: ["$midtermRemarks", false] }, "$midtermRemarks", "$$REMOVE"] 
+                },
+                finalRemarks: { 
+                    $cond: [{ $ifNull: ["$finalRemarks", false] }, "$finalRemarks", "$$REMOVE"] 
+                }
+            }}
+        ]).toArray();
+
+        if (!results || results.length === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "No grades found for this student" 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            data: results 
+        });
+
     } catch (error) {
-        
+        console.error("Error fetching student grades:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal Server Error",
+            error: error.message 
+        });
     }
-}
+};
 
 
 

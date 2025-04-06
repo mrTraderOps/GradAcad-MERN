@@ -4,12 +4,15 @@ import nclogo from "../../../../assets/images/nc_logo.png";
 import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
 import { useTerm } from "../../../../hooks/useTerm";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import API from "../../../../context/axiosInstance";
 import { UserContext } from "../../../../context/UserContext";
+import { calculateAverage } from "../../../../utils/helpers/calculateAve";
+import { calculateEQ, getRemark } from "../../../../utils/helpers/calculateEQ";
+import loadingHorizontal from "../../../../assets/webM/loading.webm";
 
 export interface StudentDetails {
-  StudentId: string;
+  _id: string;
   LastName: string;
   FirstName: string;
   MiddleInitial: string;
@@ -18,6 +21,7 @@ export interface StudentDetails {
 }
 
 export interface StudentGradeDetails {
+  _id: string;
   SubjectId: string;
   SubjectName: string;
   Credits: number;
@@ -44,40 +48,91 @@ const GradeViewing = () => {
   }
 
   const { user } = context;
+  const { activeAcadYrs, activeSems, initialAcadYr, initialSem } = useTerm();
 
-  const { activeAcadYrs, activeSems } = useTerm();
+  const [totalCredits, setTotaCredits] = useState<number>(0);
+  const [totalAverage, setTotalAverage] = useState<string>("");
 
-  const [studentDetails, setIsStudentDetails] = useState<StudentDetails[]>([
-    {
-      StudentId: "2020-0081",
-      LastName: "Dumalaog",
-      FirstName: "Alexis Jhudiel",
-      MiddleInitial: "N",
-      SectionId: "BSCS-4A",
-      StudentType: "REGULAR",
-    },
-  ]);
+  const [selectedSem, setSelectedSem] = useState<string>(initialAcadYr);
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialSem);
+  const [academicYearOptions, setAcademicYearOptions] = useState<string[]>([]);
+  const [semesterOptions, setSemesterOptions] = useState<string[]>([]);
+  const [studentDetails, setStudentDetails] = useState<StudentDetails | null>(
+    null
+  );
+  const [allStudentGrades, setAllStudentGrades] = useState<
+    StudentGradeDetails[]
+  >([]);
+  const [filteredGrades, setFilteredGrades] = useState<StudentGradeDetails[]>(
+    []
+  );
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStudentInfoById = async () => {
+    const fetchStudentData = async () => {
+      if (!user?.refId) return;
+      setLoading(true);
+
       try {
-        const response = await API.post("/student/getStudentInfoById", {
-          studentId: user?.refId,
+        // Fetch student info
+        const infoResponse = await API.post("/student/getStudentInfoById", {
+          studentId: user.refId,
         });
 
-        setIsStudentDetails(response.data);
+        // Fetch student grades
+        const gradesResponse = await API.post("/student/getAllStudentGrade", {
+          studentId: user.refId,
+        });
+
+        if (infoResponse.data.success) {
+          setStudentDetails(infoResponse.data.data);
+        }
+
+        if (gradesResponse.data.success) {
+          setAllStudentGrades(gradesResponse.data.data);
+        }
       } catch (error) {
-        console.error("Failed to fetch student info:", error);
+        console.error("Failed to fetch student data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (user?.refId) {
-      fetchStudentInfoById();
-    }
+    fetchStudentData();
   }, [user?.refId]);
 
-  if (studentDetails.length > 0) {
-    const sectionId = studentDetails[0].SectionId; // e.g., "BSCS-4A"
+  // 2. Extract unique academic years and semesters
+  useEffect(() => {
+    if (allStudentGrades.length > 0) {
+      // Get unique academic years (sorted newest first)
+      const years = [...new Set(allStudentGrades.map((g) => g.acadYr))].sort(
+        (a, b) => b.localeCompare(a)
+      );
+
+      // Get unique semesters
+      const sems = [...new Set(allStudentGrades.map((g) => g.sem))];
+
+      setAcademicYearOptions(years);
+      setSemesterOptions(sems);
+
+      // Set initial selections
+      if (years.length) setSelectedAcadYr(years[0]);
+      if (sems.length) setSelectedSem(sems[0]);
+    }
+  }, [allStudentGrades]);
+
+  // 3. Filter grades when selections change
+  useEffect(() => {
+    if (selectedAcadYr && selectedSem) {
+      const filtered = allStudentGrades.filter(
+        (grade) => grade.acadYr === selectedAcadYr && grade.sem === selectedSem
+      );
+      setFilteredGrades(filtered);
+    }
+  }, [allStudentGrades, selectedAcadYr, selectedSem]);
+
+  if (studentDetails) {
+    const sectionId = studentDetails.SectionId; // e.g., "BSCS-4A"
     const [courseCode, yearSection] = sectionId.split("-");
     const yearNumber = yearSection.match(/\d/)?.[0]; // Extract the digit
 
@@ -165,30 +220,40 @@ const GradeViewing = () => {
     doc.setFont("times", "normal");
     doc.text("Student ID: ", leftX, startY);
     doc.setFont("helvetica", "bold");
-    doc.text("2021-0213", leftX + 30, startY); // Adjust the offset
+    doc.text(`${studentDetails?._id}`, leftX + 30, startY); // Adjust the offset
 
     // Student Name
     doc.setFont("times", "normal");
     doc.text("Student Name: ", leftX, startY + lineSpacing);
     doc.setFont("helvetica", "bold");
-    doc.text("DUMALAOG, ALEXIS JHUDIEL N.", leftX + 30, startY + lineSpacing);
+    doc.text(
+      `${studentDetails?.LastName.toUpperCase()}, ${studentDetails?.FirstName.toUpperCase()} ${
+        studentDetails?.MiddleInitial
+      }`,
+      leftX + 30,
+      startY + lineSpacing
+    );
 
     // Course & Section
     doc.setFont("times", "normal");
     doc.text("Course & Section: ", leftX, startY + lineSpacing * 2);
     doc.setFont("helvetica", "bold");
-    doc.text("BSCS - 4A", leftX + 30, startY + lineSpacing * 2);
+    doc.text(
+      `${studentDetails?.SectionId}`,
+      leftX + 30,
+      startY + lineSpacing * 2
+    );
 
     // RIGHT SIDE
     doc.setFont("times", "normal");
     doc.text("Academic Year: ", rightX, startY);
     doc.setFont("helvetica", "bold");
-    doc.text("2024 - 2025", rightX + 25, startY);
+    doc.text(`${selectedAcadYr}`, rightX + 25, startY);
 
     doc.setFont("times", "normal");
     doc.text("Semester: ", rightX, startY + lineSpacing);
     doc.setFont("helvetica", "bold");
-    doc.text("1st SEMESTER", rightX + 25, startY + lineSpacing);
+    doc.text(`${selectedSem} SEMESTER`, rightX + 25, startY + lineSpacing);
 
     // Extract table data
     const headers = Array.from(
@@ -233,19 +298,128 @@ const GradeViewing = () => {
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text("Total Unit: 9", pageWidthTitle / 2, tableStartY + 50, {
-      align: "center",
-    });
+    doc.text(
+      `Total Units: ${totalCredits}`,
+      pageWidthTitle - 80,
+      tableStartY + 130,
+      {
+        align: "center",
+      }
+    );
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
-    doc.text("Average: 1.00", pageWidthTitle / 2 + 20, tableStartY + 50, {
-      align: "center",
-    });
+    doc.text(
+      `Average: ${totalAverage}`,
+      pageWidthTitle - 50,
+      tableStartY + 130,
+      {
+        align: "center",
+      }
+    );
 
     // **Open print panel**
     doc.autoPrint();
     window.open(doc.output("bloburl"), "_blank");
+  };
+
+  const GradeTable = ({
+    filteredGrades,
+  }: {
+    filteredGrades: StudentGradeDetails[];
+  }) => {
+    // Compute final grades and remarks for each subject
+    const computedGrades = filteredGrades.map((grade) => {
+      const prelim = grade.terms.PRELIM || 0;
+      const midterm = grade.terms.MIDTERM || 0;
+      const final = grade.terms.FINAL || 0;
+
+      const average = calculateAverage(prelim, midterm, final);
+      const finalGrade = calculateEQ(average);
+      const remark = getRemark(finalGrade);
+
+      return {
+        ...grade,
+        finalGrade,
+        remark,
+      };
+    });
+
+    return (
+      <>
+        <table className={styles.studentTable} id="studentTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>SUBJECT CODE</th>
+              <th>SUBJECT DESCRIPTION</th>
+              <th>CREDITS</th>
+              <th>GRADE</th>
+              <th>REMARK</th>
+            </tr>
+          </thead>
+          <tbody>
+            {computedGrades.map((grade, index) => (
+              <tr key={grade._id}>
+                <td>{index + 1}</td>
+                <td>{grade.SubjectId}</td>
+                <td>{grade.SubjectName || grade.SubjectId}</td>
+                <td>{grade.Credits}</td>
+                <td>{grade.finalGrade.toFixed(2)}</td>
+                <td>{grade.remark}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </>
+    );
+  };
+
+  const GradeSummary = ({
+    filteredGrades,
+  }: {
+    filteredGrades: StudentGradeDetails[];
+  }) => {
+    // Calculate total units and average grade
+    const { totalUnits, averageGrade } = useMemo(() => {
+      let totalCredits = 0;
+      let totalGradePoints = 0;
+      let gradedSubjects = 0;
+
+      filteredGrades.forEach((grade) => {
+        const prelim = grade.terms.PRELIM || 0;
+        const midterm = grade.terms.MIDTERM || 0;
+        const final = grade.terms.FINAL || 0;
+
+        const average = calculateAverage(prelim, midterm, final);
+        const finalGrade = calculateEQ(average);
+
+        totalCredits += grade.Credits || 0;
+
+        // Only include in average if at least one term has a grade
+        if (prelim > 0 || midterm > 0 || final > 0) {
+          totalGradePoints += finalGrade * (grade.Credits || 0);
+          gradedSubjects += grade.Credits || 0;
+        }
+      });
+
+      const average =
+        gradedSubjects > 0 ? totalGradePoints / gradedSubjects : 0;
+
+      return {
+        totalUnits: totalCredits,
+        averageGrade: average.toFixed(2),
+      };
+    }, [filteredGrades]);
+
+    setTotaCredits(totalUnits);
+    setTotalAverage(averageGrade);
+    return (
+      <>
+        <h4>Total Units: {totalUnits}</h4>
+        <h4>Average: {averageGrade}</h4>
+      </>
+    );
   };
 
   return (
@@ -271,7 +445,7 @@ const GradeViewing = () => {
         </button>
       </header>
       <main style={{ width: "100%" }}>
-        {studentDetails.length > 0 && (
+        {studentDetails && (
           <section
             style={{
               display: "flex",
@@ -293,18 +467,26 @@ const GradeViewing = () => {
               <div className={styles.studentTitle}>
                 <p>Student Name</p>
                 <h3>
-                  {studentDetails[0].LastName}, {studentDetails[0].FirstName}{" "}
-                  {studentDetails[0].MiddleInitial}.
+                  {studentDetails.LastName}, {studentDetails.FirstName}{" "}
+                  {studentDetails.MiddleInitial}.
                 </h3>
               </div>
               <div className={styles.studentTitle}>
                 <p>Student Number</p>
-                <h3>{studentDetails[0].StudentId}</h3>
+                <h3>{studentDetails._id}</h3>
               </div>
               <div className={styles.studentTitle}>
                 <p>Academic Year</p>
-                <select name="" id="">
-                  <option value={activeAcadYrs}>{activeAcadYrs}</option>
+                <select
+                  value={selectedAcadYr}
+                  onChange={(e) => setSelectedAcadYr(e.target.value)}
+                  disabled={!academicYearOptions.length}
+                >
+                  {academicYearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -326,57 +508,48 @@ const GradeViewing = () => {
                 </div>
                 <div className={styles.studentTitle}>
                   <p>Student Type</p>
-                  <h3>{studentDetails[0].StudentType}</h3>
+                  <h3>{studentDetails.StudentType}</h3>
                 </div>
               </div>
               <div className={styles.studentTitle}>
                 <p>Semester</p>
-                <select name="" id="">
-                  <option value={activeSems}>{activeSems} Semester</option>
+                <select
+                  value={selectedSem}
+                  onChange={(e) => setSelectedSem(e.target.value)}
+                  disabled={!semesterOptions.length}
+                >
+                  {semesterOptions.map((sem) => (
+                    <option key={sem} value={sem}>
+                      {sem} Semester
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           </section>
         )}
         <section style={{ maxWidth: "100%", padding: "30px" }}>
-          <table className={styles.studentTable} id="studentTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>SUBJECT CODE</th>
-                <th>SUBJECT DESCRIPTION</th>
-                <th>CREDITS</th>
-                <th>GRADE</th>
-                <th>REMARK</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td>PRC 101</td>
-                <td>Practicum 101</td>
-                <td>3</td>
-                <td>90</td>
-                <td>PASSED</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>PRC 101</td>
-                <td>Practicum 101</td>
-                <td>3</td>
-                <td>90</td>
-                <td>PASSED</td>
-              </tr>
-              <tr>
-                <td>1</td>
-                <td>PRC 101</td>
-                <td>Practicum 101</td>
-                <td>3</td>
-                <td>90</td>
-                <td>PASSED</td>
-              </tr>
-            </tbody>
-          </table>
+          {loading ? (
+            <div className={styles.loading}>
+              <h2>Loading.. Please Wait</h2>
+              <video
+                autoPlay
+                loop
+                muted
+                className={styles.loadingHorizontal}
+                height={50}
+              >
+                <source src={loadingHorizontal} type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          ) : filteredGrades.length > 0 ? (
+            <GradeTable filteredGrades={filteredGrades} />
+          ) : (
+            <p>
+              No grades found for {activeAcadYrs} - {activeSems} semester
+            </p>
+          )}
           <div
             style={{
               paddingTop: "40px",
@@ -387,8 +560,27 @@ const GradeViewing = () => {
             }}
             className={styles.belowTable}
           >
-            <h4>Total Units: 9</h4>
-            <h4>Average 1.25</h4>
+            {loading ? (
+              <div className={styles.loading}>
+                <h2>Loading.. Please Wait</h2>
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  className={styles.loadingHorizontal}
+                  height={50}
+                >
+                  <source src={loadingHorizontal} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            ) : filteredGrades.length > 0 ? (
+              <GradeSummary filteredGrades={filteredGrades} />
+            ) : (
+              <p>
+                No grades found for {activeAcadYrs} - {activeSems} semester
+              </p>
+            )}
           </div>
         </section>
       </main>

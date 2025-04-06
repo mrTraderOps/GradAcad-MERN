@@ -19,7 +19,6 @@ const allowedOrigins = [
     "http://localhost:5173", // Local development
     process.env.BACKEND_URL
   ];
-
 const app = express();
 
 // Middleware
