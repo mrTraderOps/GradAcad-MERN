@@ -14,6 +14,7 @@ import { initGradingPeriodCron, stopGradingPeriodCron } from './database/utils/c
 import { authenticateJWT } from './database/utils/jwt.js';
 
 const allowedOrigins = [
+    process.env.ENROLLPRO_URL,
     process.env.FRONTEND_URL,
     "http://localhost:5173", // Local development
     process.env.BACKEND_URL

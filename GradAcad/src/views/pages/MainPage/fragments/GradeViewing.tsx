@@ -164,30 +164,30 @@ const GradeViewing = () => {
     // Student ID
     doc.setFont("times", "normal");
     doc.text("Student ID: ", leftX, startY);
-    doc.setFont("times", "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("2021-0213", leftX + 30, startY); // Adjust the offset
 
     // Student Name
     doc.setFont("times", "normal");
     doc.text("Student Name: ", leftX, startY + lineSpacing);
-    doc.setFont("times", "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("DUMALAOG, ALEXIS JHUDIEL N.", leftX + 30, startY + lineSpacing);
 
     // Course & Section
     doc.setFont("times", "normal");
     doc.text("Course & Section: ", leftX, startY + lineSpacing * 2);
-    doc.setFont("times", "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("BSCS - 4A", leftX + 30, startY + lineSpacing * 2);
 
     // RIGHT SIDE
     doc.setFont("times", "normal");
     doc.text("Academic Year: ", rightX, startY);
-    doc.setFont("times", "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("2024 - 2025", rightX + 25, startY);
 
     doc.setFont("times", "normal");
     doc.text("Semester: ", rightX, startY + lineSpacing);
-    doc.setFont("times", "bold");
+    doc.setFont("helvetica", "bold");
     doc.text("1st SEMESTER", rightX + 25, startY + lineSpacing);
 
     // Extract table data
@@ -200,11 +200,13 @@ const GradeViewing = () => {
       Array.from(tr.querySelectorAll("td")).map((td) => td.textContent)
     );
 
+    const tableStartY = startY + 25;
+
     // Add table
     autoTable(doc, {
       head: [headers],
       body: rows,
-      startY: startY + 25,
+      startY: tableStartY,
       margin: { top: 60 },
       styles: {
         fontSize: 8,
@@ -227,6 +229,18 @@ const GradeViewing = () => {
         lineColor: [0, 0, 0],
         lineWidth: 0.1,
       },
+    });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Unit: 9", pageWidthTitle / 2, tableStartY + 50, {
+      align: "center",
+    });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.text("Average: 1.00", pageWidthTitle / 2 + 20, tableStartY + 50, {
+      align: "center",
     });
 
     // **Open print panel**
