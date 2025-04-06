@@ -125,11 +125,11 @@ const AuditTrail = () => {
     doc.addImage(rightLogo, "PNG", 160, 10, 30, 30);
 
     doc.setFontSize(14);
-    doc.setFont("calibri", "bold");
+    doc.setFont("times", "bold");
     doc.text("NORZAGARAY COLLEGE", 105, 20, { align: "center" });
 
     doc.setFontSize(10);
-    doc.setFont("calibri", "normal");
+    doc.setFont("times", "normal");
     doc.text("Municipal Compound, Poblacion, Norzagaray, Bulacan", 105, 27, {
       align: "center",
     });

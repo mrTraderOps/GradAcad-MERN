@@ -6,6 +6,7 @@ import closeIcon from "../../../../assets/icons/x-button.png";
 import { getAllUsers, handlePending } from "../../../../services/UserService";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
+import axios from "axios";
 
 interface Account {
   _id: string;
@@ -87,10 +88,13 @@ const AccountApproval = () => {
             date: formatDate(), // ✅ Ensure the date is also logged
           });
 
-          const responseEmail = await API.post("/email/sendApprovalEmail", {
-            to: accountToApprove.email,
-            username: accountToApprove.name,
-          });
+          const responseEmail = await axios.post(
+            "https://gradacad-mern.onrender.com/api/v1/email/sendApprovalEmail",
+            {
+              to: accountToApprove.email,
+              username: accountToApprove.name,
+            }
+          );
 
           if (responseEmail.data.success) {
             alert(
@@ -132,10 +136,13 @@ const AccountApproval = () => {
             date: formatDate(), // ✅ Log the rejection date
           });
 
-          const responseEmail = await API.post("/email/sendRejectionEmail", {
-            to: accountToReject.email,
-            username: accountToReject.name,
-          });
+          const responseEmail = await axios.post(
+            "https://gradacad-mern.onrender.com/api/v1/email/sendRejectionEmail",
+            {
+              to: accountToReject.email,
+              username: accountToReject.name,
+            }
+          );
 
           if (responseEmail.data.success) {
             alert(

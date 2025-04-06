@@ -1,5 +1,5 @@
 export interface Student {
-    studentId: string;
+    studentId?: string;
     StudentId?: string;
     LastName?: string;
     FirstName?: string;
@@ -20,7 +20,7 @@ export interface CombinedDataProps {
     midtermRemarks?: string;
     finalRemarks?: string;
     terms: {
-    PRELIM?: number;
+      PRELIM?: number;
       MIDTERM?: number;
       FINAL?: number;
     };

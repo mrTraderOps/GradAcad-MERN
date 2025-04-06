@@ -33,4 +33,9 @@ export const closeDB = async () => {
     if (client) await client.close();
 };
 
+export const getClient = () => {
+    if (!client) throw new Error('Client not initialized');
+    return client;
+  };
+
 export const JWT_SECRET = process.env.JWT_SECRET;

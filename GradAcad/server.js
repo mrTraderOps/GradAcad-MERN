@@ -9,6 +9,7 @@ import subjectRoutes from './database/routes/subjectRoutes.js';
 import gradeRoutes from './database/routes/gradeRoutes.js';
 import emailRoutes from './database/routes/emailRoutes.js';
 import authRoutes from './database/routes/authRoutes.js';
+import enrollmentRoutes from './database/routes/enrollmentRoutes.js';
 import { initGradingPeriodCron, stopGradingPeriodCron } from './database/utils/cron.js';
 import { authenticateJWT } from './database/utils/jwt.js';
 
@@ -47,6 +48,7 @@ const startServer = async () => {
         // Public Routes
         app.use('/api/v1/auth', authRoutes);
         app.use('/api/v1/email', emailRoutes);
+        app.use('/api/v1/enrollment', enrollmentRoutes);
 
 
         // Protected Routes (Require JWT Authentication)

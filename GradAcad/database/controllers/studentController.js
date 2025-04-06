@@ -1,9 +1,6 @@
 import { getDB } from '../config/db.js';
 
 
-export const registerStudent = async (req, res) => {
-
-}
 
 export const addStudent = async (req, res) => {
     const db = getDB();
@@ -118,12 +115,52 @@ export const getStudentByDeptSect = async (req, res) => {
     }
 }
 
-export const getStudentById = async (req, res) => {
+export const getStudentInfoById = async (req, res) => {
+    const { studentId } = req.body;
+  
+    if (!studentId) {
+      return res.status(400).json({ success: false, message: "Student ID is required" });
+    }
+  
+    try {
+      const db = getDB();
+  
+      const student = await db.collection('students').findOne(
+        { studentId },
+        {
+          projection: {
+            _id: 0,
+            StudentId: 1,
+            LastName: 1,
+            FirstName: 1,
+            MiddleInitial: 1,
+            SectionId: 1,
+            StudentType: 1
+          }
+        }
+      );
+  
+      if (!student) {
+        return res.status(404).json({ success: false, message: "Student not found" });
+      }
+  
+      res.status(200).json({ success: true, data: student });
+    } catch (error) {
+      console.error("Error fetching student info:", error);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
+    }
+  };
+  
 
-}
+export const getAllStudentGrade = async (req, res) => {
+    const { studentId, acadYr, sem } = req.body 
 
-export const updateStudent = async (req, res) => {
+    try {
+        const db = getDB();
 
+    } catch (error) {
+        
+    }
 }
 
 

@@ -1,4 +1,4 @@
-@import '/src/views/variables_css/variables';
+@import '/src/views/variables_css/_variables';
 
 .landingPage {
     display: flex;
@@ -471,5 +471,42 @@ th {
 
 select {
     padding: 11px
+}
+
+.studentInfo {
+    div {
+        p, h3 {
+                margin: 0;
+            }
+    }
+    
+}
+
+.studentTitle {
+    padding: 10px;
+
+    p {
+        color: $black;
+        padding-bottom: 10px;
+        font-weight: 600;
+    }
+}
+
+.studentTable {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+        padding: 10px;
+        background-color: transparent;
+    }
+
+    td {
+        text-align: center;
+    }
+}
+
+.belowTable {
+    color: $black;
 }
 
