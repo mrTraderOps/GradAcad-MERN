@@ -336,7 +336,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
             <div className={styles.greetings}>
               <h4>WELCOME {roleName},</h4>
               <p>
-                {user?.role === "registrar" ? "Ma'am" : "Sir"} {LoggedName}
+                {user?.role === "registrar" ? "Ma'am" : "Prof."} {LoggedName}
               </p>
             </div>
 

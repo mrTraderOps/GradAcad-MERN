@@ -153,7 +153,7 @@ const LoginPage = ({ onLogin }: Props) => {
         }
 
         const response = await fetch(
-          "http://localhost:5000/api/v1/auth/register",
+          "https://gradacad-mern.onrender.com/api/v1/auth/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
