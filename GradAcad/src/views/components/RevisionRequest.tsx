@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import styles from "./styles/AreYouSure.module.scss";
 import loadingAnimation from "../../assets/webM/loading.webm";
 import loadingHorizontal from "../../assets/webM/loadingHorizontal.webm";
-import axios from "axios";
 import { DetailProps } from "../../hooks/useGrade";
+import API from "../../context/axiosInstance";
 
 interface Props {
   isOpen: boolean;
@@ -39,9 +39,7 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
   useEffect(() => {
     const fetchProfs = async () => {
       try {
-        const response = await axios.get(
-          "http://localhost:5000/api/v1/user/getAllUsersForGradeRequest"
-        );
+        const response = await API.get("/user/getAllUsersForGradeRequest");
 
         if (response.data.success) {
           setProfData(response.data.users);
@@ -63,8 +61,8 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
       setErrorMessage("");
 
       try {
-        const response = await axios.post(
-          "http://localhost:5000/api/v1/grade/revisionRequest",
+        const response = await API.post(
+          "/grade/revisionRequest",
           { profId: selectedProf } // Only include the username
         );
 
@@ -183,10 +181,7 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
 
     const setRequest = async () => {
       try {
-        const response = await axios.post(
-          "http://localhost:5000/api/v1/grade/setRequest",
-          confirmData
-        );
+        const response = await API.post("/grade/setRequest", confirmData);
 
         if (response.data.success) {
           alert("Request is successfully granted and created!");
