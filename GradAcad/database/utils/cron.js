@@ -69,14 +69,14 @@ export const initGradingPeriodCron = () => {
     cronTask = null;
   }
 
-  // Schedule daily at midnight Philippine Time (UTC+8)
-  cronTask = cron.schedule('0 0 * * *', () => {
-    console.log('⏰ [Cron Job] Running daily grading period check (12:00 AM PHT)');
-    checkGradingPeriods();
-  }, {
-    scheduled: true,
-    timezone: 'Asia/Manila' // Philippine Time
-  });
+ // Schedule every 1 minute
+cronTask = cron.schedule('*/1 * * * *', () => {
+  console.log('⏰ [Cron Job] Running grading period check every 1 minute');
+  checkGradingPeriods();
+}, {
+  scheduled: true,
+  timezone: 'Asia/Manila' // Philippine Time
+});
 
   // Immediate first check (optional)
   checkGradingPeriods();

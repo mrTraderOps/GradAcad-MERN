@@ -64,12 +64,12 @@ export const getSubjectsByRefId = async (req, res) => {
 
         // Fetch subject details based on extracted subject IDs
         const subjectDetails = await subjectsCollection
-            .find({ _id: { $in: subjectIds } })
+            .find({ subjectCode: { $in: subjectIds } })
             .toArray();
 
         // Combine enrollment data with subject details
         const combinedData = enrollmentRecords.map(record => {
-            const subjectDetail = subjectDetails.find(sub => sub._id === record.subjectId);
+            const subjectDetail = subjectDetails.find(sub => sub.subjectCode === record.subjectId);
 
             return {
                 dept: record.dept || "Unknown",

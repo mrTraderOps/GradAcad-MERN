@@ -13,4 +13,5 @@ router.delete('/deleteStudent', authenticateJWT, deleteStudent);
 router.post('/getStudentInfoById', authenticateJWT, getStudentInfoById);
 
 router.post('/getAllStudentGrade', authenticateJWT, getAllStudentGrade);
+
 export default router;
