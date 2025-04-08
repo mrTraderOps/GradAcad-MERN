@@ -99,6 +99,8 @@ const Settings = () => {
                       ? "Admin"
                       : user.role === "student"
                       ? "Student"
+                      : user.role === "dean"
+                      ? "College Dean"
                       : "Pending"
                     : "User role can't read"}
                 </p>
@@ -128,6 +130,8 @@ const Settings = () => {
                           ? "Admin"
                           : user.role === "student"
                           ? "Student"
+                          : user.role === "dean"
+                          ? "Dean"
                           : "Pending"
                         : "User role can't read"}{" "}
                       ID : <strong>{user?.refId}</strong>

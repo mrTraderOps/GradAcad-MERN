@@ -104,6 +104,45 @@ export const getAllGrades = async (req, res) => {
   }
 };
 
+export const getGradeChecklist = async (req, res) => {
+  const { acadYr, sem, terms } = req.body;
+
+  const db = getDB();
+
+  try {
+    const gradesData = await db.collection('grades').findOne(
+      {
+        acadYr: acadYr,
+        sem: sem,
+        sect: sect,
+        subjCode: subjCode
+      },
+      { projection: { _id: 0, subjCode: 1, grades: 1 } }
+    );
+
+    if (!gradesData) {
+      return res.status(404).json({ success: false, message: 'No grades found.' });
+    }
+
+    const filteredGrades = gradesData.grades.map(student => ({
+      StudentId: student.StudentId,
+      terms: terms && terms.length > 0
+        ? Object.fromEntries(
+          terms
+            .filter(term => student.terms.hasOwnProperty(term))
+            .map(term => [term, student.terms[term]])
+        )
+        : student.terms
+    }));
+
+    res.json({ success: true, data: filteredGrades });
+
+  } catch (err) {
+    console.error('Error fetching grades:', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
 export const updateGrade = async (req, res) => {
   const { updates } = req.body;
 
@@ -949,3 +988,269 @@ export const closeRequest = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 };
+
+export const fetchMissingEnrollmentByDept = async (req, res) => {
+  const { acadYr, dept, sem, terms } = req.body;
+
+  const matchStage = {
+    acadYr,
+    sem,
+    dept
+  };
+
+  // Prepare match for terms only if it's not null or empty
+  const termToCheck = terms && terms.trim() !== "" ? terms.trim().toUpperCase() : "";
+
+  try {
+    const db = getDB();
+    const enrollmentCollection = db.collection("enrollment");
+
+    const pipeline = [
+      { $match: matchStage },
+    
+      // Unwind the enrollee array to process each student separately
+      { $unwind: "$enrollee" },
+    
+      // Lookup grades for each student
+      {
+        $lookup: {
+          from: "grades",
+          let: {
+            studentId: "$enrollee",
+            subjectId: "$subjectId",
+            acadYr: "$acadYr",
+            sem: "$sem"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$StudentId", "$$studentId"] },
+                    { $eq: ["$SubjectId", "$$subjectId"] },
+                    { $eq: ["$acadYr", "$$acadYr"] },
+                    { $eq: ["$sem", "$$sem"] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "gradeDocs"
+        }
+      },
+    
+      // Flatten the result of lookup
+      { $unwind: { path: "$gradeDocs", preserveNullAndEmptyArrays: true } },
+    
+      // Match based on specific term value (only if term is provided)
+      ...(termToCheck
+        ? [{
+            $match: {
+              [`gradeDocs.terms.${termToCheck}`]: 0
+            }
+          }]
+        : [{
+            $match: {
+              $expr: {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $objectToArray: "$gradeDocs.terms" },
+                        as: "term",
+                        cond: { $eq: ["$$term.v", 0] }
+                      }
+                    }
+                  },
+                  0
+                ]
+              }
+            }
+          }]
+      ),
+    
+      // Join with users collection to get professor info
+      {
+        $lookup: {
+          from: "users",
+          localField: "profId",
+          foreignField: "refId",
+          as: "professor"
+        }
+      },
+      { $unwind: "$professor" },
+    
+      // Format the output
+      {
+        $project: {
+          _id: 0,
+          professorName: "$professor.name",
+          profId: 1,
+          subject: {
+            $concat: ["$subjectId", "-", "$dept", "$sect"]
+          },
+        }
+      },
+    
+      // Optional: remove duplicates
+      {
+        $group: {
+          _id: {
+            professorName: "$professorName",
+            profId: "$profId",
+            subject: "$subject"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          professorName: "$_id.professorName",
+          profId: "$_id.profId",
+          subject: "$_id.subject"
+        }
+      }
+    ];
+    
+
+    const result = await enrollmentCollection.aggregate(pipeline).toArray();
+    res.status(200).json({ success: true, data: result });
+
+  } catch (error) {
+    console.error("Error fetching enrollment with zero grades:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const fetchCompletedEnrollmentByDept = async (req, res) => {
+  const { acadYr, dept, sem, terms } = req.body;
+
+  const matchStage = {
+    acadYr,
+    sem,
+    dept
+  };
+
+  // Prepare match for terms only if it's not null or empty
+  const termToCheck = terms && terms.trim() !== "" ? terms.trim().toUpperCase() : null;
+
+  try {
+    const db = getDB();
+    const enrollmentCollection = db.collection("enrollment");
+
+    const pipeline = [
+      { $match: matchStage },
+
+      // Unwind the enrollee array to process each student separately
+      { $unwind: "$enrollee" },
+
+      // Lookup grades for each student
+      {
+        $lookup: {
+          from: "grades",
+          let: {
+            studentId: "$enrollee",
+            subjectId: "$subjectId",
+            acadYr: "$acadYr",
+            sem: "$sem"
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$StudentId", "$$studentId"] },
+                    { $eq: ["$SubjectId", "$$subjectId"] },
+                    { $eq: ["$acadYr", "$$acadYr"] },
+                    { $eq: ["$sem", "$$sem"] }
+                  ]
+                }
+              }
+            }
+          ],
+          as: "gradeDocs"
+        }
+      },
+
+      // Flatten the result of lookup
+      { $unwind: { path: "$gradeDocs", preserveNullAndEmptyArrays: true } },
+
+      // Match based on specific term value (only if term is provided)
+      ...(termToCheck
+        ? [{
+            $match: {
+              [`gradeDocs.terms.${termToCheck}`]: { $ne: 0, $ne: null } // Check for non-zero and non-null
+            }
+          }]
+        : [{
+            $match: {
+              $expr: {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $objectToArray: "$gradeDocs.terms" },
+                        as: "term",
+                        cond: { $ne: ["$$term.v", 0] } // Check for non-zero and non-null
+                      }
+                    }
+                  },
+                  0
+                ]
+              }
+            }
+          }]
+      ),
+
+      // Join with users collection to get professor info
+      {
+        $lookup: {
+          from: "users",
+          localField: "profId",
+          foreignField: "refId",
+          as: "professor"
+        }
+      },
+      { $unwind: "$professor" },
+
+      // Format the output
+      {
+        $project: {
+          _id: 0,
+          professorName: "$professor.name",
+          profId: 1,
+          subject: {
+            $concat: ["$subjectId", "-", "$dept", "$sect"]
+          },
+        }
+      },
+
+      // Optional: remove duplicates
+      {
+        $group: {
+          _id: {
+            professorName: "$professorName",
+            profId: "$profId",
+            subject: "$subject"
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          professorName: "$_id.professorName",
+          profId: "$_id.profId",
+          subject: "$_id.subject"
+        }
+      }
+    ];
+
+    const result = await enrollmentCollection.aggregate(pipeline).toArray();
+    res.status(200).json({ success: true, data: result });
+
+  } catch (error) {
+    console.error("Error fetching completed enrollment data:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+

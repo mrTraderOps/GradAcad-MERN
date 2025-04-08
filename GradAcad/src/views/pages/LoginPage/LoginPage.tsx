@@ -6,7 +6,7 @@ import partner1 from "../../../assets/images/ccs_icon.png";
 import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
 import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
-import { handleLogin } from "../../../services/UserService";
+import { handleLogin, handleRegister } from "../../../services/UserService";
 import API from "../../../context/axiosInstance";
 
 interface Props {
@@ -40,6 +40,7 @@ const LoginPage = ({ onLogin }: Props) => {
   // Registration Fields
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [assignedDept, SetAssignedDept] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -67,12 +68,27 @@ const LoginPage = ({ onLogin }: Props) => {
     }
   }, [year, number]);
 
+  useEffect(() => {
+    setPassword("");
+    setEmail("");
+    setNumber("");
+    setEmail("");
+    setName("");
+    setUserId("");
+    setUsername("");
+    setRole("");
+    SetAssignedDept("");
+    setErrorMessage("");
+    setError("");
+  }, [isRegistering]);
+
   const handleRoleChange = (selectedRole: string) => {
     setRole(selectedRole);
     let newId = "";
 
     if (selectedRole === "student") {
-      // Student ID format: YYYY-NNNN (User must input manually)
+      setNumber("");
+      setYear("");
       setUserId(""); // Clear input for manual entry
     } else {
       const count = (roleCounts[selectedRole] || 0) + 1;
@@ -102,83 +118,55 @@ const LoginPage = ({ onLogin }: Props) => {
     return emailPattern.test(email);
   };
 
+  const validateStudentId = (userId: string): boolean => {
+    const studentIdPattern = /^\d{4}-\d{4}$/;
+    return studentIdPattern.test(userId);
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage("");
+
     if (isRegistering) {
-      try {
-        // Validate role
-        if (!["admin", "registrar", "student", "prof"].includes(role)) {
-          setErrorMessage("Invalid role selected.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Validate studentId if role is student
-        if (!userId.trim()) {
-          setErrorMessage("Employee or Student ID is required for students.");
-          setIsLoading(false);
-          return;
-        }
-
-        const userData: any = { email, name, password, role };
-        // Define regex pattern for student ID format (YYYY-NNNN)
-        const studentIdPattern = /^\d{4}-\d{4}$/;
-
-        // Add studentId to the request only if the role is "student" and a valid format is entered
-        if (role === "student") {
-          if (studentIdPattern.test(userId.trim())) {
-            userData.studentId = userId;
-          } else {
-            alert(
-              "Invalid Student ID format. Please enter in YYYY-NNNN format."
-            );
-            return;
-          }
-        } else {
-          userData.employeeId = userId;
-        }
-
-        if (!validateEmail(email.trim())) {
-          alert("Invalid email format. Please enter a valid email address.");
-          return;
-        }
-
-        if (!validatePassword(userData.password)) {
-          alert(
-            "Password must be 8-16 characters long, include uppercase, lowercase, a number, and a special character."
-          );
-          return;
-        }
-
-        const response = await fetch(
-          "https://gradacad-mern.onrender.com/api/v1/auth/register",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData),
-          }
-        );
-
-        const data = await response.json();
-        if (!data.succes) {
-          setErrorMessage(data.message || "Registration failed.");
-        } else {
-          setIsRegistering(false);
-          alert(
-            "Registration successful! Kindly wait to your registered e-mail for the approval of your application. Warm Regards."
-          );
-        }
-      } catch (error) {
-        setErrorMessage("Registration failed. Please try again.");
-      } finally {
+      if (!validateEmail(email.trim())) {
+        alert("Invalid email format. Please enter a valid email address.");
+        setEmail("");
         setIsLoading(false);
+        return;
       }
+
+      if (role === "student") {
+        if (!validateStudentId(userId.trim())) {
+          alert("Invalid student ID format. Please enter a valid Student ID.");
+          setUserId("");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!validatePassword(password.trim())) {
+        alert(
+          "Password must be 8-16 characters long, include uppercase, lowercase, a number, and a special character."
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      handleRegister(
+        email,
+        userId,
+        role,
+        password,
+        setErrorMessage,
+        setIsLoading,
+        name,
+        assignedDept
+      );
     } else {
       handleLogin(
-        username,
-        password,
+        username.trim(),
+        password.trim(),
         onLogin,
         setUser,
         setToken,
@@ -246,16 +234,6 @@ const LoginPage = ({ onLogin }: Props) => {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="form-group">
                   <label>Password</label>
                   <input
                     type="password"
@@ -285,74 +263,120 @@ const LoginPage = ({ onLogin }: Props) => {
                   </select>
                 </div>
 
-                {role && ( // Only show input when a role is selected
-                  <div
-                    className={
-                      role !== "student" ? "form-group" : "studentForm"
-                    }
-                  >
-                    <label>
-                      {role === "student"
-                        ? "Student ID: "
-                        : "Auto-Generated ID"}
-                    </label>
-
-                    {role === "student" && (
-                      <>
-                        <input
-                          type="number"
-                          placeholder="YYYY"
-                          value={year}
-                          min="2007"
-                          max={currentYear}
-                          onChange={(e) => {
-                            const value = e.target.value;
-
-                            if (/^\d*$/.test(value) && value.length <= 4) {
-                              setYear(value);
-                            }
-                          }}
-                          onBlur={(e) => {
-                            const value = e.target.value;
-                            // Validate year is not below 2012
-                            if (value && parseInt(value) < 2012) {
-                              alert("Year must be 2007 or later");
-                              setYear("");
-                            } else if (parseInt(value) > currentYear) {
-                              alert(`Year must be below to ${currentYear}`);
-                              setYear("");
-                            }
-                          }}
-                        />
-                        <span>-</span>
-                        <input
-                          type="text"
-                          placeholder="NNNN"
-                          value={number}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            // Only allow numbers and limit to 4 digits
-                            if (/^\d*$/.test(value) && value.length <= 4) {
-                              setNumber(value);
-                            }
-                          }}
-                        />
-                      </>
-                    )}
+                {role && (
+                  <>
                     {role !== "student" && (
-                      <>
+                      <div className="form-group">
+                        <label>Name</label>
                         <input
                           type="text"
-                          placeholder=""
-                          value={userId}
-                          onChange={(e) => {
-                            setUserId(e.target.value);
-                          }}
-                          disabled={true}
+                          placeholder="Your Name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
                         />
-                      </>
+                      </div>
                     )}
-                  </div>
+
+                    {role === "dean" && (
+                      <div className="form-group">
+                        <label>Assigned College Department</label>
+                        <select
+                          style={{ width: "100%" }}
+                          value={assignedDept}
+                          onChange={(e) => SetAssignedDept(e.target.value)}
+                          required
+                        >
+                          <option value="">Select College Department</option>
+                          <option value="CCS">
+                            College of Computing Studies
+                          </option>
+                          <option value="COED">College of Education</option>
+                          <option value="CHM">
+                            College of Hospitality Management
+                          </option>
+                        </select>
+                      </div>
+                    )}
+
+                    <div
+                      className={
+                        role !== "student" ? "form-group" : "studentForm"
+                      }
+                    >
+                      <label>
+                        {role === "student"
+                          ? "Student ID: "
+                          : "Auto-Generated ID"}
+                      </label>
+
+                      {role === "student" && (
+                        <>
+                          <input
+                            type="number"
+                            placeholder="YYYY"
+                            value={year}
+                            min="2007"
+                            max={currentYear}
+                            maxLength={4}
+                            onChange={(e) => {
+                              const value = e.target.value;
+
+                              if (/^\d*$/.test(value) && value.length <= 4) {
+                                setYear(value);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = e.target.value;
+                              // Validate year is not below 2012
+                              if (value && parseInt(value) < 2012) {
+                                alert("Year must be 2007 or later");
+                                setYear("");
+                              } else if (parseInt(value) > currentYear) {
+                                alert(`Year must be below to ${currentYear}`);
+                                setYear("");
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              // Block unwanted characters
+                              if (
+                                ["e", "E", "+", "-", ".", ","].includes(e.key)
+                              ) {
+                                e.preventDefault();
+                              }
+                            }}
+                          />
+                          <span style={{ color: "black" }}>-</span>
+                          <input
+                            type="text"
+                            placeholder="NNNN"
+                            value={number}
+                            maxLength={4}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // Only allow numbers and limit to 4 digits
+                              if (/^\d*$/.test(value) && value.length <= 4) {
+                                setNumber(value);
+                              }
+                            }}
+                          />
+                        </>
+                      )}
+                      {role !== "student" && (
+                        <>
+                          <input
+                            type="text"
+                            placeholder=""
+                            value={userId}
+                            onChange={(e) => {
+                              setUserId(e.target.value);
+                            }}
+                            disabled={true}
+                          />
+                        </>
+                      )}
+                    </div>
+                  </>
                 )}
                 <button
                   className="register-btn"
@@ -361,10 +385,12 @@ const LoginPage = ({ onLogin }: Props) => {
                 >
                   {isLoading ? "Signing Up..." : "Sign Up"}
                 </button>
-                <p>
-                  Already have an account?{" "}
-                  <a onClick={() => setIsRegistering(false)}>Login</a>
-                </p>
+                {!isLoading ? (
+                  <p>
+                    Already have an account?{" "}
+                    <a onClick={() => setIsRegistering(false)}>Login</a>
+                  </p>
+                ) : null}
               </>
             ) : (
               <>
@@ -423,13 +449,6 @@ const LoginPage = ({ onLogin }: Props) => {
                       <a
                         onClick={() => {
                           setIsRegistering(true);
-                          setEmail("");
-                          setErrorMessage("");
-                          setName("");
-                          setPassword("");
-                          setRole("");
-                          setUserId("");
-                          setUsername("");
                         }}
                       >
                         Sign Up

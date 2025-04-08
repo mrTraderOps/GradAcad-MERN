@@ -16,6 +16,7 @@ import GradingPeriod from "./fragments/GradingPeriod";
 import Enlisment from "./fragments/Enlisment";
 import OfferedSubjects from "./fragments/OfferedSubjects";
 import GradeViewing from "./fragments/GradeViewing";
+import EncodingChecklist from "./fragments/EncodingChecklist";
 
 interface Props {
   onLogout: () => void;
@@ -63,6 +64,7 @@ const MainPage = ({ onLogout }: Props) => {
             <Route path="/enrollees" element={<Enlisment />} />
             <Route path="/offered_subjects" element={<OfferedSubjects />} />
             <Route path="/grade_viewing" element={<GradeViewing />} />
+            <Route path="/encoding_checklist" element={<EncodingChecklist />} />
           </Routes>
         </div>
       </main>

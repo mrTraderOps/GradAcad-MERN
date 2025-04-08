@@ -9,6 +9,7 @@ interface User {
   name: string;
   role: string;
   password?: string;
+  assignDept?: string;
 }
 
 interface ConfirmData {

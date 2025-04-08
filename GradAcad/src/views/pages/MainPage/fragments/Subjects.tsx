@@ -45,7 +45,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
 
     setTimeout(() => {
       setIsSorting(false);
-    }, 2000); // Adjust time as needed
+    }, 1000); // Adjust time as needed
   }, [initialAcadYr, initialSem, initialTerm]);
 
   // Fetch subjects and terms

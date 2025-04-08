@@ -405,7 +405,7 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
               onClick={handleConfirm}
               disabled={isGenerateDisabled} // Disable the button if any field is not selected
             >
-              Grant Request
+              Grant Requkest
             </button>
           </div>
         </div>

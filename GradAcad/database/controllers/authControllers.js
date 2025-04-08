@@ -3,47 +3,45 @@ import { getDB } from '../config/db.js';
 import bcrypt from "bcrypt";
 
 
-// Login User
 export const loginUser = async (req, res) => {
-  const { email, studentId, password } = req.body;
+  const { password } = req.body;
+  const input = req.body.username;
 
   const db = getDB();
 
-  // Function to determine the username
-  const getUsername = () => {
-    if (email) {
-      return { email }; // Query by email
-    } else if (studentId) {
-      return { studentId: studentId }; // Query by studentId
-    } else {
-      return null;
-    }
-  };
-
-  const query = getUsername();
-
-  if (!query) {
+  if (!input) {
     return res.status(400).json({ success: false, message: 'Email or Student ID is required' });
   }
 
+  if (!password) {
+    return res.status(400).json({ success: false, message: 'Password is required' });
+  }
+
   try {
-    // Find the user by email or studentId
-    const user = await db.collection('users').findOne(query);
+ 
+    let user = await db.collection('users').findOne({ studentId: input });
+
+    if (!user) {
+      user = await db.collection('users').findOne({ email: input });
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or student ID' });
     }
 
-    // Compare the provided password with the hashed password in the database
+
+    if (!user.password) {
+      return res.status(500).json({ success: false, message: 'Password not found in user record.' });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ success: false, message: 'Invalid password' });
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
     }
 
     const token = generateToken(user._id, user.role);
 
-    // If everything is valid, return the user details
     res.json({
       success: true,
       token,
@@ -53,7 +51,8 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         refId: user.refId,
-        status: user.status
+        status: user.status,
+        assignDept: user.assignDept
       },
     });
   } catch (err) {
@@ -62,18 +61,35 @@ export const loginUser = async (req, res) => {
   }
 };
 
+
 // Register User
 export const registerUser = async (req, res) => {
-    const { email, name, password, role, employeeId, studentId } = req.body;
+  const { email, password, role, refId, assignDept } = req.body;
+  let name = req.body.name;
+  
   
     // Validate required fields
-    if (!email || !name || !password || !role) {
+    if (!email || !password || !role || !refId) {
       return res.status(400).json({ success: false, message: "All fields except Student ID are required." });
     }
   
     try {
       const db = getDB();
-      const usersCollection = db.collection("pending");
+      const pendingCollection = db.collection("pending");
+      const usersCollection = db.collection("users");
+      const studentsCollection = db.collection("students");
+
+      // Check if student is enrolled
+      if (role === "student") {
+        const existingStudent = await studentsCollection.findOne({ _id: refId  }, {projection: {_id: 0, FirstName: 1, LastName: 1}});
+      if (!existingStudent) {
+        return res.status(400).json({ success: false, message: "Student is not yet enrolled." });
+      } else {
+        const studentName = `${existingStudent.FirstName} ${existingStudent.LastName}`
+        name = studentName;
+      }
+
+      }
   
       // Check if user already exists
       const existingEmail = await usersCollection.findOne({ email });
@@ -82,9 +98,9 @@ export const registerUser = async (req, res) => {
       }
 
       // Check if user already exists
-      const existingId = await usersCollection.findOne({ refId: employeeId || studentId  });
-      if (existingId) {
-        return res.status(400).json({ success: false, message: "User ID is already exists." });
+      const existingRefId = await usersCollection.findOne({ refId  });
+      if (existingRefId) {
+        return res.status(400).json({ success: false, message: "Student ID is already exists." });
       }
   
       // Hash the password before saving
@@ -113,14 +129,18 @@ export const registerUser = async (req, res) => {
         createdAt: formatDate(),
       };
   
-      if (role === "student" && studentId) {
-        newUser.studentId = studentId;
+      if (role === "student") {
+        newUser.studentId = refId;
       } else {
-        newUser.employeeId = employeeId
+        newUser.employeeId = refId
+      }
+
+      if (role === "dean") {
+        newUser.assignDept = assignDept;
       }
   
       // Insert user into database
-      await usersCollection.insertOne(newUser);
+      await pendingCollection.insertOne(newUser);
   
       res.status(201).json({ success: true, message: "User registered successfully! Admin will process your registration application, we will send an email once approved." });
     } catch (error) {

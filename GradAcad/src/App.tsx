@@ -26,8 +26,10 @@ function App() {
                 <Navigate to="/account_approvals" replace />
               ) : user.role === "registrar" ? (
                 <Navigate to="/grade_period" replace />
-              ) : (
+              ) : user.role === "student" ? (
                 <Navigate to="/grade_viewing" replace />
+              ) : (
+                <Navigate to="/encoding_checklist" replace />
               )
             ) : (
               <LoginPage onLogin={() => {}} />

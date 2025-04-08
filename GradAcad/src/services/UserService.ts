@@ -1,6 +1,9 @@
 import API from "../context/axiosInstance";
 import axios from "axios";
 
+
+const localURL = "http://localhost:5000";
+
 export const handleLogin = (
   username: string,
   password: string,
@@ -11,7 +14,7 @@ export const handleLogin = (
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   axios
-    .post("https://gradacad-mern.onrender.com/api/v1/auth/login", { email: username, password })
+    .post(`${localURL}/api/v1/auth/login`, { username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
         const user = response.data.user;
@@ -38,26 +41,28 @@ export const handleLogin = (
 
 export const handleRegister = (
   email: string,
-  password: string,
+  userId: string,
   role: string,
-  name: string,
-  studentId: string,
-  setRegister: React.Dispatch<React.SetStateAction<any>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>
+  password: string,
+  setResponse: React.Dispatch<React.SetStateAction<string>>,
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  name?: string,
+  assignDept?: string,
 ) => {
   axios
-    .post("https://gradacad-mern.onrender.com/api/v1/auth/register", { email, password, role, name, studentId })
+  .post(`${localURL}/api/v1/auth/register`, { email, refId: userId, role, password, assignDept, name})
     .then((response) => {
-      if (response.data.success && response.data.user) {
-        setRegister(response.data.user); 
+      if (response.data.success) {
+        setResponse(response.data.message)
       } else {
-        setErrorMessage(response.data.message || "Invalid credentials.");
+        setResponse(response.data.message || "Invalid credentials.");
       }
     })
     .catch((error) => {
       const message = error.response?.data?.message || "An error occurred.";
-      setErrorMessage(message);
-    });
+      setResponse(message);
+    })
+    .finally(() => setIsLoading(false));
 };
 
 export const handlePending = (

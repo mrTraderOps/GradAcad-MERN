@@ -222,9 +222,11 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     if (userRole === "prof") {
       setRoleName("INSTRUCTOR");
     } else if (userRole === "admin") {
-      setRoleName("ADMIN");
-    } else {
-      setRoleName("");
+      setRoleName("MIS");
+    } else if (userRole === "registrar") {
+      setRoleName("REGISTRAR");
+    } else if (userRole === "dean") {
+      setRoleName("DEAN");
     }
   }, [userRole]);
 
@@ -336,7 +338,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
             <div className={styles.greetings}>
               <h4>WELCOME {roleName},</h4>
               <p>
-                {user?.role === "registrar" ? "Ma'am" : "Prof."} {LoggedName}
+                {user?.role === "registrar" ? "Ma'am" : ""} {LoggedName}
               </p>
             </div>
 

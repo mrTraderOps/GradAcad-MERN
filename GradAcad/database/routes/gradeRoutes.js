@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateJWT } from '../utils/jwt.js';
-import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2, updateRemarks, generateReportForRegistrar, updateGradingPeriodNewAcadYr, updateGradingPeriodChangeSem, updateGradingPeriodChangeTerm, updateGradingPeriodTermDone, pendingGradingPeriod, getGradingPeriod, setRequest, revisionRequest, fetchAllRequest, closeRequest, fetchAllRequestById, enlistmentReport } from '../controllers/gradesController.js';
+import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2, updateRemarks, generateReportForRegistrar, updateGradingPeriodNewAcadYr, updateGradingPeriodChangeSem, updateGradingPeriodChangeTerm, updateGradingPeriodTermDone, pendingGradingPeriod, getGradingPeriod, setRequest, revisionRequest, fetchAllRequest, closeRequest, fetchAllRequestById, enlistmentReport, fetchMissingEnrollmentByDept, fetchCompletedEnrollmentByDept } from '../controllers/gradesController.js';
 
 const router = express.Router();
 
@@ -47,5 +47,9 @@ router.post('/enlistmentReport', authenticateJWT, enlistmentReport);
 router.post('/getStudentGrades', authenticateJWT, getStudentGrades);
 
 router.post('/fetchAllRequestById',  authenticateJWT, fetchAllRequestById);
+
+router.post('/fetchMissingEnrollmentByDept',  authenticateJWT, fetchMissingEnrollmentByDept);
+
+router.post('/fetchCompletedEnrollmentByDept',  authenticateJWT, fetchCompletedEnrollmentByDept);
 
 export default router;

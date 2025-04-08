@@ -441,7 +441,7 @@ const GradeViewing = () => {
           }}
           onClick={handlePrintPDF}
         >
-          DOWNLOAD PDF
+          OPEN IN PDF
         </button>
       </header>
       <main style={{ width: "100%" }}>
