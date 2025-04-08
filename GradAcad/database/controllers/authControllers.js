@@ -26,7 +26,7 @@ export const loginUser = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or student ID' });
+      return res.status(401).json({ success: false, message: 'Email or Student ID is not yet registered' });
     }
 
 

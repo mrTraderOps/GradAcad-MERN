@@ -35,7 +35,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
   const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedTerm, setSelectedTerm] = useState<string>(initialTerm);
-  const [isSorting, setIsSorting] = useState(false);
+  const [isSorting, setIsSorting] = useState<boolean>(false);
 
   useEffect(() => {
     setIsSorting(true);

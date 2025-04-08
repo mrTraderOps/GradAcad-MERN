@@ -4,11 +4,13 @@ import { useTerm } from "../../../../hooks/useTerm";
 import { useContext, useEffect, useState } from "react";
 import API from "../../../../context/axiosInstance";
 import { UserContext } from "../../../../context/UserContext";
+import loadingAnimation from "../../../../assets/webM/loading.webm";
+import notfound from "../../../../assets//images/notfound.jpg";
 
 interface InstructorData {
   professorName: string;
   profId: string;
-  subject: string; // The subject could be a string or an array (if multiple subjects)
+  subject: string;
 }
 
 interface TableRowData {
@@ -37,8 +39,24 @@ const EncodingChecklist = () => {
     dept = ["BSED", "BEED"]; // Handle multiple departments for COED
   }
 
-  const { activeTerms, initialTerm, initialAcadYr, activeSems, initialSem } =
-    useTerm();
+  const {
+    activeSems,
+    initialAcadYr,
+    initialSem,
+    donePrelim,
+    doneMidterm,
+    doneFinal,
+  } = useTerm();
+
+  let initialTerm = "";
+
+  if (donePrelim && doneMidterm && doneFinal) {
+    initialTerm = "FINAL";
+  } else if (donePrelim && doneMidterm) {
+    initialTerm = "MIDTERM";
+  } else if (donePrelim) {
+    initialTerm = "PRELIM";
+  }
 
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
   const [selectedSem, setSelectedSem] = useState<string>(initialSem);
@@ -47,12 +65,14 @@ const EncodingChecklist = () => {
   const [completedData, setCompletedData] = useState<InstructorData[]>([]);
   const [disableTerm, setDisableTerm] = useState<boolean>(false);
   const [isDoneInitial, setIsDoneInitial] = useState<boolean>(false);
+  const [loading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   // 1. Initialization
   useEffect(() => {
     setSelectedAcadYr(initialAcadYr);
     setSelectedSem(initialSem);
-    setSelectedTerm(initialTerm);
+
     setIsDoneInitial(true);
   }, [initialAcadYr, initialSem, initialTerm]);
 
@@ -73,6 +93,8 @@ const EncodingChecklist = () => {
   }, [selectedAcadYr, selectedSem, selectedTerm]);
 
   const fetchMissingEnrollmentByDept = async () => {
+    setError(false);
+    setIsLoading(true);
     try {
       let response;
 
@@ -105,11 +127,16 @@ const EncodingChecklist = () => {
         setMissingData(response.data.data);
       }
     } catch (error) {
-      console.error("Error fetching enrollment data:", error);
+      setError(true);
+      setMissingData([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchCompletedEnrollmentByDept = async () => {
+    setError(false);
+    setIsLoading(true);
     try {
       if (Array.isArray(dept)) {
         // Fetch data for BSED first
@@ -148,7 +175,10 @@ const EncodingChecklist = () => {
         // Do something with the response data (e.g., set state)
       }
     } catch (error) {
-      console.error("Error fetching enrollment data:", error);
+      setError(true);
+      setCompletedData([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -179,8 +209,8 @@ const EncodingChecklist = () => {
     } else {
       setSelectedAcadYr(selectedValue);
       setDisableTerm(false);
-      setSelectedTerm(initialTerm);
       setSelectedSem(initialSem);
+      setSelectedTerm(initialTerm);
     }
   };
 
@@ -206,13 +236,11 @@ const EncodingChecklist = () => {
     completed: InstructorData[],
     missing: InstructorData[]
   ): TableRowData[] => {
-    // Ensure that missing is an array
     if (!Array.isArray(missing)) {
       console.error("Missing data is not an array");
-      return []; // Return an empty array to avoid further issues
+      return [];
     }
 
-    // Process missing data and ensure concatenation of subjects
     const missingSubjectsMap: { [profId: string]: string[] } = {};
 
     missing.forEach((data) => {
@@ -222,44 +250,37 @@ const EncodingChecklist = () => {
       missingSubjectsMap[data.profId].push(data.subject);
     });
 
-    // Combine completed and missing data
-    const combinedData: TableRowData[] = completed.map(
-      (completedInstructor) => {
-        const missingSubjects = missingSubjectsMap[completedInstructor.profId];
+    const allProfIds = new Set<string>();
 
-        // Remove matched data from completed
-        if (missingSubjects) {
-          missingSubjectsMap[completedInstructor.profId] =
-            missingSubjects.filter(
-              (subject) =>
-                `${completedInstructor.profId}-${subject}` !==
-                `${completedInstructor.profId}-${completedInstructor.subject}`
-            );
+    // Collect all profIds from both arrays
+    completed.forEach((data) => allProfIds.add(data.profId));
+    missing.forEach((data) => allProfIds.add(data.profId));
+
+    const combinedData: TableRowData[] = Array.from(allProfIds).map(
+      (profId) => {
+        const hasMissing = !!missingSubjectsMap[profId];
+        const professorName =
+          completed.find((d) => d.profId === profId)?.professorName ||
+          missing.find((d) => d.profId === profId)?.professorName ||
+          "Unknown";
+
+        if (hasMissing) {
+          return {
+            profId,
+            professorName,
+            subjects: missingSubjectsMap[profId].join(", "),
+            status: "Missed",
+          };
+        } else {
+          return {
+            profId,
+            professorName,
+            subjects: "All Completed",
+            status: "Done",
+          };
         }
-
-        return {
-          profId: completedInstructor.profId,
-          professorName: completedInstructor.professorName,
-          subjects: completedInstructor.subject,
-          status: "Done",
-        };
       }
     );
-
-    // Add missing data
-    Object.keys(missingSubjectsMap).forEach((profId) => {
-      const missingSubjects = missingSubjectsMap[profId];
-      if (missingSubjects.length > 0) {
-        combinedData.push({
-          profId,
-          professorName:
-            missing.find((instructor) => instructor.profId === profId)
-              ?.professorName || "Unknown",
-          subjects: missingSubjects.join(", "),
-          status: "Missed",
-        });
-      }
-    });
 
     return combinedData;
   };
@@ -271,7 +292,7 @@ const EncodingChecklist = () => {
     const combinedData = mergeInstructorData(completed, missing);
 
     return (
-      <table>
+      <table id="profTable">
         <thead>
           <tr>
             <th>
@@ -382,16 +403,9 @@ const EncodingChecklist = () => {
               <option value="" disabled={true}>
                 All
               </option>
-              {["PRELIM", "MIDTERM", "FINAL"].map((term) => {
-                if (activeTerms.includes(term.toLowerCase())) {
-                  return (
-                    <option key={term} value={term}>
-                      {term}
-                    </option>
-                  );
-                }
-                return null;
-              })}
+              {donePrelim && <option value="PRELIM">PRELIM</option>}
+              {doneMidterm && <option value="MIDTERM">MIDTERM</option>}
+              {doneFinal && <option value="FINAL">FINAL</option>}
             </select>
           </div>
           <div
@@ -415,7 +429,48 @@ const EncodingChecklist = () => {
         >
           <section>
             <div className={style.StudentList} style={{ marginLeft: "10px" }}>
-              {renderTable(completedData, missingData)}
+              {!loading ? (
+                renderTable(completedData, missingData)
+              ) : (
+                <div
+                  className={styles.loading}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <h3>Loading.. Please Wait</h3>
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    className={styles.loadingAnimation}
+                    height={50}
+                  >
+                    <source src={loadingAnimation} type="video/webm" />
+                    Your browser does not support the video tag.
+                  </video>
+                </div>
+              )}
+              {error && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "column",
+                    height: "100%",
+                  }}
+                >
+                  <img src={notfound} alt="not found" width={450} />
+                  <h3>
+                    No found instructor for specified Academic Year, Semester or
+                    Term.
+                  </h3>
+                </div>
+              )}
             </div>
           </section>
         </main>
