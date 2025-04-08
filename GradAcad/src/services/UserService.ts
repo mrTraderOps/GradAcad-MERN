@@ -3,7 +3,7 @@ import axios from "axios";
 
 
 // const localURL = "http://localhost:5000";
-const cloudURL = "http://localhost:5000";
+const cloudURL = "https://gradacad-mern.onrender.com";
 
 export const handleLogin = (
   username: string,
