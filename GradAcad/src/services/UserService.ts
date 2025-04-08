@@ -2,7 +2,8 @@ import API from "../context/axiosInstance";
 import axios from "axios";
 
 
-const localURL = "http://localhost:5000";
+// const localURL = "http://localhost:5000";
+const cloudURL = "http://localhost:5000";
 
 export const handleLogin = (
   username: string,
@@ -14,7 +15,7 @@ export const handleLogin = (
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
   axios
-    .post(`${localURL}/api/v1/auth/login`, { username, password })
+    .post(`${cloudURL}/api/v1/auth/login`, { username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
         const user = response.data.user;
@@ -50,7 +51,7 @@ export const handleRegister = (
   assignDept?: string,
 ) => {
   axios
-  .post(`${localURL}/api/v1/auth/register`, { email, refId: userId, role, password, assignDept, name})
+  .post(`${cloudURL}/api/v1/auth/register`, { email, refId: userId, role, password, assignDept, name})
     .then((response) => {
       if (response.data.success) {
         setResponse(response.data.message)
