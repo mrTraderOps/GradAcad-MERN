@@ -2,6 +2,8 @@ import style from "../styles/Settings.module.scss";
 import { useContext, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
+import avatar from "../../../../assets/images/profile.png";
+
 const Settings = () => {
   const [isProfile, setProfile] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -82,7 +84,7 @@ const Settings = () => {
           <div className={style.profileCard}>
             <div className={style.profileInfo}>
               <img
-                src="src\assets\images\profile.png"
+                src={avatar}
                 alt="User Avatar"
                 className={style.avatar}
                 width={100}
