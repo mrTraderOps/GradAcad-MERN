@@ -1,10 +1,10 @@
 import axios from "axios";
 
-// const localURL = "http://localhost:5000"
-const cloudURL = "https://gradacad-mern.onrender.com"
+export const baseURL = "https://gradacad-mern.onrender.com";
+// "http://localhost:5000"
 
 const API = axios.create({
-  baseURL: `${cloudURL}/api/v1`,
+  baseURL: `${baseURL}/api/v1`,
 });
 
 // Attach token before every request

@@ -992,13 +992,8 @@ export const closeRequest = async (req, res) => {
 export const fetchMissingEnrollmentByDept = async (req, res) => {
   const { acadYr, dept, sem, terms } = req.body;
 
-  const matchStage = {
-    acadYr,
-    sem,
-    dept
-  };
+  const matchStage = { acadYr, sem, dept };
 
-  // Prepare match for terms only if it's not null or empty
   const termToCheck = terms && terms.trim() !== "" ? terms.trim().toUpperCase() : "";
 
   try {
@@ -1007,11 +1002,9 @@ export const fetchMissingEnrollmentByDept = async (req, res) => {
 
     const pipeline = [
       { $match: matchStage },
-    
-      // Unwind the enrollee array to process each student separately
+
       { $unwind: "$enrollee" },
-    
-      // Lookup grades for each student
+
       {
         $lookup: {
           from: "grades",
@@ -1038,11 +1031,9 @@ export const fetchMissingEnrollmentByDept = async (req, res) => {
           as: "gradeDocs"
         }
       },
-    
-      // Flatten the result of lookup
+
       { $unwind: { path: "$gradeDocs", preserveNullAndEmptyArrays: true } },
-    
-      // Match based on specific term value (only if term is provided)
+
       ...(termToCheck
         ? [{
             $match: {
@@ -1068,8 +1059,7 @@ export const fetchMissingEnrollmentByDept = async (req, res) => {
             }
           }]
       ),
-    
-      // Join with users collection to get professor info
+
       {
         $lookup: {
           from: "users",
@@ -1079,45 +1069,47 @@ export const fetchMissingEnrollmentByDept = async (req, res) => {
         }
       },
       { $unwind: "$professor" },
-    
-      // Format the output
+
       {
         $project: {
           _id: 0,
           professorName: "$professor.name",
+          email: "$professor.email",
           profId: 1,
           subject: {
             $concat: ["$subjectId", "-", "$dept", "$sect"]
-          },
+          }
         }
       },
-    
-      // Optional: remove duplicates
+
+      // Now group by instructor and collect all their missing subjects
       {
         $group: {
           _id: {
             professorName: "$professorName",
-            profId: "$profId",
-            subject: "$subject"
-          }
+            email: "$email",
+            profId: "$profId"
+          },
+          subjects: { $addToSet: "$subject" } // ensure no duplicates
         }
       },
+
       {
         $project: {
           _id: 0,
           professorName: "$_id.professorName",
+          email: "$_id.email",
           profId: "$_id.profId",
-          subject: "$_id.subject"
+          subjects: 1
         }
       }
     ];
-    
 
     const result = await enrollmentCollection.aggregate(pipeline).toArray();
     res.status(200).json({ success: true, data: result });
 
   } catch (error) {
-    console.error("Error fetching enrollment with zero grades:", error);
+    console.error("Error fetching grouped missing enrollment:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -1218,6 +1210,7 @@ export const fetchCompletedEnrollmentByDept = async (req, res) => {
         $project: {
           _id: 0,
           professorName: "$professor.name",
+          email: "$professor.email",
           profId: 1,
           subject: {
             $concat: ["$subjectId", "-", "$dept", "$sect"]
@@ -1225,24 +1218,25 @@ export const fetchCompletedEnrollmentByDept = async (req, res) => {
         }
       },
 
-      // Optional: remove duplicates
       {
         $group: {
           _id: {
             professorName: "$professorName",
-            profId: "$profId",
-            subject: "$subject"
-          }
+            email: "$email",
+            profId: "$profId"
+          },
+          subjects: { $addToSet: "$subject" } // collect all unique subjects
         }
       },
       {
         $project: {
           _id: 0,
           professorName: "$_id.professorName",
+          email: "$_id.email",
           profId: "$_id.profId",
-          subject: "$_id.subject"
+          subject: "$subjects" // now an array
         }
-      }
+      }      
     ];
 
     const result = await enrollmentCollection.aggregate(pipeline).toArray();

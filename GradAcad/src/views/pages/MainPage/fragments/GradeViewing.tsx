@@ -444,7 +444,7 @@ const GradeViewing = () => {
           OPEN IN PDF
         </button>
       </header>
-      <main style={{ width: "100%" }}>
+      <main style={{ width: "100%", maxHeight: "71vh", overflowY: "auto" }}>
         {studentDetails && (
           <section
             style={{

@@ -1,9 +1,4 @@
 import API from "../context/axiosInstance";
-import axios from "axios";
-
-
-// const localURL = "http://localhost:5000";
-const cloudURL = "https://gradacad-mern.onrender.com";
 
 export const handleLogin = (
   username: string,
@@ -14,8 +9,8 @@ export const handleLogin = (
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  axios
-    .post(`${cloudURL}/api/v1/auth/login`, { username, password })
+  API
+    .post("/auth/login", { username, password })
     .then((response) => {
       if (response.data.success && response.data.user) {
         const user = response.data.user;
@@ -50,8 +45,8 @@ export const handleRegister = (
   name?: string,
   assignDept?: string,
 ) => {
-  axios
-  .post(`${cloudURL}/api/v1/auth/register`, { email, refId: userId, role, password, assignDept, name})
+  API
+  .post("/auth/register", { email, refId: userId, role, password, assignDept, name})
     .then((response) => {
       if (response.data.success) {
         setResponse(response.data.message)
@@ -72,7 +67,7 @@ export const handlePending = (
   setError: React.Dispatch<React.SetStateAction<any>>
 ) => {
   API
-    .get("user/getPendingUsers")
+    .get("/user/getPendingUsers")
     .then((response) => {
       if (response.data.success) {
         setPending(response.data.pending); 
