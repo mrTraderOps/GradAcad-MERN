@@ -1,6 +1,6 @@
 import React, { createContext, useEffect, useState } from "react";
 
-interface User {
+export interface User {
   refId?: string;
   id: string;
   username?: string;
@@ -25,12 +25,12 @@ interface ConfirmData {
 interface UserContextType {
   user: User | null;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  logout: () => void; // Logout function
+  logout: () => void;
   confirmData: ConfirmData[]; // Array of confirmation data
   addConfirmData: (data: ConfirmData) => void; // Function to add confirmation data
-
-  token: string | null; // ⬅️ New: token in context
-  setToken: (token: string | null) => void; // ⬅️ New: setter for token
+  login: (userData: User) => void; // Function to log in and store user data
+  token: string | null;
+  setToken: (token: string | null) => void;
 }
 
 export const UserContext = createContext<UserContextType | null>(null);
@@ -47,6 +47,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setTokenState(storedToken);
     }
   }, []);
+
+  // ✅ Rehydrate user from localStorage on initial load
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Optional: Helper function to log in and store in localStorage
+  const login = (userData: User) => {
+    sessionStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+  };
 
   // Save token to sessionStorage and update state
   const setToken = (newToken: string | null) => {
@@ -65,6 +79,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
+    sessionStorage.removeItem("user");
     setUser(null);
     setToken(null); // 🧹 Clear token on logout
   };
@@ -75,6 +90,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         user,
         setUser,
         logout,
+        login,
         confirmData,
         addConfirmData,
         token,

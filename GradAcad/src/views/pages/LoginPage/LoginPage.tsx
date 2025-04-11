@@ -9,18 +9,14 @@ import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 import { handleLogin, handleRegister } from "../../../services/UserService";
 import API from "../../../context/axiosInstance";
 
-interface Props {
-  onLogin: () => void;
-}
-
-const LoginPage = ({ onLogin }: Props) => {
+const LoginPage = () => {
   const context = useContext(UserContext);
 
   if (!context) {
     throw new Error("LoginPage must be used within a UserProvider");
   }
 
-  const { setUser, setToken } = context;
+  const { setToken, login } = context;
 
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
   const [isDoneRoleCounts, setIsDoneRoleCounts] = useState<boolean>(false);
@@ -168,8 +164,7 @@ const LoginPage = ({ onLogin }: Props) => {
       handleLogin(
         username.trim(),
         password.trim(),
-        onLogin,
-        setUser,
+        login,
         setToken,
         setErrorMessage,
         setIsLoading

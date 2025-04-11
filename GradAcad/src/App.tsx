@@ -33,7 +33,7 @@ function App() {
                 <Navigate to="/encoding_checklist" replace />
               )
             ) : (
-              <LoginPage onLogin={() => {}} />
+              <LoginPage />
             )
           }
         />

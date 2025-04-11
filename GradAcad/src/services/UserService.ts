@@ -1,38 +1,32 @@
 import API from "../context/axiosInstance";
+import { User } from "../context/UserContext";
 
-export const handleLogin = (
+export const handleLogin = async(
   username: string,
   password: string,
-  onLogin: () => void,
-  setUser: React.Dispatch<React.SetStateAction<any>>,
+  login: (userData: User) => void,
   setToken: React.Dispatch<React.SetStateAction<any>>,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
   setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  API
-    .post("/auth/login", { username, password })
-    .then((response) => {
-      if (response.data.success && response.data.user) {
-        const user = response.data.user;
+  try {
+    const response = await API.post("/auth/login", { username, password });
 
-        // ✅ Check if the user's status is inactive
-        if (user.status === "Inactive") {
-          setErrorMessage("Your account is inactive. Please seek assistance from MIS");
-          return;
-        }
+    const user = response.data.user;
+    if (user.status === "Inactive") {
+      setErrorMessage("Your account is inactive. Please seek assistance from MIS");
+      return;
+    }
 
-        onLogin();
-        setUser(user); 
-        setToken(response.data.token);       
-      } else {
-        setErrorMessage(response.data.message || "Invalid credentials.");
-      }
-    })
-    .catch((error) => {
-      const message = error.response?.data?.message || "An error occurred.";
-      setErrorMessage(message);
-    })
-    .finally(() => setLoading(false));
+    login(user);
+    setToken(response.data.token);
+    sessionStorage.setItem("token", response.data.token);
+  } catch (error) {
+    const message = (error as any)?.response?.data?.message || "An error occurred.";
+    setErrorMessage(message);
+  } finally {
+    setLoading(false);
+  }
 };
 
 export const handleRegister = (
