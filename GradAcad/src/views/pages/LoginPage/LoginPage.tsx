@@ -498,7 +498,9 @@ const LoginPage = ({ onLogin }: Props) => {
               </div>
 
               <div className="modalActions">
-                <button type="submit">Submit</button>
+                <button type="submit" disabled={isLoading}>
+                  {isLoading ? "Submitting..." : "Submit"}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
