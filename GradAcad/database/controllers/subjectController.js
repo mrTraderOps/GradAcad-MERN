@@ -112,6 +112,7 @@ export const getAcadYrSem = async (req, res) => {
 }
 
 export const getAllSubjectsEnrollment = async (req, res) => {
+
     try {
       const db = getDB();
   

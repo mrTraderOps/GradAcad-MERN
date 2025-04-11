@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./views/pages/LoginPage/LoginPage";
 import MainPage from "./views/pages/MainPage/MainPage";
 import { UserProvider, UserContext } from "./context/UserContext";
+import ForgotPass from "./views/pages/LoginPage/ForgotPass";
 
 function App() {
   const context = useContext(UserContext);
@@ -42,6 +43,7 @@ function App() {
             user ? <MainPage onLogout={logout} /> : <Navigate to="/" replace />
           }
         />
+        <Route path="/reset_password" element={<ForgotPass />} />
       </Routes>
     </BrowserRouter>
   );

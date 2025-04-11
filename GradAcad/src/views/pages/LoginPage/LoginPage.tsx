@@ -178,13 +178,30 @@ const LoginPage = ({ onLogin }: Props) => {
 
   const handleSubmitForgotPassword = (e: any) => {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("Invalid email format");
-      return;
-    }
     setError("");
-    console.log("Reset password for:", email);
-    setEmail(""); // Clear input after submission
+    setIsLoading(true);
+    try {
+      if (!validateEmail(email.trim())) {
+        alert("Invalid email format. Please enter a valid email address.");
+        setEmail("");
+        setIsLoading(false);
+        return;
+      }
+      API.post("/email/forgotPassword", { emailOrId: username }).then((res) => {
+        if (res.data.success) {
+          alert("Check your email for password reset instructions.");
+          setIsModalOpen(false);
+          setEmail("");
+        } else {
+          setError(res.data.message);
+        }
+      });
+    } catch (error) {
+      alert(`Internal Server Error: ${error}`);
+      setError("An error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

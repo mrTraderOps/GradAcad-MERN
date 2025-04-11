@@ -1,8 +1,10 @@
 import { generateToken } from '../utils/jwt.js';
 import { getDB } from '../config/db.js';
 import bcrypt from "bcrypt";
+import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET;
 
-
+// Login User
 export const loginUser = async (req, res) => {
   const { password } = req.body;
   const input = req.body.username;
@@ -199,4 +201,41 @@ export const getCountUsersRole = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+
+// Reset Password
+export const resetPassword = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Missing token or new password' });
+  }
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+
+    const db = getDB();
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update the user's password in the database
+    const result = await db.collection('users').updateOne(
+      { _id: userId },
+      { $set: { password: hashedPassword } }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ success: false, message: 'Email or Student ID not found or password not updated' });
+    }
+
+    res.status(200).json({ success: true, message: 'Password updated successfully' });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+  }
+};
+
 
