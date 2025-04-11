@@ -6,6 +6,7 @@ export const calculateEQ = (term: number) => {
       { min: 87.5, grade: 1.75 },
       { min: 84.5, grade: 2.00 },
       { min: 81.5, grade: 2.25 },
+      { min: 79.5, grade: 2.50 },
       { min: 75.5, grade: 2.75 },
       { min: 74.5, grade: 3.00 },
     ];

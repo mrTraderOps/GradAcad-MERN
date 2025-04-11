@@ -35,26 +35,32 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
   const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
   const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedTerm, setSelectedTerm] = useState<string>(initialTerm);
-  const [isSorting, setIsSorting] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
+  // 1. Initialization effect
   useEffect(() => {
-    setIsSorting(true);
+    // Set initial values from props
     setSelectedAcadYr(initialAcadYr);
     setSelectedSem(initialSem);
     setSelectedTerm(initialTerm);
 
-    setTimeout(() => {
-      setIsSorting(false);
-    }, 1000); // Adjust time as needed
+    // Mark initialization as complete
+    setIsInitialized(true);
+
+    // Cleanup function
+    return () => {
+      setIsInitialized(false);
+    };
   }, [initialAcadYr, initialSem, initialTerm]);
 
-  // Fetch subjects and terms
-  // const { subjects, errorMessage, acadYr, sem } = useSubjects(user?.email);
+  // Custom hook for fetching subjects - will only run after initialization
   const {
     subjects,
     errorMessage,
     loading: subjectsLoading,
-  } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem);
+  } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem, {
+    enabled: isInitialized, // Only fetch when initialized
+  });
 
   const handleAcadYrChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedValue = e.target.value;
@@ -179,7 +185,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
       </header>
 
       <main className={courseStyles.mainSubjects}>
-        {subjectsLoading || isSorting ? (
+        {subjectsLoading ? (
           <div
             className={courseStyles.loading}
             style={{

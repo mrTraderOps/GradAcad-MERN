@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SubjectData } from "../models/types/SubjectData";
-import { fetchAcadYrSem, fetchSubjectsByRefId, fetchSubjectsbyUsername } from "../services/SubjectService";
+import { fetchAcadYrSem, fetchSubjectsbyUsername } from "../services/SubjectService";
+import API from "../context/axiosInstance";
 
 
 export const useSubjects = (loggedUserName: string | undefined) => {
@@ -30,30 +31,83 @@ export const useSubjects = (loggedUserName: string | undefined) => {
 };
 
 
-export const useSubjectsV2 = (refId: string, acadYr?: string, sem?: string) => {
+export const useSubjectsV2 = (refId: string, acadYr?: string, sem?: string, options?: { enabled?: boolean }) => {
   const [subjects, setSubjects] = useState<SubjectData[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    if (!options?.enabled) {
+      setLoading(false);
+      return
+    };
+
     if (!refId) {
       setErrorMessage("Instructor ID is required");
       setLoading(false);
       return;
     }
 
-    setErrorMessage("");
-    setLoading(true);
+    const fetchSubjectsByRefId = async () => {
+      try {
+        setErrorMessage("");
+        setLoading(true);
+  
+        const response = await API.post("/subject/getSubjectsByRefId", {
+          refId: refId,
+          acadYr: acadYr || "",
+          sem: sem || "",
+        });
+  
+        if (response.data.success && options?.enabled) {
+          setSubjects(response.data.subjects);
+        } else {
+          setErrorMessage(response.data.message);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          const message = (error as any).response?.data?.message || "An error occurred.";
+          setErrorMessage(message);
+        } else {
+          setErrorMessage("An unexpected error occurred.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    // Simulate delay before fetching data
-    new Promise<void>((resolve) => {
-      setTimeout(() => {
-        fetchSubjectsByRefId(refId, acadYr || "", sem || "", setSubjects, setErrorMessage);
-        resolve(); // Resolve after fetch completes
-      }, 1000); // ⏳ Simulate 2-second delay
-    }).finally(() => setLoading(false)); // `.finally` executes after the fetch
-
-  }, [refId, acadYr, sem]);
+    fetchSubjectsByRefId();
+  }, [refId, acadYr, sem, options?.enabled]);
 
   return { subjects, errorMessage, loading };
 };
+
+export const useLazyFetchSubject = () => {
+  const [subjects, setSubjects] = useState<SubjectData[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchSubjects = async (refId: string, acadYr: string, sem: string) => {
+    setLoading(true);
+    setErrorMessage("");
+
+      try {
+        const response = await API.post("/subject/getSubjectsByRefId", {
+          refId,
+          acadYr,
+          sem,
+        });
+
+        if (response.data.success) {
+          setSubjects(response.data.subjects);
+        } else {
+          setErrorMessage(response.data.message);
+        }
+      } catch (err: any) {
+        setErrorMessage(err.response?.data?.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+    return { subjects, loading, errorMessage, fetchSubjects };
+  } 

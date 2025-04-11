@@ -22,14 +22,15 @@ export const fetchSubjectsbyUsername = (
         });
 };
 
-export const fetchSubjectsByRefId = (
+export const fetchSubjectsByRefId =  async (
     refId: string,
     acadYr: string,
     sem: string,
     setSubjects: React.Dispatch<React.SetStateAction<any>>,
     setError: React.Dispatch<React.SetStateAction<string>>
 ) => {
-    API
+    
+    await API
         .post("/subject/getSubjectsByRefId", {
             refId: refId,
             acadYr: acadYr,

@@ -5,7 +5,6 @@ import API from "../../../../context/axiosInstance";
 import avatar from "../../../../assets/images/profile.png";
 
 const Settings = () => {
-  const [isProfile, setProfile] = useState(true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -71,14 +70,6 @@ const Settings = () => {
         <h2>Settings</h2>
       </header>
       <main className={style.settingsSection}>
-        <div className={style.tabs}>
-          <button className={style.tab1} onClick={() => setProfile(true)}>
-            My Profile
-          </button>
-          <button className={style.tab2} onClick={() => setProfile(false)}>
-            Security
-          </button>
-        </div>
         <div className={style.profileSection}>
           <h2 style={{ textAlign: "start" }}>My Profile</h2>
           <div className={style.profileCard}>
@@ -106,67 +97,59 @@ const Settings = () => {
                       : "Pending"
                     : "User role can't read"}
                 </p>
-                <p>{user?.email}@gmail.com</p>
+                <p>{user?.email}</p>
               </div>
             </div>
           </div>
-          {isProfile ? (
-            <div className={style.personalInfo}>
-              <div>
-                <h3>SYSTEM INFORMATION</h3>
-                <span>
-                  <section>
-                    <p
+          <div className={style.personalInfo}>
+            <div>
+              <h3>SYSTEM INFORMATION</h3>
+              <span>
+                <section>
+                  <p
+                    style={{
+                      color: "rgb(37, 35, 35)",
+                      fontWeight: 500,
+                      paddingTop: "10px",
+                    }}
+                  >
+                    {user
+                      ? user.role === "registrar"
+                        ? "Registrar"
+                        : user.role === "prof"
+                        ? "Instructor"
+                        : user.role === "admin"
+                        ? "Admin"
+                        : user.role === "student"
+                        ? "Student"
+                        : user.role === "dean"
+                        ? "Dean"
+                        : "Pending"
+                      : "User role can't read"}{" "}
+                    ID : <strong>{user?.refId}</strong>
+                  </p>
+                </section>
+              </span>
+              <span>
+                <section>
+                  <p style={{ color: "rgb(37, 35, 35)", fontWeight: 500 }}>
+                    Password:
+                    <button
                       style={{
-                        color: "rgb(37, 35, 35)",
-                        fontWeight: 500,
-                        paddingTop: "10px",
+                        color: "rgba(37, 35, 35, 0.8)",
+                        border: "solid 1px rgba(37, 35, 35, 0.8)",
+                        borderRadius: "11px",
+                        marginLeft: "17px",
                       }}
+                      onClick={() => setIsPasswordModalOpen(true)}
                     >
-                      {user
-                        ? user.role === "registrar"
-                          ? "Registrar"
-                          : user.role === "prof"
-                          ? "Instructor"
-                          : user.role === "admin"
-                          ? "Admin"
-                          : user.role === "student"
-                          ? "Student"
-                          : user.role === "dean"
-                          ? "Dean"
-                          : "Pending"
-                        : "User role can't read"}{" "}
-                      ID : <strong>{user?.refId}</strong>
-                    </p>
-                  </section>
-                </span>
-              </div>
+                      <strong>Change Password</strong>
+                    </button>
+                  </p>
+                </section>
+              </span>
             </div>
-          ) : (
-            <div className={style.personalInfo}>
-              <div>
-                <h3>SECURITY</h3>
-                <span>
-                  <section>
-                    <p style={{ color: "rgb(37, 35, 35)", fontWeight: 700 }}>
-                      Password:
-                      <button
-                        style={{
-                          color: "rgba(37, 35, 35, 0.8)",
-                          border: "solid 1px rgba(37, 35, 35, 0.8)",
-                          borderRadius: "11px",
-                          marginLeft: "17px",
-                        }}
-                        onClick={() => setIsPasswordModalOpen(true)}
-                      >
-                        Change Password
-                      </button>
-                    </p>
-                  </section>
-                </span>
-              </div>
-            </div>
-          )}
+          </div>
           {isPasswordModalOpen && (
             <div className={style.modal}>
               <div className={style.modalContent}>
