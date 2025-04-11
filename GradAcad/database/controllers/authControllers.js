@@ -61,7 +61,6 @@ export const loginUser = async (req, res) => {
   }
 };
 
-
 // Register User
 export const registerUser = async (req, res) => {
   const { email, password, role, refId, assignDept } = req.body;
@@ -200,3 +199,4 @@ export const getCountUsersRole = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
+

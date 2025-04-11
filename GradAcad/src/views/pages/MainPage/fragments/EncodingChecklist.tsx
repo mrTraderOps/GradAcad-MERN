@@ -10,7 +10,8 @@ import notfound from "../../../../assets//images/notfound.jpg";
 interface InstructorData {
   professorName: string;
   profId: string;
-  subject: string;
+  email: string;
+  subjects: string[];
 }
 
 interface TableRowData {
@@ -67,6 +68,7 @@ const EncodingChecklist = () => {
   const [isDoneInitial, setIsDoneInitial] = useState<boolean>(false);
   const [loading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState<boolean>(false);
 
   // 1. Initialization
   useEffect(() => {
@@ -99,23 +101,27 @@ const EncodingChecklist = () => {
       let response;
 
       if (Array.isArray(dept)) {
-        // Fetch data for BSED first
-        response = await API.post("/grade/fetchMissingEnrollmentByDept", {
-          acadYr: selectedAcadYr,
-          dept: dept[0], // BSED
-          sem: selectedSem,
-          terms: selectedTerm === "" ? "" : selectedTerm,
-        });
+        const responses = await Promise.all([
+          API.post("/grade/fetchMissingEnrollmentByDept", {
+            acadYr: selectedAcadYr,
+            dept: dept[0], // BSED
+            sem: selectedSem,
+            terms: selectedTerm || "",
+          }),
+          API.post("/grade/fetchMissingEnrollmentByDept", {
+            acadYr: selectedAcadYr,
+            dept: dept[1], // BEED
+            sem: selectedSem,
+            terms: selectedTerm || "",
+          }),
+        ]);
 
-        // Fetch data for BEED after BSED is done
-        response = await API.post("/grade/fetchMissingEnrollmentByDept", {
-          acadYr: selectedAcadYr,
-          dept: dept[1], // BEED
-          sem: selectedSem,
-          terms: selectedTerm === "" ? "" : selectedTerm,
-        });
-
-        setMissingData(response.data.data);
+        // Combine both results into one array
+        const combinedData = [
+          ...responses[0].data.data,
+          ...responses[1].data.data,
+        ];
+        setMissingData(combinedData);
       } else {
         // Fetch for a single department (CCS, CHM, etc.)
         response = await API.post("/grade/fetchMissingEnrollmentByDept", {
@@ -139,27 +145,27 @@ const EncodingChecklist = () => {
     setIsLoading(true);
     try {
       if (Array.isArray(dept)) {
-        // Fetch data for BSED first
-        let response = await API.post("/grade/fetchCompletedEnrollmentByDept", {
-          acadYr: selectedAcadYr,
-          dept: dept[0], // BSED
-          sem: selectedSem,
-          terms: selectedTerm === "" ? "" : selectedTerm,
-        });
+        const responses = await Promise.all([
+          API.post("/grade/fetchCompletedEnrollmentByDept", {
+            acadYr: selectedAcadYr,
+            dept: dept[0], // BSED
+            sem: selectedSem,
+            terms: selectedTerm || "",
+          }),
+          API.post("/grade/fetchCompletedEnrollmentByDept", {
+            acadYr: selectedAcadYr,
+            dept: dept[1], // BEED
+            sem: selectedSem,
+            terms: selectedTerm || "",
+          }),
+        ]);
 
-        // Fetch data for BEED after BSED is done
-        response = await API.post("/grade/fetchCompletedEnrollmentByDept", {
-          acadYr: selectedAcadYr,
-          dept: dept[1], // BEED
-          sem: selectedSem,
-          terms: selectedTerm === "" ? "" : selectedTerm,
-        });
-
-        setCompletedData(response.data.data);
-
-        // Combine the results from both requests
-        // You can combine results here depending on your use case
-        // e.g., set the combined data to a state
+        // Combine both results into one array
+        const combinedData = [
+          ...responses[0].data.data,
+          ...responses[1].data.data,
+        ];
+        setCompletedData(combinedData);
       } else {
         // Fetch for a single department (CCS, CHM, etc.)
         const response = await API.post(
@@ -179,6 +185,39 @@ const EncodingChecklist = () => {
       setCompletedData([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const notifyProfMissingSubject = async (
+    instructorsData: InstructorData[]
+  ) => {
+    try {
+      // Transform data to match backend expectations
+      const formattedData = instructorsData.map((instructor) => ({
+        to: instructor.email,
+        username: instructor.professorName,
+        subjectIds: instructor.subjects,
+      }));
+
+      // Disable the button before sending request
+      setIsButtonDisabled(true);
+
+      const response = await API.post("/email/notifyEmailMissedSubjects", {
+        instructors: formattedData,
+      });
+
+      if (response.data.success) {
+        alert("Emails sent successfully!");
+      } else {
+        alert("Some emails failed to send:");
+      }
+    } catch (error) {
+      alert("Error sending email notifications:");
+    } finally {
+      // Cooldown time after sending emails (e.g., 5 seconds)
+      setTimeout(() => {
+        setIsButtonDisabled(false); // Re-enable button after cooldown
+      }, 360000); // 5 seconds cooldown
     }
   };
 
@@ -241,44 +280,60 @@ const EncodingChecklist = () => {
       return [];
     }
 
+    // Build a map of missing subjects
     const missingSubjectsMap: { [profId: string]: string[] } = {};
+    const missingNameMap: { [profId: string]: string } = {};
 
     missing.forEach((data) => {
       if (!missingSubjectsMap[data.profId]) {
         missingSubjectsMap[data.profId] = [];
       }
-      missingSubjectsMap[data.profId].push(data.subject);
+      if (Array.isArray(data.subjects)) {
+        missingSubjectsMap[data.profId].push(...data.subjects);
+      }
+      missingNameMap[data.profId] = data.professorName;
     });
 
-    const allProfIds = new Set<string>();
+    // Same for completed
+    const completedSubjectsMap: { [profId: string]: string[] } = {};
+    const completedNameMap: { [profId: string]: string } = {};
 
-    // Collect all profIds from both arrays
-    completed.forEach((data) => allProfIds.add(data.profId));
-    missing.forEach((data) => allProfIds.add(data.profId));
+    completed.forEach((data) => {
+      if (!completedSubjectsMap[data.profId]) {
+        completedSubjectsMap[data.profId] = [];
+      }
+      if (Array.isArray(data.subjects)) {
+        completedSubjectsMap[data.profId].push(...data.subjects);
+      }
+      completedNameMap[data.profId] = data.professorName;
+    });
+
+    const allProfIds = new Set([
+      ...Object.keys(missingSubjectsMap),
+      ...Object.keys(completedSubjectsMap),
+    ]);
 
     const combinedData: TableRowData[] = Array.from(allProfIds).map(
       (profId) => {
-        const hasMissing = !!missingSubjectsMap[profId];
+        const missingSubjects = missingSubjectsMap[profId] || [];
         const professorName =
-          completed.find((d) => d.profId === profId)?.professorName ||
-          missing.find((d) => d.profId === profId)?.professorName ||
-          "Unknown";
+          completedNameMap[profId] || missingNameMap[profId] || "Unknown";
 
-        if (hasMissing) {
+        if (missingSubjects.length > 0) {
           return {
             profId,
             professorName,
-            subjects: missingSubjectsMap[profId].join(", "),
+            subjects: missingSubjects.join(", "),
             status: "Missed",
           };
-        } else {
-          return {
-            profId,
-            professorName,
-            subjects: "All Completed",
-            status: "Done",
-          };
         }
+
+        return {
+          profId,
+          professorName,
+          subjects: "All Completed",
+          status: "Done",
+        };
       }
     );
 
@@ -418,8 +473,12 @@ const EncodingChecklist = () => {
             <button
               className={styles.submit}
               style={{ borderRadius: "10px", height: "40px" }}
+              onClick={() => {
+                notifyProfMissingSubject(missingData);
+              }}
+              disabled={isButtonDisabled}
             >
-              PRINT MEMO
+              NOTIFY MISSED
             </button>
           </div>
         </div>

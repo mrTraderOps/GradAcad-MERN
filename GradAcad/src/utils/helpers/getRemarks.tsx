@@ -5,17 +5,10 @@ export const getRemarks = (
   fg: number
 ) => {
   const terms = [prelim, midterm, final];
-  const nonZeroCount = terms.filter((term) => term > 0).length;
+  const average = terms.reduce((sum, val) => sum + val, 0) / terms.length;
 
-  if (nonZeroCount === 1) {
-    return (
-      <select>
-        <option value="AW">AW</option>
-        <option value="UW">UW</option>
-        <option value="NCA">NCA</option>
-        <option value="INC">INC</option>
-      </select>
-    );
+  if (average < 65) {
+    return "NFS"; // No Final Standing
   }
 
   return fg === 5.0 ? "FAILED" : "PASSED";

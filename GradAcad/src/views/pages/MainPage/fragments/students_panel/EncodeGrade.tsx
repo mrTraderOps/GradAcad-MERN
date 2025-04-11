@@ -14,12 +14,17 @@ import API from "../../../../../context/axiosInstance";
 import { DataProps } from "../../../../../models/types/StudentData";
 import loadingAnimation from "../../../../../assets/webM/loading.webm";
 import loadingHorizontal from "../../../../../assets/webM/loadingHorizontal.webm";
-import dropdownIcon from "../../../../../assets/icons/dropdown_icon.png";
 import ExportExcel from "../../../../../utils/ExportExcel";
 import { UserContext } from "../../../../../context/UserContext";
 import { useTerm } from "../../../../../hooks/useTerm";
 import pencilIcon from "../../../../../assets/icons/pencil.png";
 import saveIcon from "../../.././../../assets/icons/diskette.png";
+import backButton from "../../.././../../assets/icons/backButton.png";
+import downLoadIcon from "../../.././../../assets/icons/download_icon.png";
+import uploadIcon from "../../.././../../assets/icons/upload_icon.png";
+import CustomSelect from "../../../../../hooks/useCustomSelect";
+import { calculateAverage } from "../../../../../utils/helpers/calculateAve";
+import { getRemarks } from "../../../../../utils/helpers/getRemarks";
 
 interface EncodeGradeProps {
   onSubjectClick: () => void;
@@ -84,17 +89,11 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
     terms,
   });
 
-  const {
-    activeSems,
-    activeAcadYrs,
-    activeTerms,
-    donePrelim,
-    doneMidterm,
-    doneFinal,
-  } = useTerm();
+  const { activeSems, activeAcadYrs, donePrelim, doneMidterm, doneFinal } =
+    useTerm();
 
-  const handleTermChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTerm(e.target.value);
+  const handleTermChange = (term: string) => {
+    setSelectedTerm(term);
   };
 
   const { isPopupVisible, openPopup, closePopup } = usePopupVisibility();
@@ -507,7 +506,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       <header className={styles.headerStudentsPanel}>
         <div className={styles.div1}>
           <button onClick={onSubjectClick}>
-            <img src="src\assets\icons\backButton.png" alt="Back" width={35} />
+            <img src={backButton} alt="Back" width={35} />
           </button>
           <h3>
             {subjectCode} - {subjectName}
@@ -517,54 +516,34 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         <div className={styles.div2}>
           <p>
             COURSE & SECTION :{" "}
-            <strong>
+            <strong style={{ fontWeight: "bold" }}>
               {dept} - {section}
             </strong>
           </p>
 
           <p>
-            TERM :
-            <strong>
-              <select
-                id="term"
+            TERM :{" "}
+            <strong style={{ fontWeight: "bold" }}>
+              {selectedTerm === "" && "ALL"}
+            </strong>
+            <strong style={{ fontWeight: "bold" }}>
+              <CustomSelect
+                options={["PRELIM", "MIDTERM", "FINAL"]}
                 value={selectedTerm}
                 onChange={handleTermChange}
-                className={styles.selectHidden}
-              >
-                {!isOngoingSubject ? (
-                  <>
-                    <option value="PRELIM">PRELIM</option>
-                    <option value="MIDTERM">MIDTERM</option>
-                    <option value="FINAL">FINAL</option>
-                  </>
-                ) : (
-                  ["PRELIM", "MIDTERM", "FINAL"].map((term) =>
-                    activeTerms.includes(term.toLowerCase()) ? (
-                      <option key={term} value={term}>
-                        {term}
-                      </option>
-                    ) : null
-                  )
-                )}
-              </select>
-
-              <img
-                src={dropdownIcon}
-                alt="select a term"
-                height={10}
-                width={10}
+                isOngoingSubject={isOngoingSubject}
               />
             </strong>
           </p>
         </div>
 
-        {!isTermDone && isOngoingSubject && (
+        {selectedTerm !== "" && !isTermDone && isOngoingSubject && (
           <div className={styles.div3}>
             <button
               className={styles.button1}
               onClick={() => downloadCSV(students, selectedTerm, data)}
             >
-              <img src="src/assets/icons/download_icon.png" alt="" width={20} />
+              <img src={downLoadIcon} alt="" width={20} />
               <p>Download Grade Template</p>
             </button>
             <button
@@ -578,12 +557,12 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                 style={{ display: "none" }}
                 onChange={handleFileUpload}
               />
-              <img src="src/assets/icons/upload_icon.png" alt="" width={20} />
+              <img src={uploadIcon} alt="" width={20} />
               <p>Upload Grade</p>
             </button>
           </div>
         )}
-        {isOpenRequest && (
+        {selectedTerm !== "" && isOpenRequest && (
           <div className={styles.div3}>
             <button
               className={styles.button1}
@@ -638,9 +617,26 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                     <th>
                       <h5>STUDENT NAME</h5>
                     </th>
-                    <th>
-                      <h5>{selectedTerm}</h5>
-                    </th>
+                    {selectedTerm !== "" ? (
+                      <th>
+                        <h5>{selectedTerm}</h5>
+                      </th>
+                    ) : (
+                      <>
+                        <th>
+                          <h5>PRELIM</h5>
+                        </th>
+                        <th>
+                          <h5>MIDTERM</h5>
+                        </th>
+                        <th>
+                          <h5>FINAL</h5>
+                        </th>
+                        <th>
+                          <h5>AVERAGE</h5>
+                        </th>
+                      </>
+                    )}
                     <th>
                       <h5>GRADE EQ</h5>
                     </th>
@@ -650,251 +646,95 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {combinedData.map((row, index) => {
-                    const gradeForSelectedTerm = isTermName(selectedTerm)
-                      ? row.terms?.[selectedTerm]
-                      : undefined;
+                  {selectedTerm !== ""
+                    ? combinedData.map((row, index) => {
+                        const gradeForSelectedTerm = isTermName(selectedTerm)
+                          ? row.terms?.[selectedTerm]
+                          : undefined;
 
-                    const gradeEq = calculateEQ(gradeForSelectedTerm ?? 0);
-                    const isFailed = gradeEq > 3.0;
-                    const computedRemarks =
-                      gradeEq === 5.0 ? "FAILED" : "PASSED";
-                    const formattedGrade = gradeEq.toFixed(2);
+                        const gradeEq = calculateEQ(gradeForSelectedTerm ?? 0);
+                        const isFailed = gradeEq > 3.0;
+                        const computedRemarks =
+                          gradeEq === 5.0 ? "FAILED" : "PASSED";
+                        const formattedGrade = gradeEq.toFixed(2);
 
-                    const prelimRemarks =
-                      row.prelimRemarks && row.prelimRemarks.trim() !== "";
+                        const prelimRemarks =
+                          row.prelimRemarks && row.prelimRemarks.trim() !== "";
 
-                    const midtermRemarks =
-                      row.midtermRemarks && row.midtermRemarks.trim() !== "";
+                        const midtermRemarks =
+                          row.midtermRemarks &&
+                          row.midtermRemarks.trim() !== "";
 
-                    const finalRemarks =
-                      row.finalRemarks && row.finalRemarks.trim() !== "";
+                        const finalRemarks =
+                          row.finalRemarks && row.finalRemarks.trim() !== "";
 
-                    const remarks =
-                      selectedTerm === "PRELIM" && prelimRemarks
-                        ? row.prelimRemarks
-                        : selectedTerm === "MIDTERM" && prelimRemarks
-                        ? row.prelimRemarks
-                        : selectedTerm === "MIDTERM" && midtermRemarks
-                        ? row.midtermRemarks
-                        : selectedTerm === "FINAL" && prelimRemarks
-                        ? row.prelimRemarks
-                        : selectedTerm === "FINAL" && midtermRemarks
-                        ? row.midtermRemarks
-                        : selectedTerm === "FINAL" && finalRemarks
-                        ? row.finalRemarks
-                        : computedRemarks;
+                        const remarks =
+                          selectedTerm === "PRELIM" && prelimRemarks
+                            ? row.prelimRemarks
+                            : selectedTerm === "MIDTERM" && prelimRemarks
+                            ? row.prelimRemarks
+                            : selectedTerm === "MIDTERM" && midtermRemarks
+                            ? row.midtermRemarks
+                            : selectedTerm === "FINAL" && prelimRemarks
+                            ? row.prelimRemarks
+                            : selectedTerm === "FINAL" && midtermRemarks
+                            ? row.midtermRemarks
+                            : selectedTerm === "FINAL" && finalRemarks
+                            ? row.finalRemarks
+                            : computedRemarks;
 
-                    const isMidtermLocked =
-                      selectedTerm === "MIDTERM" && prelimRemarks;
-                    const isFinalLocked =
-                      selectedTerm === "FINAL" &&
-                      (midtermRemarks || prelimRemarks);
+                        const isMidtermLocked =
+                          selectedTerm === "MIDTERM" && prelimRemarks;
+                        const isFinalLocked =
+                          selectedTerm === "FINAL" &&
+                          (midtermRemarks || prelimRemarks);
 
-                    // ✅ Allow PRELIM editing until it's marked as done
-                    const isReadOnly =
-                      isTermDone || // Lock PRELIM only when done
-                      isMidtermLocked ||
-                      isFinalLocked;
+                        // ✅ Allow PRELIM editing until it's marked as done
+                        const isReadOnly =
+                          isTermDone || // Lock PRELIM only when done
+                          isMidtermLocked ||
+                          isFinalLocked;
 
-                    const shouldShowDropdown =
-                      gradeForSelectedTerm == null || gradeForSelectedTerm < 65;
-                    const shouldShowFailedRemarks =
-                      gradeForSelectedTerm ||
-                      (0 >= 66 && gradeForSelectedTerm) ||
-                      0 <= 74;
+                        const shouldShowDropdown =
+                          gradeForSelectedTerm == null ||
+                          gradeForSelectedTerm < 65;
+                        const shouldShowFailedRemarks =
+                          gradeForSelectedTerm ||
+                          (0 >= 66 && gradeForSelectedTerm) ||
+                          0 <= 74;
 
-                    return (
-                      <tr
-                        key={row.StudentId}
-                        className={
-                          !gradeForSelectedTerm && isSaved
-                            ? styles.missingGrades
-                            : ""
-                        }
-                      >
-                        <td>{row.StudentId}</td>
-                        <td>{`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
-                          row.MiddleInitial ?? ""
-                        }.`}</td>
-                        <td
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          {isTermName(selectedTerm) &&
-                            renderInput(
-                              gradeForSelectedTerm,
-                              selectedTerm,
-                              100.0,
-                              0.01,
-                              index,
-                              editingRows[row.StudentId] || false
-                            )}
-
-                          {loadingRows[row.StudentId] ? (
-                            <video
-                              autoPlay
-                              loop
-                              muted
-                              className={styles.loadingAnimation}
-                              width={80}
-                            >
-                              <source
-                                src={loadingAnimation}
-                                type="video/webm"
-                              />
-                              Your browser does not support the video tag.
-                            </video>
-                          ) : isOpenRequest ? (
-                            <img
-                              src={
-                                editingRows[row.StudentId]
-                                  ? saveIcon
-                                  : pencilIcon
-                              }
-                              alt="edit"
-                              width={20}
-                              height={20}
+                        return (
+                          <tr
+                            key={row.StudentId}
+                            className={
+                              !gradeForSelectedTerm && isSaved
+                                ? styles.missingGrades
+                                : ""
+                            }
+                          >
+                            <td>{row.StudentId}</td>
+                            <td>{`${row.LastName ?? ""}, ${
+                              row.FirstName ?? ""
+                            } ${row.MiddleInitial ?? ""}.`}</td>
+                            <td
                               style={{
-                                paddingLeft: "15px",
-                                cursor: "pointer",
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "center",
+                                alignItems: "center",
                               }}
-                              onClick={() => {
-                                if (!loadingRows[row.StudentId]) {
-                                  if (editingRows[row.StudentId]) {
-                                    handleConfirmSave(row.StudentId);
-                                    setIsSaved(true);
-                                  } else {
-                                    toggleEdit(row.StudentId);
-                                  }
-                                }
-                              }}
-                            />
-                          ) : (
-                            !isReadOnly &&
-                            isOngoingSubject && (
-                              <img
-                                src={
-                                  editingRows[row.StudentId]
-                                    ? saveIcon
-                                    : pencilIcon
-                                }
-                                alt="edit"
-                                width={20}
-                                height={20}
-                                style={{
-                                  paddingLeft: "15px",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => {
-                                  if (!loadingRows[row.StudentId]) {
-                                    if (editingRows[row.StudentId]) {
-                                      handleConfirmSave(row.StudentId);
-                                      setIsSaved(true);
-                                    } else {
-                                      toggleEdit(row.StudentId);
-                                    }
-                                  }
-                                }}
-                              />
-                            )
-                          )}
-                        </td>
-                        <td>{formattedGrade}</td>
-                        <td
-                          className={isFailed ? styles.fail : ""}
-                          style={{
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          {shouldShowDropdown ? (
-                            <>
-                              {isOngoingSubject && (
-                                <select
-                                  style={{ width: "35%", color: "#ff4949" }}
-                                  disabled={
-                                    isUpdatingRemarks[row.StudentId] ||
-                                    isReadOnly ||
-                                    false
-                                  }
-                                  onChange={(e) =>
-                                    handleRemarksChange(
-                                      e,
-                                      selectedTerm,
-                                      row.StudentId,
-                                      subjectCode,
-                                      setIsUpdatingRemarks,
-                                      setCombinedData
-                                    )
-                                  }
-                                  value={remarks}
-                                >
-                                  <option value="">Select</option>
-                                  <option value="AW">AW</option>
-                                  <option value="UW">UW</option>
-                                  <option value="NCA">NCA</option>
-                                  <option value="INC">INC</option>
-                                </select>
-                              )}
+                            >
+                              {isTermName(selectedTerm) &&
+                                renderInput(
+                                  gradeForSelectedTerm,
+                                  selectedTerm,
+                                  100.0,
+                                  0.01,
+                                  index,
+                                  editingRows[row.StudentId] || false
+                                )}
 
-                              {isOpenRequest && (
-                                <select
-                                  style={{ width: "35%", color: "#ff4949" }}
-                                  disabled={
-                                    isUpdatingRemarks[row.StudentId] || false
-                                  }
-                                  onChange={(e) =>
-                                    handleRemarksChange(
-                                      e,
-                                      selectedTerm,
-                                      row.StudentId,
-                                      subjectCode,
-                                      setIsUpdatingRemarks,
-                                      setCombinedData
-                                    )
-                                  }
-                                  value={remarks}
-                                >
-                                  <option value="">Select</option>
-                                  <option value="AW">AW</option>
-                                  <option value="UW">UW</option>
-                                  <option value="NCA">NCA</option>
-                                  <option value="INC">INC</option>
-                                </select>
-                              )}
-
-                              {!isOngoingSubject && !isOpenRequest && (
-                                <select
-                                  style={{ width: "35%", color: "#ff4949" }}
-                                  disabled={true}
-                                  onChange={(e) =>
-                                    handleRemarksChange(
-                                      e,
-                                      selectedTerm,
-                                      row.StudentId,
-                                      subjectCode,
-                                      setIsUpdatingRemarks,
-                                      setCombinedData
-                                    )
-                                  }
-                                  value={remarks}
-                                >
-                                  <option value="">Select</option>
-                                  <option value="AW">AW</option>
-                                  <option value="UW">UW</option>
-                                  <option value="NCA">NCA</option>
-                                  <option value="INC">INC</option>
-                                </select>
-                              )}
-
-                              {isUpdatingRemarks[row.StudentId] && (
+                              {loadingRows[row.StudentId] ? (
                                 <video
                                   autoPlay
                                   loop
@@ -908,17 +748,227 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
                                   />
                                   Your browser does not support the video tag.
                                 </video>
+                              ) : isOpenRequest ? (
+                                <img
+                                  src={
+                                    editingRows[row.StudentId]
+                                      ? saveIcon
+                                      : pencilIcon
+                                  }
+                                  alt="edit"
+                                  width={20}
+                                  height={20}
+                                  style={{
+                                    paddingLeft: "15px",
+                                    cursor: "pointer",
+                                  }}
+                                  onClick={() => {
+                                    if (!loadingRows[row.StudentId]) {
+                                      if (editingRows[row.StudentId]) {
+                                        handleConfirmSave(row.StudentId);
+                                        setIsSaved(true);
+                                      } else {
+                                        toggleEdit(row.StudentId);
+                                      }
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                !isReadOnly &&
+                                isOngoingSubject && (
+                                  <img
+                                    src={
+                                      editingRows[row.StudentId]
+                                        ? saveIcon
+                                        : pencilIcon
+                                    }
+                                    alt="edit"
+                                    width={20}
+                                    height={20}
+                                    style={{
+                                      paddingLeft: "15px",
+                                      cursor: "pointer",
+                                    }}
+                                    onClick={() => {
+                                      if (!loadingRows[row.StudentId]) {
+                                        if (editingRows[row.StudentId]) {
+                                          handleConfirmSave(row.StudentId);
+                                          setIsSaved(true);
+                                        } else {
+                                          toggleEdit(row.StudentId);
+                                        }
+                                      }
+                                    }}
+                                  />
+                                )
                               )}
-                            </>
-                          ) : shouldShowFailedRemarks ? ( // ✅ Show "FAILED" if grade is between 66-74
-                            computedRemarks
-                          ) : (
-                            remarks // ✅ Default to fetched or computed remarks
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                            </td>
+                            <td>{formattedGrade}</td>
+                            <td
+                              className={isFailed ? styles.fail : ""}
+                              style={{
+                                display: "flex",
+                                flexDirection: "row",
+                                justifyContent: "center",
+                                alignItems: "center",
+                              }}
+                            >
+                              {shouldShowDropdown ? (
+                                <>
+                                  {isOngoingSubject && (
+                                    <select
+                                      style={{ width: "35%", color: "#ff4949" }}
+                                      disabled={
+                                        isUpdatingRemarks[row.StudentId] ||
+                                        isReadOnly ||
+                                        false
+                                      }
+                                      onChange={(e) =>
+                                        handleRemarksChange(
+                                          e,
+                                          selectedTerm,
+                                          row.StudentId,
+                                          subjectCode,
+                                          setIsUpdatingRemarks,
+                                          setCombinedData
+                                        )
+                                      }
+                                      value={remarks}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="AW">AW</option>
+                                      <option value="UW">UW</option>
+                                      <option value="NCA">NCA</option>
+                                      <option value="INC">INC</option>
+                                    </select>
+                                  )}
+
+                                  {isOpenRequest && (
+                                    <select
+                                      style={{ width: "35%", color: "#ff4949" }}
+                                      disabled={
+                                        isUpdatingRemarks[row.StudentId] ||
+                                        false
+                                      }
+                                      onChange={(e) =>
+                                        handleRemarksChange(
+                                          e,
+                                          selectedTerm,
+                                          row.StudentId,
+                                          subjectCode,
+                                          setIsUpdatingRemarks,
+                                          setCombinedData
+                                        )
+                                      }
+                                      value={remarks}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="AW">AW</option>
+                                      <option value="UW">UW</option>
+                                      <option value="NCA">NCA</option>
+                                      <option value="INC">INC</option>
+                                    </select>
+                                  )}
+
+                                  {!isOngoingSubject && !isOpenRequest && (
+                                    <select
+                                      style={{ width: "35%", color: "#ff4949" }}
+                                      disabled={true}
+                                      onChange={(e) =>
+                                        handleRemarksChange(
+                                          e,
+                                          selectedTerm,
+                                          row.StudentId,
+                                          subjectCode,
+                                          setIsUpdatingRemarks,
+                                          setCombinedData
+                                        )
+                                      }
+                                      value={remarks}
+                                    >
+                                      <option value="">Select</option>
+                                      <option value="AW">AW</option>
+                                      <option value="UW">UW</option>
+                                      <option value="NCA">NCA</option>
+                                      <option value="INC">INC</option>
+                                    </select>
+                                  )}
+
+                                  {isUpdatingRemarks[row.StudentId] && (
+                                    <video
+                                      autoPlay
+                                      loop
+                                      muted
+                                      className={styles.loadingAnimation}
+                                      width={80}
+                                    >
+                                      <source
+                                        src={loadingAnimation}
+                                        type="video/webm"
+                                      />
+                                      Your browser does not support the video
+                                      tag.
+                                    </video>
+                                  )}
+                                </>
+                              ) : shouldShowFailedRemarks ? ( // ✅ Show "FAILED" if grade is between 66-74
+                                computedRemarks
+                              ) : (
+                                remarks // ✅ Default to fetched or computed remarks
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    : combinedData.map((row) => {
+                        // Check if there's already a remark in prelim, midterm, or final
+                        const existingRemark =
+                          row.finalRemarks?.trim() ||
+                          row.midtermRemarks?.trim() ||
+                          row.prelimRemarks?.trim();
+
+                        // Compute only if no existing remarks
+                        const average = existingRemark
+                          ? 0.0
+                          : calculateAverage(
+                              row.terms.PRELIM ?? 0,
+                              row.terms.MIDTERM ?? 0,
+                              row.terms.FINAL ?? 0
+                            );
+                        const gradeEq = existingRemark
+                          ? 0.0
+                          : calculateEQ(average);
+                        const remarks = existingRemark
+                          ? existingRemark // Use the existing remark if present
+                          : getRemarks(
+                              row.terms.PRELIM ?? 0,
+                              row.terms.MIDTERM ?? 0,
+                              row.terms.FINAL ?? 0,
+                              gradeEq
+                            );
+
+                        // Ensure remarks are red if the student has an existing remark or failed
+                        const isFailed = existingRemark || gradeEq > 3.0;
+
+                        return (
+                          <tr key={row.StudentId}>
+                            <td>{row.StudentId}</td>
+                            <td className={styles.studentName}>
+                              {`${row.LastName ?? ""}, ${row.FirstName ?? ""} ${
+                                row.MiddleInitial ?? ""
+                              }.`}
+                            </td>
+                            <td>{row.terms.PRELIM}</td>
+                            <td>{row.terms.MIDTERM}</td>
+                            <td>{row.terms.FINAL}</td>
+                            <td>{average.toFixed(2)}</td>
+                            <td>{gradeEq}</td>
+                            <td className={isFailed ? styles.fail : ""}>
+                              {remarks}
+                            </td>
+                          </tr>
+                        );
+                      })}
                 </tbody>
               </table>
             )}
