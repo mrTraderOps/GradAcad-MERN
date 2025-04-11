@@ -1,13 +1,13 @@
-import { useState } from "react";
+// import { useState } from "react";
 import "./LoginPage.scss";
 import logo from "../../../assets/images/nc_logo_large.png";
 import partner1 from "../../../assets/images/ccs_icon.png";
 import partner2 from "../../../assets/images/hm.png";
 import partner3 from "../../../assets/images/safe_icon.png";
-import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
+// import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 
 const ForgotPass = () => {
-  const [email, setEmail] = useState("");
+  // const [email, setEmail] = useState("");
 
   return (
     <div className="login-page">
