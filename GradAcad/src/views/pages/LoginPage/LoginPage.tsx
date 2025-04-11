@@ -33,8 +33,9 @@ const LoginPage = ({ onLogin }: Props) => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [Modalloading, setIsModalLoading] = useState(false);
   const currentYear = new Date().getFullYear();
 
   // Registration Fields
@@ -176,31 +177,35 @@ const LoginPage = ({ onLogin }: Props) => {
     }
   };
 
-  const handleSubmitForgotPassword = (e: any) => {
+  const handleSubmitForgotPassword = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
+    setIsModalLoading(true);
     setError("");
-    setIsLoading(true);
     try {
       if (!validateEmail(email.trim())) {
         alert("Invalid email format. Please enter a valid email address.");
         setEmail("");
-        setIsLoading(false);
+        setIsModalLoading(false);
         return;
       }
-      API.post("/email/forgotPassword", { emailOrId: username }).then((res) => {
-        if (res.data.success) {
-          alert("Check your email for password reset instructions.");
-          setIsModalOpen(false);
-          setEmail("");
-        } else {
-          setError(res.data.message);
-        }
+      const response = await API.post("/email/forgotPassword", {
+        emailOrId: username,
       });
+
+      if (response.data.success) {
+        alert("Check your email for password reset instructions.");
+        setIsModalOpen(false);
+        setEmail("");
+      } else {
+        setError(response.data.message);
+      }
     } catch (error) {
       alert(`Internal Server Error: ${error}`);
       setError("An error occurred. Please try again later.");
     } finally {
-      setIsLoading(false);
+      setIsModalLoading(false);
     }
   };
 
@@ -498,18 +503,34 @@ const LoginPage = ({ onLogin }: Props) => {
               </div>
 
               <div className="modalActions">
-                <button type="submit" disabled={isLoading}>
-                  {isLoading ? "Submitting..." : "Submit"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEmail("");
-                  }}
-                >
-                  Cancel
-                </button>
+                {!Modalloading ? (
+                  <>
+                    {" "}
+                    <button type="submit">Send</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEmail("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <video autoPlay loop muted width={60}>
+                      <source src={loadingHorizontal} type="video/webm" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
               </div>
             </form>
           </div>
