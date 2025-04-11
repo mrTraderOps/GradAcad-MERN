@@ -19,6 +19,7 @@ import { UserContext } from "../../../../../context/UserContext";
 import { useTerm } from "../../../../../hooks/useTerm";
 import pencilIcon from "../../../../../assets/icons/pencil.png";
 import saveIcon from "../../.././../../assets/icons/diskette.png";
+import backButton from "../../.././../../assets/icons/backButton.png";
 import downLoadIcon from "../../.././../../assets/icons/download_icon.png";
 import uploadIcon from "../../.././../../assets/icons/upload_icon.png";
 import CustomSelect from "../../../../../hooks/useCustomSelect";
@@ -505,7 +506,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
       <header className={styles.headerStudentsPanel}>
         <div className={styles.div1}>
           <button onClick={onSubjectClick}>
-            <img src="src\assets\icons\backButton.png" alt="Back" width={35} />
+            <img src={backButton} alt="Back" width={35} />
           </button>
           <h3>
             {subjectCode} - {subjectName}
