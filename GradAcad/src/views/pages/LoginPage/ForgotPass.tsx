@@ -84,7 +84,9 @@ const ForgotPass = () => {
             <button className="register-btn" type="submit" disabled={loading}>
               {loading ? "Changing..." : "Change Password"}
             </button>
-            {message && <p style={{ marginTop: "10px" }}>{message}</p>}
+            {message && (
+              <p style={{ marginTop: "10px", color: "red" }}>{message}</p>
+            )}
             <p>
               Changed your mind? Back to{" "}
               <a onClick={() => navigate("/")}>Login</a>

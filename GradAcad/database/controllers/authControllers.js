@@ -213,7 +213,7 @@ export const resetPassword = async (req, res) => {
   try {
     // Verify the token
     const decoded = jwt.verify(token, JWT_SECRET);
-    const userId = decoded.id;
+    const email = decoded.email;
 
     const db = getDB();
 
@@ -222,7 +222,7 @@ export const resetPassword = async (req, res) => {
 
     // Update the user's password in the database
     const result = await db.collection('users').updateOne(
-      { _id: userId },
+      { email: email },
       { $set: { password: hashedPassword } }
     );
 
