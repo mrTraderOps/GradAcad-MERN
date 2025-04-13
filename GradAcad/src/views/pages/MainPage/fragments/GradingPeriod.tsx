@@ -408,7 +408,7 @@ const GradingPeriod = () => {
                 justifyContent: "space-between",
               }}
             >
-              <h2 style={{ paddingLeft: "15px", marginTop: "0" }}>
+              <h2 style={{ paddingLeft: "50px", marginTop: "0" }}>
                 Grade Revision Request
               </h2>
               <div
