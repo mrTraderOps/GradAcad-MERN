@@ -59,7 +59,7 @@ const Subjects: React.FC<Props> = ({ onStudentClick }) => {
     errorMessage,
     loading: subjectsLoading,
   } = useSubjectsV2(user.refId, selectedAcadYr, selectedSem, {
-    enabled: isInitialized, // Only fetch when initialized
+    enabled: isInitialized,
   });
 
   const handleAcadYrChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

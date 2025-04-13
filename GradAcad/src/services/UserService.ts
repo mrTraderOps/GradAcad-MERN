@@ -55,47 +55,76 @@ export const handleRegister = (
     .finally(() => setIsLoading(false));
 };
 
-export const handlePending = (
+export const handlePending = async (
+  selectedSort: string,
+  role: string,
+  page: number,
   setPending: React.Dispatch<React.SetStateAction<any>>,
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>,
+  setTotalPages: React.Dispatch<React.SetStateAction<number>>,
   setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  setError: React.Dispatch<React.SetStateAction<any>>
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<any>>
 ) => {
-  API
-    .get("/user/getPendingUsers")
-    .then((response) => {
-      if (response.data.success) {
-        setPending(response.data.pending); 
-      } else {
-        setErrorMessage(response.data.message || "Failed to fetch pending. Please try again later");
-        setError(true)
-      }
-    })
-    .catch((error) => {
-      const message = error.response?.data?.message || "An error occurred. Contact your developer";
-      setErrorMessage(message);
-      setError(true)
+  setLoading(true)
+  try {
+    const response = await API.post("/user/getPendingUsers", {
+      sorter: selectedSort,
+      role,
+      page,
     });
-}
 
-export const getAllUsers = ( 
-  setUsers: React.Dispatch<React.SetStateAction<any>>,
-  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
-  setError: React.Dispatch<React.SetStateAction<any>>
-) => {
-  API
-    .get("/user/getAllUsers")
-    .then((response) => {
-      if (response.data.success) {
-        setUsers(response.data.users); 
-      } else {
-        setError(true)
-        setErrorMessage(response.data.message || "Failed to fetch all users. Please try again later");
-      }
-    })
-    .catch((error) => {
-      const message = error.response?.data?.message || "An error occurred. Contact dev";
-      setErrorMessage(message);
-      setError(true)
-    });
+    if (response.data.success) {
+      setPending(response.data.pending);
+      setCurrentPage(response.data.currentPage);
+      setTotalPages(response.data.totalPages);
+    } else {
+      setErrorMessage(response.data.message || "Failed to fetch pending users.");
+      setError(true);
+    }
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || "An error occurred. Please contact your developer.";
+    setErrorMessage(message);
+    setError(true);
+  } finally {
+    setLoading(false)
   }
+};
+
+export const getAllApprovedUsers = async ( 
+  selectedSort: string,
+  role: string,
+  page: number,
+  setApproved: React.Dispatch<React.SetStateAction<any>>,
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>,
+  setTotalPages: React.Dispatch<React.SetStateAction<number>>,
+  setErrorMessage: React.Dispatch<React.SetStateAction<string>>,
+  setError: React.Dispatch<React.SetStateAction<any>>,
+  setLoading: React.Dispatch<React.SetStateAction<any>>
+) => {
+  setLoading(true)
+  try {
+    const response = await API.post("/user/getAllApprovedUsers", {
+      sorter: selectedSort,
+      role,
+      page,
+    });
+
+    if (response.data.success) {
+      setApproved(response.data.users);
+      setCurrentPage(response.data.currentPage);
+      setTotalPages(response.data.totalPages);
+    } else {
+      setErrorMessage(response.data.message || "Failed to fetch pending users.");
+      setError(true);
+    }
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || "An error occurred. Please contact your developer.";
+    setErrorMessage(message);
+    setError(true);
+  } finally {
+    setLoading(false)
+  }}
 

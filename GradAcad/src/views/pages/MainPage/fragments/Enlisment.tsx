@@ -299,18 +299,22 @@ const Enlisment = () => {
             <header className={styles.headerStudentsPanel}>
               <div className={styles.div2}>
                 <p>SUBJECT CODE: </p>
-                <strong>{enlist.subjectId}</strong>
+                <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
+                  {enlist.subjectId}
+                </strong>
               </div>
               <div className={styles.div2}>
                 <p>
                   COURSE & SECTION :{" "}
-                  <strong>
+                  <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
                     {enlist.dept} - {enlist.sect}
                   </strong>
                 </p>
                 <p>
                   INSTRUCTOR :{" "}
-                  <strong>{enlist.instructor.toUpperCase()}</strong>
+                  <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
+                    {enlist.instructor.toUpperCase()}
+                  </strong>
                 </p>
               </div>
               <div className={styles.div3}>

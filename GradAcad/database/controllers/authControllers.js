@@ -128,6 +128,7 @@ export const registerUser = async (req, res) => {
         password: hashedPassword,
         role,
         createdAt: formatDate(),
+        status: "Active",
       };
   
       if (role === "student") {

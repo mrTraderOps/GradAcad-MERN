@@ -1,6 +1,6 @@
 import styles from "../fragments/students_panel/styles/StudentsPanel.module.scss";
 import style from "../styles/Department.module.scss";
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
 import { useCombinedDatav2 } from "../../../../hooks/useCombinedData";
 import { calculateAverage } from "../../../../utils/helpers/calculateAve";
@@ -33,7 +33,7 @@ const Sheet = () => {
       subjCode,
       terms: [""],
     }),
-    [acadYr, sem, dept, sect, subjCode]
+    [acadYr, sem, dept, sect, subjCode] // 👈 include trigger
   );
 
   const { combinedData, errorMessage, loading } =
@@ -248,20 +248,26 @@ const Sheet = () => {
           </p>
         </div>
         <header className={styles.headerStudentsPanel}>
-          <div className={styles.div1}>
+          <div
+            className={styles.div1}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: "30px",
+            }}
+          >
             <p>SUBJECT CODE: </p>
-            <strong>{subjCode}</strong>
+            <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
+              {subjCode}
+            </strong>
             <p>SUBJECT NAME: </p>
-            <strong>{subjName}</strong>
-          </div>
-
-          <div className={styles.div2}>
-            <p>
-              COURSE & SECTION :{" "}
-              <strong>
-                {dept} - {sect}
-              </strong>
-            </p>
+            <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
+              {subjName}
+            </strong>
+            <p>COURSE & SECTION :</p>
+            <strong style={{ color: "#0F2A71", fontWeight: "bold" }}>
+              {dept} - {sect}
+            </strong>
           </div>
 
           <div className={styles.div3}>

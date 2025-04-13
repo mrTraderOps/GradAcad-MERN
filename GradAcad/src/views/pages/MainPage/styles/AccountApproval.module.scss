@@ -198,3 +198,9 @@
       }
     }
   }
+
+  .tableContainer {
+    max-height: 400px;  /* Adjust height as needed */
+    overflow-y: auto;
+    border: 1px solid #ddd; /* Adds a border around the table for clarity */
+  }

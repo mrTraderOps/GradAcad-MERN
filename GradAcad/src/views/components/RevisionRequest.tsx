@@ -4,6 +4,7 @@ import loadingAnimation from "../../assets/webM/loading.webm";
 import loadingHorizontal from "../../assets/webM/loadingHorizontal.webm";
 import { DetailProps } from "../../hooks/useGrade";
 import API from "../../context/axiosInstance";
+import { useTerm } from "../../hooks/useTerm";
 
 interface Props {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
+  const { initialAcadYr, initialSem } = useTerm();
+
   const [profData, setProfData] = useState<{ refId: string; name: string }[]>(
     []
   );
@@ -25,8 +28,8 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
 
   const [selectedProf, setSelectedProf] = useState<string>("");
   const [selectedName, setSelectedName] = useState<string>("");
-  const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
-  const [selectedSem, setSelectedSem] = useState<string>("");
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
+  const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedDept, setSelectedDept] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
@@ -84,8 +87,16 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
   const uniqueAcadYrs = [
     ...new Set(subjectData?.map((item) => item.acadYr) || []),
   ];
-
   const uniqueSems = [...new Set(subjectData?.map((item) => item.sem) || [])];
+
+  useEffect(() => {
+    if (!selectedAcadYr && uniqueAcadYrs.length > 0) {
+      setSelectedAcadYr(uniqueAcadYrs[0]);
+    }
+    if (!selectedSem && uniqueSems.length > 0) {
+      setSelectedSem(uniqueSems[0]);
+    }
+  }, [uniqueAcadYrs, uniqueSems]);
 
   useEffect(() => {
     setFilteredData([]);
@@ -95,7 +106,7 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
 
     if (!selectedAcadYr || !selectedSem) return;
 
-    // ✅ Step 1: Filter data based on Academic Year & Semester
+    // Filter data based on Academic Year & Semester
     const newFilteredData =
       subjectData?.filter(
         (item) => item.acadYr === selectedAcadYr && item.sem === selectedSem
@@ -103,12 +114,12 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
 
     setFilteredData(newFilteredData);
 
-    // ✅ Step 2: Extract unique departments
+    // Extract unique departments
     setUniqueDepts([
       ...new Set(newFilteredData.map((item) => item.dept) || []),
     ]);
 
-    // ✅ Reset Course and Section when AcadYr/Sem changes
+    // Reset Course and Section when AcadYr/Sem changes
     setSelectedDept("");
     setSelectedSubject("");
     setSelectedSection("");
@@ -405,7 +416,7 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
               onClick={handleConfirm}
               disabled={isGenerateDisabled} // Disable the button if any field is not selected
             >
-              Grant Requkest
+              Grant Request
             </button>
           </div>
         </div>
