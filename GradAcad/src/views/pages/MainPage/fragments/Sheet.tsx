@@ -1,6 +1,6 @@
 import styles from "../fragments/students_panel/styles/StudentsPanel.module.scss";
 import style from "../styles/Department.module.scss";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { UserContext } from "../../../../context/UserContext";
 import { useCombinedDatav2 } from "../../../../hooks/useCombinedData";
 import { calculateAverage } from "../../../../utils/helpers/calculateAve";

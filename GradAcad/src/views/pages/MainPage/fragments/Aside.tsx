@@ -1,9 +1,8 @@
-import { ReactNode, useContext, useState } from "react";
+import { ReactNode, useState } from "react";
 import styles from "../styles/MainPage.module.scss";
 import { useResolvedPath, useMatch, useNavigate } from "react-router-dom";
 import acadEx from "../../../../assets/icons/acadEx_logo.png";
 import AreYousureLogOut from "../../../components/AreYouSureLogOut";
-import { UserContext } from "../../../../context/UserContext";
 
 interface Props {
   onLogout: () => void;
