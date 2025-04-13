@@ -52,7 +52,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [approvedCount, setApprovedCount] = useState();
   const [summary, setSummary] = useState<AccountSummary[]>([]);
 
-  const iconWH = 50;
+  const iconWH = 30;
 
   const context = useContext(UserContext);
 
@@ -582,14 +582,8 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
         <section className={styles.section3}>
           <footer className={styles.nc_footer}>
             <div>
-              <div className={styles.nc_logo_name}>
-                <img
-                  src="src\assets\images\nc_logo.png"
-                  alt=""
-                  width={45}
-                  height={45}
-                />
-                <h2>NORZAGARAY COLLEGE</h2>
+              <div>
+                <h2>©2025 GradAcad Inc.| All rights reserved</h2>
               </div>
               <div className={styles.nc_org}>
                 <img
@@ -601,8 +595,8 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                 <img
                   src="src\assets\images\hm.png"
                   alt=""
-                  width={45}
-                  height={45}
+                  width={30}
+                  height={30}
                 />
                 <img
                   src="src\assets\images\safe_logo.png"

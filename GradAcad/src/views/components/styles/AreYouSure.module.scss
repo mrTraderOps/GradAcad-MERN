@@ -34,8 +34,8 @@
 .modalContent1 {
     background: #fff;
     border-radius: 40px;
-    padding: 20px;
-    width: 36%;
+    padding: 10px;
+    width: 35%;
     height: calc(580px - 3vh);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     position: relative;
@@ -45,24 +45,34 @@
     justify-content: center;
     padding-bottom: 10px;
 
+
     h2 {
         color: $black;
     }
 
     h3 {
-        color: $black;
+        color: $darkblue;
         padding-bottom: 10px;
+        font-weight: $extraBold;
     }
     div {
         height: 100px;
         width: 80%;
+        padding: 10px;
 
         label {
             color: $black;
+            font-size: $extraBold;
+            font-weight: $Bold;
             padding-right: 10px;
+            
+
         }
         select {
-            height: 50%;
+            height: 70%;
+            width: 100%;
+            border-radius: 6px;
+            font-size: small;
         }
     }
 }
@@ -112,4 +122,20 @@
 
 .Cc {
     width: 60%;
+}
+//Enrollees(winz)
+.selectContainer {
+        select {
+            height: 70%;
+            width: 100%;
+            border-radius: 6px;
+            font-size: small;
+        }
+.modalActions {
+    padding-top: 20px;
+
+    button {
+        color: $darkblue;
+        }
+    }
 }
