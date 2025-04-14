@@ -608,6 +608,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                   height={iconWH}
                 />
               </div>
+              </div>
             </div>
           </footer>
         </section>
