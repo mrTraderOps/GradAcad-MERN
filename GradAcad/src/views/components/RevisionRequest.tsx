@@ -239,8 +239,8 @@ export const RevisionRequest = ({ isOpen, onCancel, onRefetch }: Props) => {
           </video>
         </div>
       ) : (
-        <div className={styles.modalContent1}>
-          <h3>Grade Revision Request</h3>
+        <div className={styles.modalContentRequest}>
+          <h3 style={{ alignSelf: "center", marginTop: "0px", paddingTop: "0px"}}>Grade Revision Request</h3>
 
           {/* Academic Year Dropdown */}
           <div className={styles.filterGroup}>

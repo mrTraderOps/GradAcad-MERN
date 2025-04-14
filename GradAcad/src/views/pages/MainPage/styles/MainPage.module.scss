@@ -16,6 +16,7 @@
         height: 100%;
         width: 20%;
         background-color: $blue;
+        border-radius: 0px 0px 0px 0px;
     }
         .aside > header {
             padding: 10px;
@@ -239,18 +240,18 @@
                 padding-bottom: 0%;
             }
                 .nc_footer > div {
-                    margin-right: 40px;
+                    margin-right: 0px;
+                    margin-top: 70px;
+                    height: 10px;
                     width: 100%;
                     padding: 1%;
                     justify-content: space-between;
-                }
-            .nc_logo_name {
-                padding-left: 3%;
-                gap: 13px;
-
+                    background-color: #ffffff;
+                    border-radius: 10px 10px 0px 0px;
+                
                 h2 {
-                    font-size: $Medium;
-                    font-weight: $extraBold;
+                    font-size: 10px;
+                    font-weight: $Medium;
                     color: $darkblue;
                     align-self: center;
                     margin: 0;
@@ -422,7 +423,7 @@ p {
     h4 {
         font-size: $Medium;
         color: $yellow;
-        font-weight: $Light + 100;
+        font-weight: $Bold;
         padding-bottom: 5px;
     }
     p {
@@ -461,12 +462,30 @@ th {
 }
 
 .MainPageHeader {
-    background-color: rgba(41, 63, 116, 1);
+    background-color: #293F74;
+    padding: 5px;
+    border-radius: 0px 0px 0px 0px;
 
-
-    div {
-        justify-content: space-between;
-    }
+    .headerContent {
+        display: flex;
+        align-items: center;
+        justify-content: space-between; /* Maintains your existing layout */
+        max-width: 1200px; /* Optional: constrain width */
+        margin: 0 auto; /* Center content */
+        padding-right: 130px;
+      }
+    
+      .logoWithText {
+        display: flex;
+        align-items: center;
+        gap: 15px; /* Space between logo and text */
+        color: #ffffff; /* Dark blue for text */
+        font-size: 30px;
+        font-weight: 700;
+        font-family: $primaryFont;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
 }
 
 select {

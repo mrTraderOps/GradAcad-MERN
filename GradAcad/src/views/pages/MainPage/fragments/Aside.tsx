@@ -39,7 +39,7 @@ const Aside = ({ role, onLogout }: Props) => {
     <aside className={styles.aside}>
       <header className={styles.header}>
         <div>
-          <img src={acadEx} width={30} height={30} alt="LOGO" />
+          <img src={acadEx} width={50} height={50} alt="LOGO" />
           <div>
             <h2>GRAD</h2>
             <h2 className={styles.excel}>ACAD</h2>

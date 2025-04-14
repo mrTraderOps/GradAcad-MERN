@@ -231,7 +231,7 @@ const LoginPage = () => {
       <div className={`right-section ${isRegistering ? "expand" : ""}`}>
         <div className={`login-form ${isRegistering ? "register-panel" : ""}`}>
           <h2>{isRegistering ? "Sign Up" : "Login"}</h2>
-          <p>
+          <p> 
             {isRegistering
               ? "Create a new account"
               : "Enter your account details"}

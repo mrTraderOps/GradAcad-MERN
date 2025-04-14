@@ -56,7 +56,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
   const [approvedCount, setApprovedCount] = useState();
   const [summary, setSummary] = useState<AccountSummary[]>([]);
 
-  const iconWH = 50;
+  const iconWH = 30;
 
   const context = useContext(UserContext);
 
@@ -585,6 +585,28 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                 <img src={ccs} alt="" width={iconWH} height={iconWH} />
                 <img src={hm} alt="" width={45} height={45} />
                 <img src={safe} alt="" width={iconWH} height={iconWH} />
+              <div>
+                <h2>©2025 GradAcad Inc.| All rights reserved</h2>
+              </div>
+              <div className={styles.nc_org}>
+                <img
+                  src="src\assets\images\ccs_logo.png"
+                  alt=""
+                  width={iconWH}
+                  height={iconWH}
+                />
+                <img
+                  src="src\assets\images\hm.png"
+                  alt=""
+                  width={30}
+                  height={30}
+                />
+                <img
+                  src="src\assets\images\safe_logo.png"
+                  alt=""
+                  width={iconWH}
+                  height={iconWH}
+                />
               </div>
             </div>
           </footer>

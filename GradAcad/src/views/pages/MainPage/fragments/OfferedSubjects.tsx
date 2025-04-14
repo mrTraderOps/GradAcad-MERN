@@ -399,8 +399,8 @@ const OfferedSubjects = () => {
       </div>
       {editingSubject && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalContent} style={{ width: "40%" }}>
-            <h3>Edit Subject</h3>
+          <div className={styles.modalContent} style={{ width: "35%", paddingBottom: "40px"}}>
+          <h3 style={{ textAlign: "center" }}>Add Subject</h3>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -433,8 +433,8 @@ const OfferedSubjects = () => {
               </div>
               {/* Instructor Dropdown */}
               <div className={styles.formGroup}>
-                <label style={{ marginLeft: "10px" }}>
-                  <strong>Instructor: </strong>
+                <label style={{ marginLeft: "1px" }}>
+                  <label>Instructor: </label>
                 </label>
                 <select
                   value={editingSubject?.profId || ""}
@@ -445,11 +445,12 @@ const OfferedSubjects = () => {
                     })
                   } // Handle selection change
                   style={{
-                    height: "59px",
-                    width: "68%",
-                    marginLeft: "25px",
+                    height: "70%",
+                    width: "104%",
+                    marginLeft: "1px",
                     paddingLeft: "10px",
-                    fontWeight: "600",
+                    fontWeight: "$Medium",
+                    borderRadius: "10px",
                   }}
                 >
                   <option value="" disabled>
@@ -484,11 +485,12 @@ const OfferedSubjects = () => {
                   value={editingSubject?.sem || ""}
                   onChange={(e) => handleChange("sem", e.target.value)}
                   style={{
-                    height: "59px",
-                    width: "68%",
-                    marginLeft: "25px",
+                    height: "70%",
+                    width: "104%",
+                    marginLeft: "1px",
                     paddingLeft: "10px",
-                    fontWeight: "bold",
+                    fontWeight: "$Medium",
+                    borderRadius: "10px",
                   }}
                 >
                   <option value="">
@@ -509,7 +511,7 @@ const OfferedSubjects = () => {
 
               {/* Course Input (4 UPPERCASE LETTERS) */}
               <div className={styles.formGroup}>
-                <label>Course</label>
+                <label>Program</label>
                 <input
                   type="text"
                   value={editingSubject?.dept || ""}

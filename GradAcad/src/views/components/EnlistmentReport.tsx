@@ -164,17 +164,17 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
           </video>
         </div>
       ) : (
+        
         <div className={styles.modalContent1}>
           <h3>Select a Subject</h3>
 
           {/* Academic Year Dropdown */}
-          <div className={styles.filterGroup}>
+          <div className={styles.selectContainer}>
             <label htmlFor="academicYear">Academic Year:</label>
             <select
               id="academicYear"
               value={selectedAcadYr}
               onChange={(e) => setSelectedAcadYr(e.target.value)}
-              style={{ width: "30%" }}
             >
               <option value="">Select Academic Year</option>
               {uniqueAcadYrs.map((acadYr, index) => (
@@ -186,7 +186,7 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
           </div>
 
           {/* Semester Dropdown */}
-          <div className={styles.filterGroup}>
+          <div className={styles.selectContainer}>
             <label htmlFor="semester">Semester:</label>
             <select
               id="semester"
@@ -203,7 +203,7 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
           </div>
 
           {/* Department Dropdown */}
-          <div className={styles.filterGroup}>
+          <div className={styles.selectContainer}>
             <label htmlFor="department">Department:</label>
             <select
               id="department"
@@ -220,14 +220,13 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
           </div>
 
           {/* Course Subject Dropdown */}
-          <div className={styles.filterGroup}>
+          <div className={styles.selectContainer}>
             <label htmlFor="courseCode">Course Subject:</label>
             <select
               className={styles.Cc}
               id="courseCode"
               value={selectedSubject}
               onChange={(e) => setSelectedSubject(e.target.value)}
-              style={{ width: "30%" }}
             >
               <option value="">Select Course</option>
               {filteredSubject.map((course, index) => (
@@ -239,7 +238,7 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
           </div>
 
           {/* Section Dropdown */}
-          <div className={styles.filterGroup}>
+          <div className={styles.selectContainer}>
             <label htmlFor="section">Section:</label>
             <select
               id="section"
