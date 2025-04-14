@@ -15,7 +15,6 @@ import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
-import nc from "../../../../assets/images/nc_logo.png";
 import ccs from "../../../../assets/images/ccs_logo.png";
 import hm from "../../../../assets/images/hm.png";
 import safe from "../../../../assets/images/safe_logo.png";
