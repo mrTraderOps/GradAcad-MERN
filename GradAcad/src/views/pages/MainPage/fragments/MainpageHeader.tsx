@@ -6,7 +6,7 @@ const MainpageHeader = () => {
       <div className={styles.headerContent}>
         <div className={styles.logoWithText}>
           <img src={nc_logo} alt="Norzagaray College" width={50} />
-          <span className={styles.collegeName}>Norzagaray College</span>
+          <span className={styles.collegeName} style={{textWrap: "nowrap"}}>Norzagaray College</span>
         </div>
         <div className={styles.custom_input}></div>
       </div>
