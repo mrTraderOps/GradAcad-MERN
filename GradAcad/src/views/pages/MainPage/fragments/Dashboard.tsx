@@ -15,6 +15,10 @@ import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
+import nc from "../../../../assets/images/nc_logo.png";
+import ccs from "../../../../assets/images/ccs_logo.png";
+import hm from "../../../../assets/images/hm.png";
+import safe from "../../../../assets/images/safe_logo.png";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -574,33 +578,13 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
           <footer className={styles.nc_footer}>
             <div>
               <div className={styles.nc_logo_name}>
-                <img
-                  src="src\assets\images\nc_logo.png"
-                  alt=""
-                  width={45}
-                  height={45}
-                />
+                <img src={nc} alt="" width={45} height={45} />
                 <h2>NORZAGARAY COLLEGE</h2>
               </div>
               <div className={styles.nc_org}>
-                <img
-                  src="src\assets\images\ccs_logo.png"
-                  alt=""
-                  width={iconWH}
-                  height={iconWH}
-                />
-                <img
-                  src="src\assets\images\hm.png"
-                  alt=""
-                  width={45}
-                  height={45}
-                />
-                <img
-                  src="src\assets\images\safe_logo.png"
-                  alt=""
-                  width={iconWH}
-                  height={iconWH}
-                />
+                <img src={ccs} alt="" width={iconWH} height={iconWH} />
+                <img src={hm} alt="" width={45} height={45} />
+                <img src={safe} alt="" width={iconWH} height={iconWH} />
               </div>
             </div>
           </footer>

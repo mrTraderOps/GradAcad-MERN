@@ -124,13 +124,13 @@ const GradingPeriod = () => {
           // ⬇️ Set states including your question's target
           setAcadYr(availableAcadYears[0]);
           setSemester(availableSemesters[0] || "");
-          setTerm(initialTerm);
 
           setCurrentAcadYr(currentAcadYr);
           setAcademicYears(availableAcadYears);
           setCurrentSem(currentSem);
           setSemesters(availableSemesters);
           setTerms(availableTerms);
+          setTerm(initialTerm);
         }
       } catch (error) {
         console.error("Error fetching terms:", error);
