@@ -15,6 +15,10 @@ import { GradeData } from "../../../../models/types/GradeData";
 import { GenerateReport } from "../../../components/GenerateReport";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
+import nc from "../../../../assets/images/nc_logo.png";
+import ccs from "../../../../assets/images/ccs_logo.png";
+import hm from "../../../../assets/images/hm.png";
+import safe from "../../../../assets/images/safe_logo.png";
 
 interface GroupedSubject {
   subjectCode: string;
@@ -62,8 +66,9 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     throw new Error("User role can't read");
   }
 
-  const subjects =
-    user?.role === "prof" ? useSubjectsV2(user.refId).subjects : [];
+  const { subjects } = useSubjectsV2(user.refId, undefined, undefined, {
+    enabled: true,
+  });
 
   const uniqueAcadYrs = [...new Set(subjects.map((subject) => subject.acadYr))];
   const uniqueSems = [...new Set(subjects.map((subject) => subject.sem))];
@@ -120,7 +125,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     setSelectedSem("0");
     setSelectedSubject("0");
     setSelectedSection("0");
-  }, [subjects]);
+  }, []);
 
   useEffect(() => {
     if (
@@ -184,6 +189,29 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
 
   const COLORS = ["#00C49F", "#FF8042"];
 
+  const groupedSubjects = subjects.reduce<Record<string, GroupedSubject>>(
+    (acc, subject) => {
+      const { subjectCode, section } = subject;
+
+      if (!acc[subjectCode]) {
+        acc[subjectCode] = {
+          subjectCode,
+          sections: new Set(),
+        };
+      }
+
+      acc[subjectCode].sections.add(section);
+
+      return acc;
+    },
+    {}
+  );
+
+  const tableData = Object.values(groupedSubjects).map((subject) => ({
+    subjectCode: subject.subjectCode,
+    sectionCount: subject.sections.size,
+  }));
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -220,7 +248,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
 
   useEffect(() => {
     if (userRole === "prof") {
-      setRoleName("INSTRUCTOR");
+      setRoleName("");
     } else if (userRole === "admin") {
       setRoleName("MIS");
     } else if (userRole === "registrar") {
@@ -230,9 +258,7 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
     }
   }, [userRole]);
 
-  //Pending Approved Users
   useEffect(() => {
-    // Fetch the total pending and approved accounts
     const fetchAccountCounts = async () => {
       try {
         const response = await API.get("/user/pendingApprovedUsers");
@@ -269,29 +295,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
 
     fetchSummary();
   }, []);
-
-  const groupedSubjects = subjects.reduce<Record<string, GroupedSubject>>(
-    (acc, subject) => {
-      const { subjectCode, section } = subject;
-
-      if (!acc[subjectCode]) {
-        acc[subjectCode] = {
-          subjectCode,
-          sections: new Set(),
-        };
-      }
-
-      acc[subjectCode].sections.add(section);
-
-      return acc;
-    },
-    {}
-  );
-
-  const tableData = Object.values(groupedSubjects).map((subject) => ({
-    subjectCode: subject.subjectCode,
-    sectionCount: subject.sections.size,
-  }));
 
   const renderCustomizedLabel = ({
     cx,
@@ -336,7 +339,12 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
         <section className={styles.section1}>
           <div className={styles.dashboard1}>
             <div className={styles.greetings}>
-              <h4>WELCOME {roleName},</h4>
+              {user.role === "prof" ? (
+                <h4>WELCOME,</h4>
+              ) : (
+                <h4>WELCOME {roleName},</h4>
+              )}
+
               <p>
                 {user?.role === "registrar" ? "Ma'am" : ""} {LoggedName}
               </p>
@@ -519,19 +527,6 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
                     </table>
                   </div>
                 </div>
-                <div className={styles.shortCut}>
-                  <div>
-                    <button onClick={() => setShowModal(true)}>
-                      <p>Generate Report</p>
-                      <img
-                        src="src\assets\icons\generate_report.png"
-                        width={20}
-                        height={20}
-                        alt=""
-                      />
-                    </button>
-                  </div>
-                </div>
               </div>
             ) : user?.role === "admin" ? (
               <div>
@@ -582,6 +577,14 @@ const Dashboard = ({ LoggedName, userRole }: Props) => {
         <section className={styles.section3}>
           <footer className={styles.nc_footer}>
             <div>
+              <div className={styles.nc_logo_name}>
+                <img src={nc} alt="" width={45} height={45} />
+                <h2>NORZAGARAY COLLEGE</h2>
+              </div>
+              <div className={styles.nc_org}>
+                <img src={ccs} alt="" width={iconWH} height={iconWH} />
+                <img src={hm} alt="" width={45} height={45} />
+                <img src={safe} alt="" width={iconWH} height={iconWH} />
               <div>
                 <h2>©2025 GradAcad Inc.| All rights reserved</h2>
               </div>

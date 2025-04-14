@@ -121,7 +121,8 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
   }
 
   const handleFileUpload = (event: any) => {
-    const file = event.target.files[0];
+    const fileInput = event.target as HTMLInputElement;
+    const file = fileInput.files?.[0];
     if (!file || !file.name.endsWith(".csv")) {
       alert("Please upload a valid CSV file.");
       return;
@@ -134,7 +135,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         const uploadedData = result.data as Array<{ STUDENT_ID: string }>;
 
         const expectedHeaders = ["STUDENT_ID", "STUDENT NAME", selectedTerm];
-
         const parsedHeaders = Object.keys(uploadedData[0] || {});
         const missingHeaders = expectedHeaders.filter(
           (header) => !parsedHeaders.includes(header)
@@ -150,7 +150,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
             (uploadedRow: any) => uploadedRow["STUDENT_ID"] === row.StudentId
           );
 
-          // Define conditions for read-only students
           const isMidtermLocked =
             selectedTerm === "MIDTERM" && row.prelimRemarks;
           const isFinalLocked =
@@ -158,7 +157,6 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
             (row.prelimRemarks || row.midtermRemarks || row.finalRemarks);
           const isReadOnly = isTermDone || isMidtermLocked || isFinalLocked;
 
-          // If the student is read-only, return the row without updating
           if (isReadOnly) {
             return row;
           }
@@ -183,14 +181,12 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
         setCombinedData(updatedTableData);
 
-        // ✅ Track students as "edited"
         const newEditingRows = uploadedData.reduce((acc, row) => {
           acc[row["STUDENT_ID"]] = true;
           return acc;
         }, {} as Record<string, boolean>);
         setEditingRows(newEditingRows);
 
-        // ✅ Immediately update `currentGrades` for Save All
         const updatedGrades = updatedTableData.reduce((acc, row) => {
           acc[row.StudentId] =
             row.terms[selectedTerm as keyof typeof row.terms] ?? 0;
@@ -199,6 +195,9 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
 
         setCurrentGrades(updatedGrades);
         setIsEditing(true);
+
+        // ✅ Clear file input after handling
+        if (fileInput) fileInput.value = "";
       },
       error: (err) => {
         alert("Failed to parse CSV file. Please check the format.");
@@ -249,7 +248,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
         await API.post("/user/logs", {
           action: "Grade Updated",
           userId: user?.refId, // Instructor's ID
-          name: `Prof ${user?.name}`, // Instructor's Name
+          name: `Instructor ${user?.name}`, // Instructor's Name
           date: new Date().toLocaleString(),
           details: `Updated grade for Student ${studentId} in ${subjectCode} (${selectedTerm}): ${oldGrade} --> ${newGrade}.`,
         });
@@ -1003,7 +1002,7 @@ const EncodeGrade = ({ onSubjectClick, data }: EncodeGradeProps) => {
             <p className={styles.error}>{errorMessageXport}</p>
           )}
 
-          {!loadingXport && !errorMessageXport && (
+          {!loadingXport && !errorMessageXport && isTermDone && (
             <ExportExcel
               combinedData={combinedDataForXport}
               loggedName={user?.name ?? ""}

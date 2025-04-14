@@ -1,9 +1,10 @@
 import { useContext, useEffect, useState } from "react";
-import styles from "../styles/AccountApproval.module.scss";
-import searchIcon from "../../../../assets/images/search_Icon.png";
-import arrow from "../../../../assets/icons/arrow.png";
-import closeIcon from "../../../../assets/icons/x-button.png";
-import { getAllUsers, handlePending } from "../../../../services/UserService";
+import styles from "../styles/UserManagement.module.scss";
+import {
+  getAllApprovedUsers,
+  handlePending,
+} from "../../../../services/UserService";
+import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
 
@@ -21,26 +22,52 @@ interface Account {
 
 const AccountApproval = () => {
   const [pendingAccounts, setPendingAccounts] = useState<Account[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [error1, setError1] = useState<boolean>(false);
-  const [error2, setError2] = useState<boolean>(false);
   const [approvedAccounts, setApprovedAccounts] = useState<Account[]>([]);
-  const [currentPanel, setCurrentPanel] = useState("pending");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
-  const [roleFilter, setRoleFilter] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [showApproved, setShowApproved] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [error, setError] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedSort, setSelectedSort] = useState<string>("newest");
+
   const context = useContext(UserContext);
   if (!context) {
     throw new Error("ExportExcel must be used within a UserProvider");
   }
 
   const { user } = context;
-
   useEffect(() => {
-    handlePending(setPendingAccounts, setErrorMessage, setError1);
-    getAllUsers(setApprovedAccounts, setErrorMessage, setError2);
-  }, [currentPanel]);
+    if (showApproved) {
+      getAllApprovedUsers(
+        selectedSort,
+        selectedRole,
+        currentPage,
+        setApprovedAccounts,
+        setCurrentPage,
+        setTotalPages,
+        setErrorMessage,
+        setError,
+        setLoading
+      );
+    } else {
+      handlePending(
+        selectedSort,
+        selectedRole,
+        currentPage,
+        setPendingAccounts,
+        setCurrentPage,
+        setTotalPages,
+        setErrorMessage,
+        setError,
+        setLoading
+      );
+    }
+  }, [showApproved, selectedSort, selectedRole, currentPage]);
 
   const formatDate = (): string => {
     const now = new Date();
@@ -154,210 +181,250 @@ const AccountApproval = () => {
     }
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedAccount(null);
-  };
-
-  // Filter function for accounts based on search and role
-  const filteredPendingAccounts = pendingAccounts.filter((account) => {
-    const matchesRole = roleFilter
-      ? account.role.toLowerCase() === roleFilter.toLowerCase()
-      : true;
-    const matchesSearch =
-      account.name.includes(searchTerm) || account.email.includes(searchTerm);
-
-    return matchesRole && matchesSearch;
-  });
-
-  const filteredApprovedAccounts = approvedAccounts.filter((account) => {
-    const matchesRole = roleFilter
-      ? account.role.toLowerCase() === roleFilter.toLowerCase()
-      : true;
-    const matchesSearch =
-      account.name.includes(searchTerm) || account.email.includes(searchTerm);
-
-    return matchesRole && matchesSearch;
-  });
-  // Role mapping object
   const roleMapping: any = {
     prof: "Instructor",
     registrar: "Registrar",
     admin: "Admin",
     student: "Student",
+    dean: "Dean",
   };
 
   return (
-    <div className={styles.accountApproval}>
-      <h5>
-        {currentPanel === "pending" ? "Pending Accounts" : "Approved Accounts"}
-      </h5>
-      <div className={styles.container1}>
-        <div className={styles.searchBar}>
-          <img src={searchIcon} alt="search" width={20} height={20} />
-          <input
-            type="text"
-            placeholder="Search accounts..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)} // Update state on input change
-          />
-        </div>
-        <div className={styles.buttonGroup}>
-          <img src={arrow} alt="filter" width={25} height={25} />
+    <div className={styles.userManagement}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          flexDirection: "row",
+        }}
+      >
+        <h2>{showApproved ? "Approved Users" : "Account Approval"}</h2>
+        <button
+          style={{
+            borderRadius: "10px",
+            backgroundColor: showApproved ? "#0F2A71" : "green",
+            height: "40px",
+          }}
+          onClick={() => setShowApproved(!showApproved)} // ✅ Toggle Archive View
+        >
+          {showApproved ? "Back to Pending Users" : "Approved List"}
+        </button>
+      </div>
+      {/* Search Bar */}
+      <div className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Sort by Date:</label>
           <select
-            onChange={(e) => setRoleFilter(e.target.value)}
-            value={roleFilter}
+            style={{ width: "180px", height: "48px" }}
+            value={selectedSort}
+            onChange={(e) => setSelectedSort(e.target.value)}
           >
-            <option value="">Filter by Role</option>
-            <option value="admin">Admin</option>
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Filter by Role:</label>
+          <select
+            style={{ width: "180px", height: "48px" }}
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="admin">MIS</option>
+            <option value="dean">Dean</option>
+            <option value="registrar">Registrar</option>
             <option value="prof">Instructor</option>
             <option value="student">Student</option>
-            <option value="registrar">Registrar</option>
           </select>
-          <button
-            className={styles.pendingButton}
-            onClick={() => setCurrentPanel("pending")}
-          >
-            Pending
-          </button>
-          <button
-            className={styles.approvedButton}
-            onClick={() => setCurrentPanel("approved")}
-          >
-            Approved
-          </button>
-          {/* <button className={styles.printButton}>Print</button> */}
+        </div>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Find by Name:</label>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: "87%", borderRadius: "4px" }}
+          />
         </div>
       </div>
-      <div className={styles.accountList}>
-        {currentPanel === "pending" ? (
-          error1 ? (
-            <p>{errorMessage}</p>
-          ) : filteredPendingAccounts.length === 0 ? (
-            <p>No pending accounts.</p>
-          ) : (
-            filteredPendingAccounts.map((account) => {
-              return (
-                <div
-                  key={account._id}
-                  className={styles.accountItem}
-                  // onClick={() => handleAccountClick(account)}
-                >
-                  <div className={styles.accountInfo}>
-                    <p>
-                      <p style={{ fontWeight: "normal" }}>Role: </p>
-                      <strong>{account.role}</strong>
-                    </p>
-                    {account.role === "student" && (
+
+      {/* User Table */}
+      <div className={styles.tableContainer}>
+        <table className={styles.userTable}>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Role</th>
+              {!showApproved ? (
+                <>
+                  <th>Registered Name</th>
+                  <th>Registered Email</th>
+                  <th>Registration Date</th>
+                  <th>Actions</th>
+                </>
+              ) : (
+                <>
+                  <th>Approved Name</th>
+                  <th>Approved Email</th>
+                  <th>Approved Date</th>
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {error ? (
+              <h3 style={{ paddingLeft: "20px" }}>{errorMessage}</h3>
+            ) : loading ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center" }}>
+                  <video
+                    autoPlay
+                    loop
+                    muted
+                    className={styles.loadingAnimation}
+                    width={60}
+                  >
+                    <source src={loadingHorizontal} type="video/webm" />
+                    Your browser does not support the video tag.
+                  </video>
+                </td>
+              </tr>
+            ) : (
+              (() => {
+                const accounts = showApproved
+                  ? approvedAccounts
+                  : pendingAccounts;
+                const filteredAccounts = accounts.filter(
+                  (user) =>
+                    user.name
+                      .toLowerCase()
+                      .includes(searchQuery.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+
+                if (filteredAccounts.length === 0) {
+                  return (
+                    <h3 style={{ paddingLeft: "20px" }}>
+                      No {showApproved ? "approved" : "pending"} account/s
+                      found.
+                    </h3>
+                  );
+                }
+
+                return filteredAccounts.map((user) => (
+                  <tr key={user._id}>
+                    <td>{user.refId || user.studentId}</td>
+                    <td>{roleMapping[user.role] || user.role}</td>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    {!showApproved ? (
                       <>
-                        <p>
-                          <p style={{ fontWeight: "normal" }}>Student ID:</p>
-                          <strong>{account.studentId}</strong>
-                        </p>
+                        <td>{user.createdAt}</td>
+                        <td className={styles.actions}>
+                          <button
+                            className={styles.approveButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(user._id);
+                            }}
+                          >
+                            Approve
+                          </button>
+                          <button
+                            className={styles.rejectButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReject(user._id);
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </td>
                       </>
+                    ) : (
+                      <td>{user.approvedAt}</td>
                     )}
-                    <p>
-                      <p style={{ fontWeight: "normal" }}>Registered Name: </p>
-                      <strong>{account.name}</strong>
-                    </p>
-                    <p>
-                      <p style={{ fontWeight: "normal" }}>
-                        Registered E-mail Address:{" "}
-                      </p>
-                      <strong>{account.email}</strong>
-                    </p>
-                    <p>
-                      <p style={{ fontWeight: "normal" }}>Created At:</p>
-                      <strong>{account.createdAt}</strong>
-                    </p>
-                  </div>
-                  <div className={styles.actions}>
-                    <button
-                      className={styles.approveButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApprove(account._id);
-                      }}
-                    >
-                      Approve
-                    </button>
-                    <button
-                      className={styles.rejectButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleReject(account._id);
-                      }}
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )
-        ) : error2 ? (
-          <p>{errorMessage || "Failed to fetch approve account."}</p>
-        ) : filteredApprovedAccounts.length === 0 ? (
-          <p>No approved accounts.</p>
-        ) : (
-          filteredApprovedAccounts.map((account) => (
-            <div key={account._id} className={styles.accountItem}>
-              <div className={styles.accountInfo}>
-                <p>
-                  <p style={{ fontWeight: "normal" }}>Role:</p>
-                  <strong>{roleMapping[account.role] || account.role}</strong>
-                </p>
-                {account.role === "student" && (
-                  <>
-                    <p>
-                      <p style={{ fontWeight: "normal" }}>Student ID:</p>
-                      <strong>{account.studentId}</strong>
-                    </p>
-                  </>
-                )}
-                <p>
-                  <p style={{ fontWeight: "normal" }}>Registered Name:</p>
-                  <strong>{account.name} </strong>
-                </p>
-
-                <p>
-                  <p style={{ fontWeight: "normal" }}>
-                    Registered E-mail Address:{" "}
-                  </p>
-                  <strong>{account.email}</strong>
-                </p>
-                <p>
-                  <p style={{ fontWeight: "normal" }}>Approved At:</p>
-                  <strong> {account.approvedAt}</strong>
-                </p>
-              </div>
-            </div>
-          ))
-        )}
+                  </tr>
+                ));
+              })()
+            )}
+          </tbody>
+        </table>
       </div>
-      {isModalOpen && (
-        <AccountModal account={selectedAccount} onClose={closeModal} />
-      )}
-    </div>
-  );
-};
 
-const AccountModal = ({ account, onClose }: any) => {
-  if (!account) return null;
-
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modal}>
-        <button onClick={onClose} className={styles.closeButton}>
-          <img src={closeIcon} alt="close" width={20} height={20} />
+      {/* Pagination */}
+      <div className={styles.pagination}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+        >
+          Prev
         </button>
-        <h3>Account Details</h3>
-        <p>
-          <strong>Name:</strong> {account.name}
-        </p>
-        <p>
-          <strong>Email:</strong> {account.email}
-        </p>
+
+        {(() => {
+          const pages = [];
+          const maxVisiblePages = 3;
+          const sidePages = 1;
+
+          const shouldShowLeftEllipsis =
+            currentPage > sidePages + maxVisiblePages;
+          const shouldShowRightEllipsis =
+            currentPage < totalPages - sidePages - maxVisiblePages + 1;
+
+          pages.push(
+            <button
+              key={1}
+              onClick={() => setCurrentPage(1)}
+              className={currentPage === 1 ? styles.activePage : ""}
+            >
+              1
+            </button>
+          );
+
+          if (shouldShowLeftEllipsis)
+            pages.push(<span key="left-ellipsis">...</span>);
+
+          const start = Math.max(2, currentPage - sidePages);
+          const end = Math.min(totalPages - 1, currentPage + sidePages);
+
+          for (let i = start; i <= end; i++) {
+            pages.push(
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={currentPage === i ? styles.activePage : ""}
+              >
+                {i}
+              </button>
+            );
+          }
+
+          if (shouldShowRightEllipsis)
+            pages.push(<span key="right-ellipsis">...</span>);
+
+          if (totalPages > 1) {
+            pages.push(
+              <button
+                key={totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                className={currentPage === totalPages ? styles.activePage : ""}
+              >
+                {totalPages}
+              </button>
+            );
+          }
+
+          return pages;
+        })()}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

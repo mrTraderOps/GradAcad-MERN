@@ -345,7 +345,7 @@ export const generateReportForRegistrar = async (req, res) => {
         $lookup: {
           from: "subjects", // 🔗 Join with subjects collection
           localField: "subjectId", // 🔍 Match 'subjectId' in 'enrollment'
-          foreignField: "_id", // 🔍 Match '_id' in 'subjects'
+          foreignField: "subjectCode", // 🔍 Match 'subjectCode' in 'subjects'
           as: "subjectDetails", // 🔄 Store result in 'subjectDetails'
         },
       },

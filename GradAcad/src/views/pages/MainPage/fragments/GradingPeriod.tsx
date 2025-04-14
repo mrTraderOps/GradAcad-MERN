@@ -18,14 +18,10 @@ interface GradeRequest {
 }
 
 const GradingPeriod = () => {
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [acadYr, setAcadYr] = useState<string>("");
-  const [semester, setSemester] = useState<string>("");
-  const [term, setTerm] = useState<string>("");
-  const [startTime, setStartTime] = useState<string>("");
-  const [endTime, setEndTime] = useState<string>("");
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const today = new Date();
+  const sevenDaysLater = new Date();
+  sevenDaysLater.setDate(today.getDate() + 6);
+  today.setHours(0, 0, 0, 0);
 
   const [currentAcadYr, setCurrentAcadYr] = useState<string>("");
   const [academicYears, setAcademicYears] = useState<string[]>([]);
@@ -34,6 +30,15 @@ const GradingPeriod = () => {
   const [terms, setTerms] = useState<string[]>([]);
   const [pendingGradingPeriod, setPendingGradingPeriod] = useState<boolean>();
   const [gradeRequests, setGradeRequests] = useState<GradeRequest[]>([]);
+
+  const [startDate, setStartDate] = useState<Date | null>(today);
+  const [endDate, setEndDate] = useState<Date | null>(sevenDaysLater);
+  const [acadYr, setAcadYr] = useState<string>("");
+  const [semester, setSemester] = useState<string>("");
+  const [term, setTerm] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("08:00");
+  const [endTime, setEndTime] = useState<string>("00:00");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [showModal, setShowModal] = useState(false);
 
@@ -99,23 +104,33 @@ const GradingPeriod = () => {
           }
 
           let availableTerms: string[] = [];
+          let initialTerm = "";
           if (DoneFirstSem) {
             availableTerms = ["prelim"];
           } else if (!prelimDone && !midtermDone && !finalDone) {
             availableTerms = ["prelim"];
+            initialTerm = "prelim";
           } else if (prelimDone && !midtermDone) {
             availableTerms = ["midterm"];
+            initialTerm = "midterm";
           } else if (prelimDone && midtermDone && !finalDone) {
             availableTerms = ["final"];
+            initialTerm = "final";
           } else if (DoneSecondSem) {
             availableTerms = ["prelim"];
+            initialTerm = "prelim";
           }
+
+          // ⬇️ Set states including your question's target
+          setAcadYr(availableAcadYears[0]);
+          setSemester(availableSemesters[0] || "");
 
           setCurrentAcadYr(currentAcadYr);
           setAcademicYears(availableAcadYears);
           setCurrentSem(currentSem);
           setSemesters(availableSemesters);
           setTerms(availableTerms);
+          setTerm(initialTerm);
         }
       } catch (error) {
         console.error("Error fetching terms:", error);
@@ -376,23 +391,30 @@ const GradingPeriod = () => {
   const formatDateForCalendar = (dateString: string | null) => {
     if (!dateString) return "";
 
-    const date = new Date(dateString); // Convert ISO string to Date object
+    const date = new Date(dateString);
 
     if (isNaN(date.getTime())) return ""; // Handle invalid date
 
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
+    // Adjust to local timezone
+    const offset = date.getTimezoneOffset(); // in minutes
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+
+    const year = localDate.getFullYear();
+    const month = (localDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = localDate.getDate().toString().padStart(2, "0");
 
     return `${month}-${day}-${year}`; // MM-DD-YYYY format
+  };
+
+  const formatDateLocal = (date: Date) => {
+    const offset = date.getTimezoneOffset(); // in minutes
+    const localDate = new Date(date.getTime() - offset * 60 * 1000);
+    return localDate.toISOString().split("T")[0];
   };
 
   const handleCancelSubmit = () => {
     setShowModal(false);
   };
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to avoid issues
 
   return (
     <>
@@ -547,9 +569,7 @@ const GradingPeriod = () => {
                       <label>Start Date *</label>
                       <input
                         type="date"
-                        value={
-                          startDate ? startDate.toISOString().split("T")[0] : ""
-                        }
+                        value={startDate ? formatDateLocal(startDate) : ""}
                         onChange={(e) => {
                           const dateValue = e.target.value
                             ? new Date(e.target.value)
@@ -594,9 +614,7 @@ const GradingPeriod = () => {
                       <label>End Date *</label>
                       <input
                         type="date"
-                        value={
-                          endDate ? endDate.toISOString().split("T")[0] : ""
-                        }
+                        value={endDate ? formatDateLocal(endDate) : ""}
                         onChange={(e) => {
                           const dateValue = e.target.value
                             ? new Date(e.target.value)
@@ -632,6 +650,7 @@ const GradingPeriod = () => {
                       <label>Start Time *</label>
                       <input
                         type="time"
+                        value={startTime}
                         onChange={(e) => {
                           setStartTime(e.target.value);
                           setErrors((prev) => ({ ...prev, startTime: "" })); // Clear error
@@ -646,6 +665,7 @@ const GradingPeriod = () => {
                       <label>End Time *</label>
                       <input
                         type="time"
+                        value={endTime}
                         onChange={(e) => {
                           setEndTime(e.target.value);
                           setErrors((prev) => ({ ...prev, endTime: "" })); // Clear error
@@ -745,6 +765,7 @@ const GradingPeriod = () => {
                       margin: "0",
                       textAlign: "center",
                       paddingBottom: "10px",
+                      color: "black",
                     }}
                   >
                     Active Grading Period

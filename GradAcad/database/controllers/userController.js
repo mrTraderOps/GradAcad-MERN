@@ -1,65 +1,115 @@
 import { getDB } from '../config/db.js';
 import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
-
+import axios from "axios";
 
 export const getPendingUsers = async (req, res) => {
+  const { sorter = "newest", role = "", page = 1 } = req.body;
+
   try {
-      const db = getDB();
-      const collection = db.collection("pending");
+    const db = getDB();
+    const collection = db.collection("pending");
 
-      // Fetch all documents, excluding the password field
-      const pending = await collection.find({}, { projection: { password: 0 } }).toArray();
+    const pageSize = 20;
+    const skip = (parseInt(page) - 1) * pageSize;
 
-      if (pending.length > 0) {
-          res.status(200).json({ success: true, pending });
-      } else {
-          res.status(404).json({ success: false, message: "No users found" });
-      }
+    // Build filter object
+    const filter = {};
+    if (role !== "") {
+      filter.role = role;
+    }
+
+    // Determine sorting direction
+    const sort = {
+      createdAt: sorter === "oldest" ? 1 : -1,
+    };
+
+    // Get total count
+    const total = await collection.countDocuments(filter);
+
+    // Fetch paginated + sorted + filtered users (exclude password)
+    const pending = await collection
+      .find(filter, { projection: { password: 0 } })
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      pending,
+      total,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / pageSize),
+    });
   } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 
-export const getAllUsers = async (req, res) => {
+export const getAllApprovedUsers = async (req, res) => {
+  const { sorter = "newest", role = "", page = 1 } = req.body;
+  const pageSize = 20;
+  const skip = (page - 1) * pageSize;
+
   try {
     const db = getDB();
     const usersCollection = db.collection("users");
-    const approvedCollection = db.collection("approved");
 
-    // Perform an aggregation to join users with approved data
+    // Match stage (optional filtering)
+    const matchStage = {};
+    if (role) {
+      matchStage.role = role;
+    }
+
+    // Sort direction
+    const sortDirection = sorter === "oldest" ? 1 : -1;
+
+    // Count total for pagination
+    const totalUsers = await usersCollection.countDocuments(matchStage);
+    const totalPages = Math.ceil(totalUsers / pageSize);
+
     const users = await usersCollection
       .aggregate([
+        { $match: matchStage },
         {
           $lookup: {
             from: "approved",
-            localField: "refId", // Field in users collection
-            foreignField: "employeeId", // Matching field in approved collection
+            localField: "refId",
+            foreignField: "employeeId",
             as: "approvalData",
           },
         },
         {
           $project: {
-            password: 0, // Exclude password
-            "approvalData._id": 0, // Remove _id from joined data
+            password: 0,
+            "approvalData._id": 0,
           },
         },
         {
           $addFields: {
-            approvedAt: { $arrayElemAt: ["$approvalData.approvedAt", 0] }, // Extract first match
+            approvedAt: { $arrayElemAt: ["$approvalData.approvedAt", 0] },
           },
         },
         {
           $project: {
-            approvalData: 0, // Remove array field after extracting approvedAt
+            approvalData: 0,
           },
         },
+        { $sort: { approvedAt: sortDirection } },
+        { $skip: skip },
+        { $limit: pageSize },
       ])
       .toArray();
 
     if (users.length > 0) {
-      res.status(200).json({ success: true, users });
+      res.status(200).json({
+        success: true,
+        users,
+        currentPage: Number(page),
+        totalPages,
+      });
     } else {
       res.status(404).json({ success: false, message: "No users found" });
     }
@@ -91,17 +141,47 @@ export const getAllUsersForGradeRequest = async (req, res) => {
 };
 
 export const getManageUsers = async (req, res) => {
+  const { role, status, page = 1 } = req.body;
+
   try {
     const db = getDB();
     const usersCollection = db.collection("users");
 
-    const users = await usersCollection.find({}, { projection: { password: 0, role: 0 } }).toArray();
+    const query = {};
 
-    if (users.length > 0) {
-      res.status(200).json({ success: true, users });
-    } else {
-      res.status(404).json({ success: false, message: "No users found" });
+    // Dynamically apply filters if provided
+    if (role && role.trim() !== "") {
+      query.role = role;
     }
+
+    if (status && status.trim() !== "") {
+      query.status = status;
+    }
+
+    const pageNumber = parseInt(page);
+    const pageSize = 20;
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Count total matching users (for pagination metadata)
+    const totalUsers = await usersCollection.countDocuments(query);
+
+    // Fetch users with pagination
+    const users = await usersCollection
+      .find(query, { projection: { password: 0 } }) // Exclude password only
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages: Math.ceil(totalUsers / pageSize),
+        totalUsers,
+        pageSize,
+      },
+    });
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ success: false, message: "Internal Server Error" });
@@ -321,12 +401,23 @@ export const auditUsers = async (req, res) => {
       }
     }
 
-    // Fetch logs with pagination
     const logs = await logsCollection
-      .find(query)
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .toArray();
+    .aggregate([
+      {
+        $addFields: {
+          dateObj: {
+            $dateFromString: {
+              dateString: "$date", // assuming stored like "11 Apr 2025"
+              format: "%d %b %Y",
+            },
+          },
+        },
+      },
+      { $sort: { dateObj: -1 } }, // Sort using real date
+      { $skip: (page - 1) * limit },
+      { $limit: limit }
+    ])
+    .toArray();
 
     // Get total count
     const totalCount = await logsCollection.countDocuments(query);
@@ -415,15 +506,50 @@ export const accountSummary = async (req, res) => {
 };
 
 export const getArchivedUsers = async (req, res) => {
+  const { role, status, page = 1 } = req.body;
+
   try {
     const db = getDB();
-
     const usersArchiveCollection = db.collection("users_archive");
 
-    const archivedUsers = await usersArchiveCollection.find({}).toArray(); 
-    res.status(200).json({ success: true, users: archivedUsers });
+    const query = {};
+
+    // Dynamically apply filters if provided
+    if (role && role.trim() !== "") {
+      query.role = role;
+    }
+
+    if (status && status.trim() !== "") {
+      query.status = status;
+    }
+
+    const pageNumber = parseInt(page);
+    const pageSize = 20;
+    const skip = (pageNumber - 1) * pageSize;
+
+    // Count total matching users (for pagination metadata)
+    const totalUsers = await usersArchiveCollection.countDocuments(query);
+
+    // Fetch users with pagination
+    const users = await usersArchiveCollection
+      .find(query, { projection: { password: 0 } }) // Exclude password only
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
+
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages: Math.ceil(totalUsers / pageSize),
+        totalUsers,
+        pageSize,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error fetching archived users", error });
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
 

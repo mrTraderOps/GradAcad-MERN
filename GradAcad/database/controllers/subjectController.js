@@ -67,9 +67,38 @@ export const getSubjectsByRefId = async (req, res) => {
             .find({ subjectCode: { $in: subjectIds } })
             .toArray();
 
+            const gradesCollection = db.collection("grades");
+
+        // For performance, group and count all at once
+        const gradeCounts = await gradesCollection
+          .aggregate([
+            {
+              $match: {
+                SubjectId: { $in: subjectIds },
+                acadYr: acadYr || { $exists: true },
+                sem: sem || { $exists: true }
+              }
+            },
+            {
+              $group: {
+                _id: "$SubjectId",
+                count: { $sum: 1 }
+              }
+            }
+          ])
+          .toArray();
+            
+        // Convert to a lookup object
+        const gradeCountMap = gradeCounts.reduce((acc, cur) => {
+          acc[cur._id] = cur.count;
+          return acc;
+        }, {});
+            
+
         // Combine enrollment data with subject details
         const combinedData = enrollmentRecords.map(record => {
             const subjectDetail = subjectDetails.find(sub => sub.subjectCode === record.subjectId);
+            const enrolledCount = gradeCountMap[record.subjectId] || 0;
 
             return {
                 dept: record.dept || "Unknown",
@@ -77,7 +106,8 @@ export const getSubjectsByRefId = async (req, res) => {
                 subjectName: subjectDetail?.subjectName || "Unknown",
                 section: record.sect,
                 acadYr: record.acadYr,
-                sem: record.sem
+                sem: record.sem,
+                enrolledStudents: enrolledCount,
             };
         });
 
@@ -112,6 +142,7 @@ export const getAcadYrSem = async (req, res) => {
 }
 
 export const getAllSubjectsEnrollment = async (req, res) => {
+
     try {
       const db = getDB();
   
@@ -121,7 +152,7 @@ export const getAllSubjectsEnrollment = async (req, res) => {
           $lookup: {
             from: "subjects", // 🔗 Join with subjects collection
             localField: "subjectId", // 🔍 Match 'subjectId' in 'enrollment'
-            foreignField: "_id", // 🔍 Match '_id' in 'subjects'
+            foreignField: "subjectCode", // 🔍 Match 'subjectCode' in 'subjects'
             as: "subjectDetails", // 🔄 Store result in 'subjectDetails'
           },
         },
@@ -210,21 +241,26 @@ export const getAllSubjectsArchived = async (req, res) => {
 };
   
 export const getAllInstructor = async (req, res) => {
-    try {
-      const db = getDB();
-      const usersCollection = db.collection("users");
-  
-      const users = await usersCollection.find({role: "prof"}, { projection: { name: 1, refId: 1, _id: 0} }).toArray();
-  
-      if (users.length > 0) {
-        res.status(200).json({ success: true, users });
-      } else {
-        res.status(404).json({ success: false, message: "No users found" });
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ success: false, message: "Internal Server Error" });
+  try {
+    const db = getDB();
+    const usersCollection = db.collection("users");
+
+    const users = await usersCollection
+      .find(
+        { role: { $in: ["prof", "dean"] } },
+        { projection: { name: 1, refId: 1, role: 1, _id: 0 } }
+      )
+      .toArray();
+
+    if (users.length > 0) {
+      res.status(200).json({ success: true, users });
+    } else {
+      res.status(404).json({ success: false, message: "No users found" });
     }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
 };
  
 export const updateSubjectOffered = async (req, res) => {

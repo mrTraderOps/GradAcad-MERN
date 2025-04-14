@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import styles from "../styles/UserManagement.module.scss";
 import { UserContext } from "../../../../context/UserContext";
 import loadingAnimation from "../../../../assets/webM/loading.webm";
+import loadingHorizontal from "../../../../assets/webM/loadingHorizontal.webm";
 import API from "../../../../context/axiosInstance";
 
 interface User {
@@ -22,6 +23,13 @@ const UserManagement = () => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<
     Record<string, boolean>
   >({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [selectedRole, setSelectedRole] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("Active");
 
   const context = useContext(UserContext);
   if (!context) {
@@ -31,10 +39,20 @@ const UserManagement = () => {
   const { user } = context;
 
   useEffect(() => {
+    setLoading(true);
+    setErrorMessage("");
+    setError(false);
+    setArchivedUsers([]);
+    setUsers([]);
     if (showArchived) {
-      // ✅ Fetch Archived Users
-      API.get("/user/getArchivedUsers")
-        .then((response) => {
+      const getArchivedUsers = async () => {
+        try {
+          const response = await API.post("/user/getArchivedUsers", {
+            role: selectedRole,
+            status: selectedStatus,
+            page: currentPage,
+          });
+
           if (response.data.success) {
             setArchivedUsers(response.data.users);
           } else {
@@ -42,31 +60,47 @@ const UserManagement = () => {
               response.data.message || "No archived users found."
             );
           }
-        })
-        .catch((error) => {
+        } catch (error) {
+          setError(true);
           setErrorMessage(
-            error.response?.data?.message || "An error occurred."
+            (error as any).response?.data?.message || "An error occurred."
           );
-        });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      getArchivedUsers();
     } else {
-      // ✅ Fetch Active Users
-      API.get("/user/getManageUsers")
-        .then((response) => {
+      const fetchUsers = async () => {
+        try {
+          const response = await API.post("/user/getManageUsers", {
+            role: selectedRole,
+            status: selectedStatus,
+            page: currentPage,
+          });
+
           if (response.data.success) {
             setUsers(response.data.users);
+            setTotalPages(response.data.pagination.totalPages);
           } else {
+            setUsers([]);
             setErrorMessage(response.data.message || "No users found.");
           }
-        })
-        .catch((error) => {
+        } catch (error) {
+          setError(true);
           setErrorMessage(
-            error.response?.data?.message || "An error occurred."
+            (error as any).response?.data?.message || "An error occurred."
           );
-        });
-    }
-  }, [showArchived]);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-  // Handle Archiving user
+      fetchUsers();
+    }
+  }, [selectedRole, selectedStatus, currentPage, showArchived]);
+
   const handleArchive = async (refId: string) => {
     if (!window.confirm("Are you sure you want to archive this user?")) {
       return;
@@ -109,7 +143,6 @@ const UserManagement = () => {
     }
   };
 
-  // ✅ Handle Restoring User
   const handleRestore = async (refId: string) => {
     if (!window.confirm("Are you sure you want to restore this user?")) {
       return;
@@ -265,7 +298,6 @@ const UserManagement = () => {
           display: "flex",
           justifyContent: "space-between",
           flexDirection: "row",
-          paddingBottom: "15px",
         }}
       >
         <h2>{showArchived ? "Archived Users" : "User Management"}</h2>
@@ -282,13 +314,44 @@ const UserManagement = () => {
       </div>
 
       {/* Search Bar */}
-      <div className={styles.searchBar}>
-        <input
-          type="text"
-          placeholder="Search users by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className={styles.filters}>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Filter by Role:</label>
+          <select
+            style={{ width: "180px", height: "48px" }}
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="admin">MIS</option>
+            <option value="dean">Dean</option>
+            <option value="registrar">Registrar</option>
+            <option value="prof">Instructor</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Status:</label>
+          <select
+            style={{ width: "180px", height: "48px" }}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+        <div className={styles.filterGroup}>
+          <label style={{ color: "black" }}>Find by Name:</label>
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: "87%", borderRadius: "4px" }}
+          />
+        </div>
       </div>
 
       {/* User Table */}
@@ -304,12 +367,23 @@ const UserManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {errorMessage && (
-              <>
-                <h2>{errorMessage}</h2>
-              </>
-            )}
-            {!errorMessage &&
+            {error ? (
+              <h3 style={{ paddingLeft: "20px" }}>{errorMessage}</h3>
+            ) : loading ? (
+              <tr>
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  className={styles.loadingAnimation}
+                  width={60}
+                  style={{ marginLeft: "40px" }}
+                >
+                  <source src={loadingHorizontal} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              </tr>
+            ) : (
               (showArchived ? archivedUsers : users)
                 .filter(
                   (user) =>
@@ -385,9 +459,83 @@ const UserManagement = () => {
                       )}
                     </td>
                   </tr>
-                ))}
+                ))
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* Pagination */}
+      <div className={styles.pagination}>
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((prev) => prev - 1)}
+        >
+          Prev
+        </button>
+
+        {(() => {
+          const pages = [];
+          const maxVisiblePages = 3;
+          const sidePages = 1;
+
+          const shouldShowLeftEllipsis =
+            currentPage > sidePages + maxVisiblePages;
+          const shouldShowRightEllipsis =
+            currentPage < totalPages - sidePages - maxVisiblePages + 1;
+
+          pages.push(
+            <button
+              key={1}
+              onClick={() => setCurrentPage(1)}
+              className={currentPage === 1 ? styles.activePage : ""}
+            >
+              1
+            </button>
+          );
+
+          if (shouldShowLeftEllipsis)
+            pages.push(<span key="left-ellipsis">...</span>);
+
+          const start = Math.max(2, currentPage - sidePages);
+          const end = Math.min(totalPages - 1, currentPage + sidePages);
+
+          for (let i = start; i <= end; i++) {
+            pages.push(
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={currentPage === i ? styles.activePage : ""}
+              >
+                {i}
+              </button>
+            );
+          }
+
+          if (shouldShowRightEllipsis)
+            pages.push(<span key="right-ellipsis">...</span>);
+
+          if (totalPages > 1) {
+            pages.push(
+              <button
+                key={totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                className={currentPage === totalPages ? styles.activePage : ""}
+              >
+                {totalPages}
+              </button>
+            );
+          }
+
+          return pages;
+        })()}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+        >
+          Next
+        </button>
       </div>
 
       {/* Edit User Modal */}
@@ -402,15 +550,14 @@ const UserManagement = () => {
               }}
             >
               <div className={styles.formGroup}>
-                <label>ID:</label>
-                <input
-                  type="text"
-                  value={editingUser.refId}
-                  onChange={(e) =>
-                    setEditingUser({ ...editingUser, refId: e.target.value })
-                  }
-                  readOnly={true}
-                />
+                <p style={{ fontSize: "16px" }}>
+                  ID : <strong>{editingUser.refId}</strong>
+                </p>
+              </div>
+              <div className={styles.formGroup}>
+                <p style={{ fontSize: "16px" }}>
+                  Email : <strong>{editingUser.email}</strong>
+                </p>
               </div>
               <div className={styles.formGroup}>
                 <label>Name:</label>
@@ -419,16 +566,6 @@ const UserManagement = () => {
                   value={editingUser.name}
                   onChange={(e) =>
                     setEditingUser({ ...editingUser, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Email:</label>
-                <input
-                  type="email"
-                  value={editingUser.email}
-                  onChange={(e) =>
-                    setEditingUser({ ...editingUser, email: e.target.value })
                   }
                 />
               </div>

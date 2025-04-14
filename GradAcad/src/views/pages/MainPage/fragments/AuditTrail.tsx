@@ -9,6 +9,7 @@ import { UserContext } from "../../../../context/UserContext";
 import API from "../../../../context/axiosInstance";
 
 interface AuditLog {
+  _id: string;
   logId: number;
   action: string;
   userId: string;
@@ -18,6 +19,7 @@ interface AuditLog {
 }
 
 const AuditTrail = () => {
+  const today = new Date().toISOString().split("T")[0];
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -46,6 +48,7 @@ const AuditTrail = () => {
     const fetchAuditLogs = async () => {
       setLoading(true);
       setAuditLogs([]);
+      setError(false);
       setErrorMessage("");
       try {
         const response = await API.post("/user/getAuditUsers", {
@@ -66,7 +69,7 @@ const AuditTrail = () => {
         }
       } catch (error) {
         console.error("Error fetching audit logs:", error);
-        setErrorMessage("An error occurred while fetching logs.");
+        setErrorMessage("No logs found.");
         setError(true);
       } finally {
         setTimeout(() => {
@@ -94,6 +97,7 @@ const AuditTrail = () => {
   const handleFilterStartDateChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
+    console.log(e.target.value);
     setFilterStartDate(e.target.value);
     setCurrentPage(1);
   };
@@ -182,7 +186,7 @@ const AuditTrail = () => {
 
   return (
     <div className={styles.auditTrail}>
-      <h2 style={{ textAlign: "center" }}>Audit Trail</h2>
+      <h2>Audit Trail</h2>
 
       {/* Filters */}
       <div className={styles.filters}>
@@ -228,6 +232,7 @@ const AuditTrail = () => {
             type="date"
             value={filterEndDate}
             onChange={handleFilterEndDateChange}
+            max={today}
           />
         </div>
         <button
@@ -239,7 +244,7 @@ const AuditTrail = () => {
           }}
           onClick={handlePrintPDF}
         >
-          OPEN IN PDF
+          PRINT PDF
         </button>
       </div>
 
@@ -279,10 +284,9 @@ const AuditTrail = () => {
           <table className={styles.auditTable}>
             <thead>
               <tr>
-                <th>Log ID</th>
                 <th>Action</th>
-                <th>Actor User ID</th>
-                <th>Actor Name</th>
+                <th>User ID</th>
+                <th>User Name</th>
                 <th>Date</th>
                 <th>Details</th>
               </tr>
@@ -290,7 +294,7 @@ const AuditTrail = () => {
             <tbody>
               {error ? (
                 <>
-                  <h2>{errorMessage}</h2>
+                  <h3 style={{ paddingLeft: "20px" }}>{errorMessage}</h3>
                 </>
               ) : loading ? (
                 <tr>
@@ -315,12 +319,9 @@ const AuditTrail = () => {
               ) : (
                 auditLogs.map((log, index) => (
                   <tr
-                    key={log.logId}
+                    key={log._id}
                     className={index % 2 === 0 ? styles.evenRow : styles.oddRow}
                   >
-                    <td>
-                      <strong>{log.logId}</strong>
-                    </td>
                     <td>{log.action}</td>
                     <td>{log.userId}</td>
                     <td>{log.name}</td>
@@ -343,15 +344,63 @@ const AuditTrail = () => {
           Prev
         </button>
 
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i + 1}
-            onClick={() => setCurrentPage(i + 1)}
-            className={currentPage === i + 1 ? styles.activePage : ""}
-          >
-            {i + 1}
-          </button>
-        ))}
+        {(() => {
+          const pages = [];
+          const maxVisiblePages = 3;
+          const sidePages = 1;
+
+          const shouldShowLeftEllipsis =
+            currentPage > sidePages + maxVisiblePages;
+          const shouldShowRightEllipsis =
+            currentPage < totalPages - sidePages - maxVisiblePages + 1;
+
+          // Always show first page
+          pages.push(
+            <button
+              key={1}
+              onClick={() => setCurrentPage(1)}
+              className={currentPage === 1 ? styles.activePage : ""}
+            >
+              1
+            </button>
+          );
+
+          if (shouldShowLeftEllipsis)
+            pages.push(<span key="left-ellipsis">...</span>);
+
+          const start = Math.max(2, currentPage - sidePages);
+          const end = Math.min(totalPages - 1, currentPage + sidePages);
+
+          for (let i = start; i <= end; i++) {
+            pages.push(
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i)}
+                className={currentPage === i ? styles.activePage : ""}
+              >
+                {i}
+              </button>
+            );
+          }
+
+          if (shouldShowRightEllipsis)
+            pages.push(<span key="right-ellipsis">...</span>);
+
+          // Always show last page
+          if (totalPages > 1) {
+            pages.push(
+              <button
+                key={totalPages}
+                onClick={() => setCurrentPage(totalPages)}
+                className={currentPage === totalPages ? styles.activePage : ""}
+              >
+                {totalPages}
+              </button>
+            );
+          }
+
+          return pages;
+        })()}
 
         <button
           disabled={currentPage === totalPages}

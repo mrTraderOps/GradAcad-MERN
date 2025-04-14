@@ -9,18 +9,14 @@ import loadingHorizontal from "../../../assets/webM/loadingHorizontal.webm";
 import { handleLogin, handleRegister } from "../../../services/UserService";
 import API from "../../../context/axiosInstance";
 
-interface Props {
-  onLogin: () => void;
-}
-
-const LoginPage = ({ onLogin }: Props) => {
+const LoginPage = () => {
   const context = useContext(UserContext);
 
   if (!context) {
     throw new Error("LoginPage must be used within a UserProvider");
   }
 
-  const { setUser, setToken } = context;
+  const { setToken, login } = context;
 
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
   const [isDoneRoleCounts, setIsDoneRoleCounts] = useState<boolean>(false);
@@ -33,8 +29,9 @@ const LoginPage = ({ onLogin }: Props) => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [Modalloading, setIsModalLoading] = useState(false);
   const currentYear = new Date().getFullYear();
 
   // Registration Fields
@@ -167,8 +164,7 @@ const LoginPage = ({ onLogin }: Props) => {
       handleLogin(
         username.trim(),
         password.trim(),
-        onLogin,
-        setUser,
+        login,
         setToken,
         setErrorMessage,
         setIsLoading
@@ -176,15 +172,36 @@ const LoginPage = ({ onLogin }: Props) => {
     }
   };
 
-  const handleSubmitForgotPassword = (e: any) => {
+  const handleSubmitForgotPassword = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      setError("Invalid email format");
-      return;
-    }
+    setIsModalLoading(true);
     setError("");
-    console.log("Reset password for:", email);
-    setEmail(""); // Clear input after submission
+    try {
+      if (!validateEmail(email.trim())) {
+        alert("Invalid email format. Please enter a valid email address.");
+        setEmail("");
+        setIsModalLoading(false);
+        return;
+      }
+      const response = await API.post("/email/forgotPassword", {
+        emailOrId: username,
+      });
+
+      if (response.data.success) {
+        alert("Check your email for password reset instructions.");
+        setIsModalOpen(false);
+        setEmail("");
+      } else {
+        setError(response.data.message);
+      }
+    } catch (error) {
+      alert(`Internal Server Error: ${error}`);
+      setError("An error occurred. Please try again later.");
+    } finally {
+      setIsModalLoading(false);
+    }
   };
 
   return (
@@ -481,16 +498,34 @@ const LoginPage = ({ onLogin }: Props) => {
               </div>
 
               <div className="modalActions">
-                <button type="submit">Submit</button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsModalOpen(false);
-                    setEmail("");
-                  }}
-                >
-                  Cancel
-                </button>
+                {!Modalloading ? (
+                  <>
+                    {" "}
+                    <button type="submit">Send</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsModalOpen(false);
+                        setEmail("");
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      width: "100%",
+                    }}
+                  >
+                    <video autoPlay loop muted width={60}>
+                      <source src={loadingHorizontal} type="video/webm" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
               </div>
             </form>
           </div>

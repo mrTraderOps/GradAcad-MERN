@@ -16,7 +16,9 @@ import { authenticateJWT } from './database/utils/jwt.js';
 const allowedOrigins = [
     process.env.ENROLLPRO_URL,
     process.env.FRONTEND_URL,
-    "http://localhost:5173", // Local development
+    "http://localhost:5173",
+    "http://localhost:5000",
+    "https://grad-acad-mern-git-fork-winzkatehp-main-mrtraderops-projects.vercel.app",
     process.env.BACKEND_URL
   ];
 const app = express();

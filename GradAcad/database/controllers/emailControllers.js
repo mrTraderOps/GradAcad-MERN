@@ -1,4 +1,10 @@
 import { createTransport } from 'nodemailer';
+import jwt from 'jsonwebtoken';
+import dotenv from "dotenv";
+import { getDB } from '../config/db.js';
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 const transporter = createTransport({
   service: 'gmail',
@@ -136,5 +142,58 @@ export const notifyEmailMissedSubjects = async (req, res) => {
   } catch (error) {
     console.error("Error sending batch emails:", error);
     return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  const { emailOrId } = req.body;
+  const db = getDB();
+
+  try {
+    const user = await db.collection("users").findOne({
+      $or: [{ email: emailOrId }, { studentId: emailOrId }],
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Email or Student ID is not registered yet." });
+    }
+
+    // ✅ Generate a short-lived JWT
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const resetLink = `https://nc-gradacad.vercel.app/reset_password?token=${token}`;
+
+    // ✅ Send email with reset link
+    const info = await transporter.sendMail({
+      from: `"GradAcad MIS" <${process.env.EMAIL_USER}>`,
+      to: user.email, // ✅ send to the found user's email
+      subject: "Password Reset Request 🔐",
+      text: `Dear ${user.name},\n\nYou requested to reset your password. Click the link below:\n\n${resetLink}\n\nThis link will expire in 15 minutes.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2>🔐 Password Reset Request</h2>
+          <p>Dear <strong>${user.name}</strong>,</p>
+          <p>You requested to reset your password. Please click the link below to proceed:</p>
+          <a href="${resetLink}" style="display: inline-block; background-color: #007BFF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Reset Password
+          </a>
+          <p>This link will expire in 15 minutes. If you didn't request this, please ignore this email.</p>
+          <p>Best regards,<br><strong>GradAcad MIS Department</strong></p>
+        </div>
+      `,
+    });
+
+    console.log("📧 Reset link sent:", info.messageId);
+    return res.status(200).json({ success: true, message: "Reset link sent successfully." });
+
+  } catch (error) {
+    console.error("❌ Forgot password error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
   }
 };

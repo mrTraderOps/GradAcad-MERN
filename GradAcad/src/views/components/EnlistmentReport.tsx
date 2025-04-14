@@ -3,6 +3,7 @@ import styles from "./styles/AreYouSure.module.scss";
 import { DetailProps, useGradeForRegistrar } from "../../hooks/useGrade";
 import { UserContext } from "../../context/UserContext";
 import loadingAnimation from "../../assets/webM/loading.webm";
+import { useTerm } from "../../hooks/useTerm";
 
 interface Props {
   isOpen: boolean;
@@ -13,14 +14,16 @@ interface Props {
 export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
   const { data, errorMessage, loading } = useGradeForRegistrar();
 
+  const { initialAcadYr, initialSem } = useTerm();
+
   const context = useContext(UserContext);
   const { addConfirmData }: any = context;
 
   const [filteredData, setFilteredData] = useState<DetailProps[]>([]);
 
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
-  const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
-  const [selectedSem, setSelectedSem] = useState<string>("");
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
+  const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedDept, setSelectedDept] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
@@ -32,6 +35,15 @@ export const EnlismentReport = ({ isOpen, onCancel, onRefetch }: Props) => {
   // Extract unique academic years and semesters from data
   const uniqueAcadYrs = [...new Set(data?.map((item) => item.acadYr) || [])];
   const uniqueSems = [...new Set(data?.map((item) => item.sem) || [])];
+
+  useEffect(() => {
+    if (!selectedAcadYr && uniqueAcadYrs.length > 0) {
+      setSelectedAcadYr(uniqueAcadYrs[0]);
+    }
+    if (!selectedSem && uniqueSems.length > 0) {
+      setSelectedSem(uniqueSems[0]);
+    }
+  }, [uniqueAcadYrs, uniqueSems]);
 
   useEffect(() => {
     setFilteredData([]);

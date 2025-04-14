@@ -1,7 +1,8 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import styles from "../styles/MainPage.module.scss";
 import { useResolvedPath, useMatch, useNavigate } from "react-router-dom";
 import acadEx from "../../../../assets/icons/acadEx_logo.png";
+import AreYousureLogOut from "../../../components/AreYouSureLogOut";
 
 interface Props {
   onLogout: () => void;
@@ -14,6 +15,8 @@ interface CustomButton {
 }
 
 const Aside = ({ role, onLogout }: Props) => {
+  const [openModal, setOpenModal] = useState(false);
+
   function CustomButton({ to, children, ...props }: CustomButton) {
     const resolvedPath = useResolvedPath(to);
     const isActive = useMatch({ path: resolvedPath.pathname, end: true });
@@ -93,8 +96,13 @@ const Aside = ({ role, onLogout }: Props) => {
         </ul>
       </nav>
       <footer>
-        <button onClick={onLogout}>LOGOUT</button>
+        <button onClick={() => setOpenModal(true)}>LOGOUT</button>
       </footer>
+      <AreYousureLogOut
+        isOpen={openModal}
+        onConfirm={onLogout}
+        onCancel={() => setOpenModal(false)}
+      />
     </aside>
   );
 };

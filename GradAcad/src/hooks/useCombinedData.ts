@@ -167,7 +167,7 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms, sect, dept }: 
   setLoading(true);
 
     if (!acadYr || !sem || !subjCode || !terms || terms.length === 0) {
-      setError("Missing required parameters 12123");
+      setError("Missing required parameters");
       setLoading(false);
       return;
     }
@@ -215,6 +215,7 @@ export const useCombinedDatav2 = ({ acadYr, sem, subjCode, terms, sect, dept }: 
     setCurrentGrades,
     setOriginalGrades,
     setLoading,
+    setError,
     combinedData,
     students,
     errorMessage,

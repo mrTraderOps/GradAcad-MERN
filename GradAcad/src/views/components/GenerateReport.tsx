@@ -8,6 +8,7 @@ import {
 import { UserContext } from "../../context/UserContext";
 import loadingAnimation from "../../assets/webM/loading.webm";
 import { useNavigate } from "react-router-dom";
+import { useTerm } from "../../hooks/useTerm";
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +28,8 @@ export const GenerateReport = ({
   const context = useContext(UserContext);
   const { addConfirmData }: any = context;
 
+  const { initialAcadYr, initialSem } = useTerm();
+
   // Always call both hooks at the top level
   const gradeData = useGrade(userId ?? ""); // Fetch when userId exists
   const registrarData = useGradeForRegistrar(); // Fetch when no userId
@@ -39,8 +42,8 @@ export const GenerateReport = ({
   const loading = userId ? gradeData.loading : registrarData.loading;
 
   const [ModalContentLoading, setModalContent1Loading] = useState(false);
-  const [selectedAcadYr, setSelectedAcadYr] = useState<string>("");
-  const [selectedSem, setSelectedSem] = useState<string>("");
+  const [selectedAcadYr, setSelectedAcadYr] = useState<string>(initialAcadYr);
+  const [selectedSem, setSelectedSem] = useState<string>(initialSem);
   const [selectedDept, setSelectedDept] = useState<string>("");
   const [selectedCourse, setSelectedCourse] = useState<string>("");
   const [selectedSection, setSelectedSection] = useState<string>("");
@@ -55,6 +58,15 @@ export const GenerateReport = ({
   const uniqueSems = [...new Set(data?.map((item) => item.sem) || [])];
 
   useEffect(() => {
+    if (!selectedAcadYr && uniqueAcadYrs.length > 0) {
+      setSelectedAcadYr(uniqueAcadYrs[0]);
+    }
+    if (!selectedSem && uniqueSems.length > 0) {
+      setSelectedSem(uniqueSems[0]);
+    }
+  }, [uniqueAcadYrs, uniqueSems]);
+
+  useEffect(() => {
     setFilteredData([]);
     setUniqueDepts([]);
     setFilteredCourses([]);
@@ -62,7 +74,6 @@ export const GenerateReport = ({
 
     if (!selectedAcadYr || !selectedSem) return;
 
-    // ✅ Step 1: Filter data based on Academic Year & Semester
     const newFilteredData =
       data?.filter(
         (item) => item.acadYr === selectedAcadYr && item.sem === selectedSem
@@ -70,12 +81,10 @@ export const GenerateReport = ({
 
     setFilteredData(newFilteredData);
 
-    // ✅ Step 2: Extract unique departments
     setUniqueDepts([
       ...new Set(newFilteredData.map((item) => item.dept) || []),
     ]);
 
-    // ✅ Reset Course and Section when AcadYr/Sem changes
     setSelectedDept("");
     setSelectedCourse("");
     setSelectedSection("");
@@ -88,7 +97,6 @@ export const GenerateReport = ({
       return;
     }
 
-    // ✅ Step 3: Filter Courses based on selected Department
     const newFilteredCourses = filteredData
       .filter((item) => item.dept === selectedDept)
       .map((item) => ({
@@ -113,7 +121,6 @@ export const GenerateReport = ({
       return;
     }
 
-    // ✅ Step 4: Filter Sections based on selected Course
     const newFilteredSections = filteredData
       .filter(
         (item) =>
