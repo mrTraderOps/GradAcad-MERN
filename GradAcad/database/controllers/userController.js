@@ -1,7 +1,7 @@
 import { getDB } from '../config/db.js';
 import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
-
+import axios from "axios";
 
 export const getPendingUsers = async (req, res) => {
   const { sorter = "newest", role = "", page = 1 } = req.body;
@@ -118,7 +118,6 @@ export const getAllApprovedUsers = async (req, res) => {
     res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
-
 
 export const getAllUsersForGradeRequest = async (req, res) => {
   try {
