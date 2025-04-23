@@ -48,15 +48,7 @@ const GradeViewing = () => {
   }
 
   const { user } = context;
-  const {
-    activeAcadYrs,
-    activeSems,
-    initialAcadYr,
-    initialSem,
-    donePrelim,
-    doneMidterm,
-    doneFinal,
-  } = useTerm();
+  const { activeAcadYrs, activeSems, initialAcadYr, initialSem } = useTerm();
 
   const [totalCredits, setTotaCredits] = useState<number>(0);
   const [totalAverage, setTotalAverage] = useState<string>("");
