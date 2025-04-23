@@ -505,6 +505,70 @@ export const getStudentGrades = async (req, res) => {
   }
 };
 
+export const getStudentGradesV2 = async (req, res) => {
+  try {
+    const { refId, acadYr, sem, subjectId, dept, sect } = req.body;
+
+    if (!refId || !acadYr || !sem) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required parameters: refId, acadYr, sem.",
+      });
+    }
+
+    const db = getDB();
+
+    // Step 1: Build dynamic filter
+    const enrollmentFilter = { profId: refId, acadYr, sem };
+    if (subjectId) enrollmentFilter.subjectId = subjectId;
+    if (dept) enrollmentFilter.dept = dept;
+    if (sect) enrollmentFilter.sect = sect;
+
+    const enrollmentDocs = await db.collection("enrollment").find(enrollmentFilter).toArray();
+
+    if (!enrollmentDocs.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No enrollment records found with the given filters.",
+      });
+    }
+
+    // Step 2: Get subjectIds from enrollment
+    const subjectIds = enrollmentDocs.map((e) => e.subjectId);
+
+    // Step 3: Determine student IDs only if section is provided
+    const enrolledStudentIds = dept && sect
+      ? enrollmentDocs.flatMap((e) => e.enrollee)
+      : [];
+
+    // Step 4: Build dynamic grade query
+    const gradeQuery = {
+      SubjectId: { $in: subjectIds },
+      acadYr,
+      sem,
+    };
+
+    if (dept && sect) {
+      gradeQuery.StudentId = { $in: enrolledStudentIds };
+    }
+
+    const grades = await db.collection("grades").find(gradeQuery).toArray();
+
+    // Step 5: Return grades
+    const combinedData = grades.map((grade) => ({
+      StudentId: grade.StudentId,
+      SubjectId: grade.SubjectId,
+      terms: grade.terms || {},
+    }));
+
+    return res.status(200).json({ success: true, data: combinedData });
+
+  } catch (error) {
+    console.error("Error fetching student grades:", error);
+    return res.status(500).json({ success: false, message: "Internal server error." });
+  }
+};
+
 export const updateGradeV2 = async (req, res) => {
   const { updates } = req.body;
 

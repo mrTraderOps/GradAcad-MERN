@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticateJWT } from '../utils/jwt.js';
-import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2, updateRemarks, generateReportForRegistrar, updateGradingPeriodNewAcadYr, updateGradingPeriodChangeSem, updateGradingPeriodChangeTerm, updateGradingPeriodTermDone, pendingGradingPeriod, getGradingPeriod, setRequest, revisionRequest, fetchAllRequest, closeRequest, fetchAllRequestById, enlistmentReport, fetchMissingEnrollmentByDept, fetchCompletedEnrollmentByDept } from '../controllers/gradesController.js';
+import { getTerms, getAllGrades, updateGrade, insertGrade, generateReport, getStudentGrades, getTermsV2, updateGradeV2, updateRemarks, generateReportForRegistrar, updateGradingPeriodNewAcadYr, updateGradingPeriodChangeSem, updateGradingPeriodChangeTerm, updateGradingPeriodTermDone, pendingGradingPeriod, getGradingPeriod, setRequest, revisionRequest, fetchAllRequest, closeRequest, fetchAllRequestById, enlistmentReport, fetchMissingEnrollmentByDept, fetchCompletedEnrollmentByDept, getStudentGradesV2 } from '../controllers/gradesController.js';
 
 const router = express.Router();
 
@@ -45,6 +45,8 @@ router.post('/generateReport', authenticateJWT, generateReport);
 router.post('/enlistmentReport', authenticateJWT, enlistmentReport);
 
 router.post('/getStudentGrades', authenticateJWT, getStudentGrades);
+
+router.post('/getStudentGradesV2', authenticateJWT, getStudentGradesV2);
 
 router.post('/fetchAllRequestById',  authenticateJWT, fetchAllRequestById);
 

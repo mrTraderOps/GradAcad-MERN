@@ -7,4 +7,5 @@ export interface SubjectData {
   terms?: [string];
   acadYr: string;
   sem: string;
+  enrolledStudents?: string;
 }

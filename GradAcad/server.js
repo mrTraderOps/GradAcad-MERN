@@ -10,6 +10,7 @@ import gradeRoutes from './database/routes/gradeRoutes.js';
 import emailRoutes from './database/routes/emailRoutes.js';
 import authRoutes from './database/routes/authRoutes.js';
 import enrollmentRoutes from './database/routes/enrollmentRoutes.js';
+import botRoutes from './database/routes/botRoutes.js';
 import { initGradingPeriodCron, stopGradingPeriodCron } from './database/utils/cron.js';
 import { authenticateJWT } from './database/utils/jwt.js';
 
@@ -18,7 +19,6 @@ const allowedOrigins = [
     process.env.FRONTEND_URL,
     "http://localhost:5173",
     "http://localhost:5000",
-    "https://grad-acad-mern-git-fork-winzkatehp-main-mrtraderops-projects.vercel.app",
     process.env.BACKEND_URL
   ];
 const app = express();
@@ -58,6 +58,7 @@ const startServer = async () => {
         app.use('/api/v1/student', authenticateJWT, studentRoutes);
         app.use('/api/v1/subject', authenticateJWT, subjectRoutes);
         app.use('/api/v1/grade', authenticateJWT, gradeRoutes);
+        app.use('/api/v1/bot', authenticateJWT, botRoutes);
         
 
         // Health check (modified for native driver)

@@ -1,5 +1,6 @@
 export interface GradeData {
     StudentId?: string;
+    SubjectId?: string;
     terms: {
       PRELIM?: number;
       MIDTERM?: number;

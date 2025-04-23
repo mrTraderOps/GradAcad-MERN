@@ -48,7 +48,15 @@ const GradeViewing = () => {
   }
 
   const { user } = context;
-  const { activeAcadYrs, activeSems, initialAcadYr, initialSem } = useTerm();
+  const {
+    activeAcadYrs,
+    activeSems,
+    initialAcadYr,
+    initialSem,
+    donePrelim,
+    doneMidterm,
+    doneFinal,
+  } = useTerm();
 
   const [totalCredits, setTotaCredits] = useState<number>(0);
   const [totalAverage, setTotalAverage] = useState<string>("");
@@ -520,7 +528,7 @@ const GradeViewing = () => {
                 >
                   {semesterOptions.map((sem) => (
                     <option key={sem} value={sem}>
-                      {sem} Semester
+                      {sem}
                     </option>
                   ))}
                 </select>
